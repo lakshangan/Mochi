@@ -25,18 +25,15 @@ export class SystemActivityMonitor {
 
   private async checkActivity() {
     try {
-      // 1. Check if music is playing
+      // 1. Check if audio is playing (fast, no permissions needed)
       let isMusicPlaying = false;
       try {
-        const { stdout } = await execAsync(`osascript -e 'if application "Music" is running then tell application "Music" to get player state'`);
-        if (stdout.trim().toLowerCase() === 'playing') isMusicPlaying = true;
-      } catch (e) {}
-
-      if (!isMusicPlaying) {
-        try {
-          const { stdout } = await execAsync(`osascript -e 'if application "Spotify" is running then tell application "Spotify" to get player state'`);
-          if (stdout.trim().toLowerCase() === 'playing') isMusicPlaying = true;
-        } catch (e) {}
+        const { stdout } = await execAsync(`pmset -g assertions | grep "coreaudiod"`);
+        if (stdout.includes('PreventUserIdleSystemSleep') || stdout.includes('NoIdleSleepAssertion')) {
+          isMusicPlaying = true;
+        }
+      } catch (e) {
+        // grep returns exit code 1 if no match, handled here.
       }
 
       if (isMusicPlaying) {
@@ -44,14 +41,14 @@ export class SystemActivityMonitor {
         return;
       }
 
-      // 2. Check active app for Coding
+      // 2. Check active app for Coding (fast, no permissions needed)
       let activeApp = '';
       try {
-        const { stdout } = await execAsync(`osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`);
+        const { stdout } = await execAsync(`lsappinfo info -only name $(lsappinfo front)`);
         activeApp = stdout.trim().toLowerCase();
       } catch (e) {}
 
-      const codingApps = ['code', 'cursor', 'antigravity', 'terminal', 'iterm2', 'xcode', 'webstorm', 'intellij'];
+      const codingApps = ['code', 'cursor', 'antigravity', 'terminal', 'iterm', 'xcode', 'webstorm'];
       if (codingApps.some(c => activeApp.includes(c))) {
         this.notifyState('coding');
         return;
@@ -65,12 +62,11 @@ export class SystemActivityMonitor {
         idleSeconds = idleNanos / 1_000_000_000;
       } catch (e) {}
 
-      if (idleSeconds < 2.0) {
+      if (idleSeconds < 3.0) {
         this.notifyState('typing');
         return;
       }
 
-      // Default idle
       this.notifyState('idle');
 
     } catch (err) {

@@ -123,7 +123,8 @@ export const OrbPet: React.FC = () => {
 
     if (window.mochiApi) {
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
-        anim.triggerReaction(state, 3000);
+        // Continuous state update instead of a 3-second reaction
+        anim.setState(state);
       });
 
       unsubTimerComp = window.mochiApi.onTimerCompleted(() => {

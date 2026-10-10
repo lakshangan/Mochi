@@ -25,7 +25,7 @@ export class FaceTextureManager {
     this.ctx = context;
 
     this.currentEyes = {
-      text: 'I   <',
+      text: 'I   I',
       glowIntensity: 1.0,
       color: '#ffffff',
       shakeX: 0,
@@ -50,32 +50,33 @@ export class FaceTextureManager {
       case 'happy':
       case 'celebrating':
         this.targetEyes.text = '^   ^';
-        this.targetEyes.glowIntensity = 1.5;
+        this.targetEyes.glowIntensity = 1.6;
         this.targetEyes.shakeX = 0;
-        this.targetEyes.shakeY = 0;
+        this.targetEyes.shakeY = -2;
         break;
 
       case 'curious':
         this.targetEyes.text = 'O   o';
-        this.targetEyes.glowIntensity = 1.2;
+        this.targetEyes.glowIntensity = 1.3;
         this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = 0;
         break;
 
       case 'sleeping':
-        this.targetEyes.text = '~   ~';
+        this.targetEyes.text = '︶ ︶';
         this.targetEyes.glowIntensity = 0.5;
         this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = 0;
         break;
 
       case 'typing':
-      case 'focused':
-      case 'working':
         this.targetEyes.text = '>   <';
         this.targetEyes.glowIntensity = 1.3;
         this.targetEyes.shakeX = (Math.random() - 0.5) * 4;
         this.targetEyes.shakeY = (Math.random() - 0.5) * 2;
         break;
 
+      case 'focused':
       case 'coding':
         this.targetEyes.text = '[   ]';
         this.targetEyes.glowIntensity = 1.8;
@@ -85,14 +86,14 @@ export class FaceTextureManager {
 
       case 'listening':
         this.targetEyes.text = '♫   ♫';
-        this.targetEyes.glowIntensity = 1.2;
+        this.targetEyes.glowIntensity = 1.3;
         this.targetEyes.shakeX = 0;
         this.targetEyes.shakeY = Math.sin(Date.now() / 200) * 8; // subtle bounce
         break;
 
       case 'idle':
       default:
-        this.targetEyes.text = 'I   <';
+        this.targetEyes.text = 'I   I';
         this.targetEyes.glowIntensity = 1.0;
         this.targetEyes.shakeX = 0;
         this.targetEyes.shakeY = 0;
@@ -122,28 +123,31 @@ export class FaceTextureManager {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Cyan/Magenta glowing matrix background (rounded rectangle)
+    // Deep inner shadow/fade for the screen bounds
     const rectW = 380;
     const rectH = 180;
     const rectX = (w - rectW) / 2;
     const rectY = (h - rectH) / 2;
 
+    // The beautiful cyan -> purple gradient from the image
     const grad = ctx.createLinearGradient(rectX, rectY, rectX + rectW, rectY + rectH);
-    grad.addColorStop(0, 'rgba(0, 247, 255, 0.8)'); // Cyan
-    grad.addColorStop(0.5, 'rgba(56, 114, 255, 0.6)'); // Blue
-    grad.addColorStop(1, 'rgba(196, 77, 255, 0.8)'); // Magenta/Violet
+    grad.addColorStop(0, 'rgba(0, 247, 255, 0.9)'); // Cyan
+    grad.addColorStop(0.4, 'rgba(56, 114, 255, 0.7)'); // Soft blue
+    grad.addColorStop(0.8, 'rgba(196, 77, 255, 0.85)'); // Magenta/Violet
+    grad.addColorStop(1, 'rgba(255, 51, 102, 0.5)'); // Pink tail
 
-    ctx.shadowBlur = 40 * this.currentEyes.glowIntensity;
-    ctx.shadowColor = 'rgba(0, 247, 255, 0.6)';
+    // Give it a strong outer glow
+    ctx.shadowBlur = 50 * this.currentEyes.glowIntensity;
+    ctx.shadowColor = 'rgba(0, 247, 255, 0.5)';
     ctx.fillStyle = grad;
     
     ctx.beginPath();
-    ctx.roundRect(rectX, rectY, rectW, rectH, 30);
+    ctx.roundRect(rectX, rectY, rectW, rectH, 40);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Dot matrix / scanline effect
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    // Dot matrix / scanline effect overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     for (let y = rectY; y < rectY + rectH; y += 4) {
       ctx.fillRect(rectX, y, rectW, 2);
     }
@@ -153,16 +157,21 @@ export class FaceTextureManager {
 
     // Draw the Text (Eyes)
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 90px "JetBrains Mono", monospace, sans-serif';
+    ctx.font = 'bold 95px "Helvetica Neue", Helvetica, Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    ctx.shadowBlur = 15 * this.currentEyes.glowIntensity;
+    ctx.shadowBlur = 20 * this.currentEyes.glowIntensity;
     ctx.shadowColor = '#ffffff';
 
     const textX = w / 2 + this.currentEyes.shakeX;
-    const textY = h / 2 + this.currentEyes.shakeY;
+    let textY = h / 2 + this.currentEyes.shakeY;
     
+    // Nudge sleeping face up slightly to look better
+    if (this.currentEyes.text === '︶ ︶') {
+      textY -= 15;
+    }
+
     ctx.fillText(this.currentEyes.text, textX, textY);
     
     // extra brightness pass
