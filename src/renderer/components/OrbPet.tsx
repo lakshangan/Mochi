@@ -17,35 +17,29 @@ export const OrbPet: React.FC = () => {
 
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
-  const [greeting, setGreeting] = useState<{ title: string; subtitle: string; icon: string }>({
-    title: 'Hello friend! ✨',
-    subtitle: 'Click me to open assistant',
-    icon: '✨',
+  const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
+    title: 'Hello there.',
+    subtitle: 'Click me to open your assistant.',
   });
 
   const getDynamicGreeting = () => {
     const hour = new Date().getHours();
     let timeGreeting = 'Good evening';
-    let icon = '✨';
     if (hour >= 5 && hour < 12) {
       timeGreeting = 'Good morning';
-      icon = '🌅';
     } else if (hour >= 12 && hour < 17) {
       timeGreeting = 'Good afternoon';
-      icon = '⚡';
     } else if (hour >= 17 && hour < 22) {
       timeGreeting = 'Good evening';
-      icon = '🌙';
     } else {
-      timeGreeting = 'Late night flow';
-      icon = '🌌';
+      timeGreeting = 'Working late';
     }
 
     const tips = [
-      { title: `${timeGreeting}!`, subtitle: 'Ready to get into flow? 🚀', icon },
-      { title: 'Welcome back!', subtitle: 'Click me to open your assistant ✨', icon: '💖' },
-      { title: 'Hey there! 🌸', subtitle: 'Remember to drink some water 💧', icon: '💧' },
-      { title: 'Deep Work Mode', subtitle: 'Ready for a 25m Pomodoro? 🔥', icon: '⏱️' },
+      { title: `${timeGreeting}.`, subtitle: 'I am here if you need to focus or take a break.' },
+      { title: 'Welcome back.', subtitle: 'Let me know how I can help you today.' },
+      { title: 'Hello there.', subtitle: 'Remember to stay hydrated and take short breaks.' },
+      { title: 'Focus mode.', subtitle: 'Ready to start a deep work session when you are.' },
     ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -166,7 +160,6 @@ export const OrbPet: React.FC = () => {
           onClick={handlePetAction}
           title="Click to open Mochi Assistant"
         >
-          <span className="bubble-icon">{greeting.icon}</span>
           <div className="bubble-body">
             <div className="bubble-title">{greeting.title}</div>
             <div className="bubble-subtitle">{greeting.subtitle}</div>

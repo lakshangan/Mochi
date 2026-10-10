@@ -2,16 +2,11 @@ import * as THREE from 'three';
 import { PetAnimationState } from '../../shared/types';
 
 export interface EyeShape {
-  leftEyeScaleY: number;
-  rightEyeScaleY: number;
-  leftEyeScaleX: number;
-  rightEyeScaleX: number;
-  eyeCurve: number; // -1 (sad) to 0 (neutral) to +1 (happy curve)
-  pupilOffsetX: number;
-  pupilOffsetY: number;
-  blinkProgress: number; // 0 (open) to 1 (closed)
+  text: string;
   glowIntensity: number;
   color: string;
+  shakeX: number;
+  shakeY: number;
 }
 
 export class FaceTextureManager {
@@ -30,16 +25,11 @@ export class FaceTextureManager {
     this.ctx = context;
 
     this.currentEyes = {
-      leftEyeScaleY: 1.0,
-      rightEyeScaleY: 1.0,
-      leftEyeScaleX: 1.0,
-      rightEyeScaleX: 1.0,
-      eyeCurve: 0,
-      pupilOffsetX: 0,
-      pupilOffsetY: 0,
-      blinkProgress: 0,
+      text: 'I   <',
       glowIntensity: 1.0,
-      color: '#00f7ff', // glowing cyan
+      color: '#ffffff',
+      shakeX: 0,
+      shakeY: 0
     };
 
     this.targetEyes = { ...this.currentEyes };
@@ -54,135 +44,72 @@ export class FaceTextureManager {
   public setExpression(state: PetAnimationState, targetGaze: { x: number; y: number } = { x: 0, y: 0 }): void {
     switch (state) {
       case 'blink':
-        this.targetEyes.blinkProgress = 1.0;
+        this.targetEyes.text = '-   -';
         break;
 
       case 'happy':
       case 'celebrating':
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 0.8;
-        this.targetEyes.rightEyeScaleY = 0.8;
-        this.targetEyes.leftEyeScaleX = 1.1;
-        this.targetEyes.rightEyeScaleX = 1.1;
-        this.targetEyes.eyeCurve = 1.0; // curved happy arches
+        this.targetEyes.text = '^   ^';
         this.targetEyes.glowIntensity = 1.5;
-        this.targetEyes.color = '#38ef7d'; // cyan-emerald sparkle
+        this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = 0;
         break;
 
       case 'curious':
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 1.25;
-        this.targetEyes.rightEyeScaleY = 1.05;
-        this.targetEyes.leftEyeScaleX = 1.1;
-        this.targetEyes.rightEyeScaleX = 1.0;
-        this.targetEyes.eyeCurve = 0.2;
-        this.targetEyes.pupilOffsetX = targetGaze.x * 24;
-        this.targetEyes.pupilOffsetY = targetGaze.y * 18;
-        this.targetEyes.glowIntensity = 1.3;
-        this.targetEyes.color = '#00f7ff';
+        this.targetEyes.text = 'O   o';
+        this.targetEyes.glowIntensity = 1.2;
+        this.targetEyes.shakeX = 0;
         break;
 
       case 'sleeping':
-        this.targetEyes.blinkProgress = 0.95;
-        this.targetEyes.leftEyeScaleY = 0.15;
-        this.targetEyes.rightEyeScaleY = 0.15;
-        this.targetEyes.eyeCurve = 0.3;
-        this.targetEyes.glowIntensity = 0.4;
-        this.targetEyes.color = '#7f5af0'; // gentle violet
+        this.targetEyes.text = '~   ~';
+        this.targetEyes.glowIntensity = 0.5;
+        this.targetEyes.shakeX = 0;
         break;
 
-      case 'waking':
-        this.targetEyes.blinkProgress = 0.3;
-        this.targetEyes.leftEyeScaleY = 0.7;
-        this.targetEyes.rightEyeScaleY = 0.7;
-        this.targetEyes.eyeCurve = 0.1;
-        this.targetEyes.glowIntensity = 0.9;
-        this.targetEyes.color = '#00f7ff';
-        break;
-
-      case 'thinking':
-        this.targetEyes.blinkProgress = 0.15;
-        this.targetEyes.leftEyeScaleY = 0.9;
-        this.targetEyes.rightEyeScaleY = 0.9;
-        this.targetEyes.eyeCurve = 0;
-        this.targetEyes.pupilOffsetX = 12;
-        this.targetEyes.pupilOffsetY = -10;
-        this.targetEyes.glowIntensity = 1.2;
-        this.targetEyes.color = '#9d4edd'; // purple deep thought
-        break;
-
-      case 'working':
+      case 'typing':
       case 'focused':
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 0.95;
-        this.targetEyes.rightEyeScaleY = 0.95;
-        this.targetEyes.leftEyeScaleX = 1.0;
-        this.targetEyes.rightEyeScaleX = 1.0;
-        this.targetEyes.eyeCurve = 0;
-        this.targetEyes.glowIntensity = 1.1;
-        this.targetEyes.color = '#00f7ff';
+      case 'working':
+        this.targetEyes.text = '>   <';
+        this.targetEyes.glowIntensity = 1.3;
+        this.targetEyes.shakeX = (Math.random() - 0.5) * 4;
+        this.targetEyes.shakeY = (Math.random() - 0.5) * 2;
         break;
 
-      case 'reminding':
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 1.3;
-        this.targetEyes.rightEyeScaleY = 1.3;
-        this.targetEyes.leftEyeScaleX = 1.15;
-        this.targetEyes.rightEyeScaleX = 1.15;
-        this.targetEyes.eyeCurve = 0.4;
+      case 'coding':
+        this.targetEyes.text = '[   ]';
         this.targetEyes.glowIntensity = 1.8;
-        this.targetEyes.color = '#ff9f1c'; // vibrant glowing amber-cyan
+        this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = 0;
         break;
 
-      case 'dragging':
-        this.targetEyes.blinkProgress = 0.1;
-        this.targetEyes.leftEyeScaleY = 0.85;
-        this.targetEyes.rightEyeScaleY = 0.85;
-        this.targetEyes.leftEyeScaleX = 1.2;
-        this.targetEyes.rightEyeScaleX = 1.2;
-        this.targetEyes.eyeCurve = 0.3;
-        this.targetEyes.glowIntensity = 1.4;
-        this.targetEyes.color = '#00f7ff';
-        break;
-
-      case 'walking':
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 1.05;
-        this.targetEyes.rightEyeScaleY = 1.05;
-        this.targetEyes.eyeCurve = 0.2;
-        this.targetEyes.glowIntensity = 1.1;
-        this.targetEyes.color = '#00f7ff';
+      case 'listening':
+        this.targetEyes.text = '♫   ♫';
+        this.targetEyes.glowIntensity = 1.2;
+        this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = Math.sin(Date.now() / 200) * 8; // subtle bounce
         break;
 
       case 'idle':
       default:
-        this.targetEyes.blinkProgress = 0;
-        this.targetEyes.leftEyeScaleY = 1.0;
-        this.targetEyes.rightEyeScaleY = 1.0;
-        this.targetEyes.leftEyeScaleX = 1.0;
-        this.targetEyes.rightEyeScaleX = 1.0;
-        this.targetEyes.eyeCurve = 0;
-        this.targetEyes.pupilOffsetX = targetGaze.x * 12;
-        this.targetEyes.pupilOffsetY = targetGaze.y * 10;
+        this.targetEyes.text = 'I   <';
         this.targetEyes.glowIntensity = 1.0;
-        this.targetEyes.color = '#00f7ff';
+        this.targetEyes.shakeX = 0;
+        this.targetEyes.shakeY = 0;
         break;
     }
   }
 
   public update(delta: number): void {
     const lerpSpeed = Math.min(1.0, delta * 12);
-
-    this.currentEyes.leftEyeScaleY += (this.targetEyes.leftEyeScaleY - this.currentEyes.leftEyeScaleY) * lerpSpeed;
-    this.currentEyes.rightEyeScaleY += (this.targetEyes.rightEyeScaleY - this.currentEyes.rightEyeScaleY) * lerpSpeed;
-    this.currentEyes.leftEyeScaleX += (this.targetEyes.leftEyeScaleX - this.currentEyes.leftEyeScaleX) * lerpSpeed;
-    this.currentEyes.rightEyeScaleX += (this.targetEyes.rightEyeScaleX - this.currentEyes.rightEyeScaleX) * lerpSpeed;
-    this.currentEyes.eyeCurve += (this.targetEyes.eyeCurve - this.currentEyes.eyeCurve) * lerpSpeed;
-    this.currentEyes.pupilOffsetX += (this.targetEyes.pupilOffsetX - this.currentEyes.pupilOffsetX) * lerpSpeed;
-    this.currentEyes.pupilOffsetY += (this.targetEyes.pupilOffsetY - this.currentEyes.pupilOffsetY) * lerpSpeed;
-    this.currentEyes.blinkProgress += (this.targetEyes.blinkProgress - this.currentEyes.blinkProgress) * (lerpSpeed * 1.5);
     this.currentEyes.glowIntensity += (this.targetEyes.glowIntensity - this.currentEyes.glowIntensity) * lerpSpeed;
-    this.currentEyes.color = this.targetEyes.color;
+    
+    // Smoothly update shake if not jumping
+    this.currentEyes.shakeX = this.targetEyes.shakeX;
+    this.currentEyes.shakeY = this.targetEyes.shakeY;
+
+    // We only instantly switch text for retro LCD feel
+    this.currentEyes.text = this.targetEyes.text;
 
     this.draw();
     this.texture.needsUpdate = true;
@@ -195,161 +122,51 @@ export class FaceTextureManager {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Subtle dark circular faceplate backdrop
-    const grad = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w * 0.45);
-    grad.addColorStop(0, 'rgba(10, 14, 28, 0.95)');
-    grad.addColorStop(0.7, 'rgba(6, 9, 20, 0.98)');
-    grad.addColorStop(1, 'rgba(4, 6, 15, 0.0)');
+    // Cyan/Magenta glowing matrix background (rounded rectangle)
+    const rectW = 380;
+    const rectH = 180;
+    const rectX = (w - rectW) / 2;
+    const rectY = (h - rectH) / 2;
+
+    const grad = ctx.createLinearGradient(rectX, rectY, rectX + rectW, rectY + rectH);
+    grad.addColorStop(0, 'rgba(0, 247, 255, 0.8)'); // Cyan
+    grad.addColorStop(0.5, 'rgba(56, 114, 255, 0.6)'); // Blue
+    grad.addColorStop(1, 'rgba(196, 77, 255, 0.8)'); // Magenta/Violet
+
+    ctx.shadowBlur = 40 * this.currentEyes.glowIntensity;
+    ctx.shadowColor = 'rgba(0, 247, 255, 0.6)';
     ctx.fillStyle = grad;
+    
     ctx.beginPath();
-    ctx.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2);
+    ctx.roundRect(rectX, rectY, rectW, rectH, 30);
     ctx.fill();
+    ctx.shadowBlur = 0;
 
-    // Subtle LED / pixel matrix grid lines
-    ctx.strokeStyle = 'rgba(0, 247, 255, 0.04)';
-    ctx.lineWidth = 1;
-    const step = 14;
-    for (let x = 60; x < w - 60; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, 80);
-      ctx.lineTo(x, h - 80);
-      ctx.stroke();
+    // Dot matrix / scanline effect
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    for (let y = rectY; y < rectY + rectH; y += 4) {
+      ctx.fillRect(rectX, y, rectW, 2);
     }
-    for (let y = 80; y < h - 80; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(60, y);
-      ctx.lineTo(w - 60, y);
-      ctx.stroke();
+    for (let x = rectX; x < rectX + rectW; x += 4) {
+      ctx.fillRect(x, rectY, 2, rectH);
     }
 
-    // Render the two expressive eyes
-    const eyeSpacing = 82;
-    const eyeBaseRadiusX = 28;
-    const eyeBaseRadiusY = 40;
-    const eyeCenterY = h / 2 - 12;
+    // Draw the Text (Eyes)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 90px "JetBrains Mono", monospace, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    ctx.shadowBlur = 15 * this.currentEyes.glowIntensity;
+    ctx.shadowColor = '#ffffff';
 
-    const leftX = w / 2 - eyeSpacing;
-    const rightX = w / 2 + eyeSpacing;
-
-    const blinkFactor = Math.max(0.04, 1 - this.currentEyes.blinkProgress);
-
-    this.drawSingleEye(
-      leftX,
-      eyeCenterY,
-      eyeBaseRadiusX * this.currentEyes.leftEyeScaleX,
-      eyeBaseRadiusY * this.currentEyes.leftEyeScaleY * blinkFactor,
-      this.currentEyes.eyeCurve,
-      this.currentEyes.pupilOffsetX,
-      this.currentEyes.pupilOffsetY,
-      this.currentEyes.color,
-      this.currentEyes.glowIntensity
-    );
-
-    this.drawSingleEye(
-      rightX,
-      eyeCenterY,
-      eyeBaseRadiusX * this.currentEyes.rightEyeScaleX,
-      eyeBaseRadiusY * this.currentEyes.rightEyeScaleY * blinkFactor,
-      this.currentEyes.eyeCurve,
-      this.currentEyes.pupilOffsetX,
-      this.currentEyes.pupilOffsetY,
-      this.currentEyes.color,
-      this.currentEyes.glowIntensity
-    );
-
-    // Cute smiling mouth curve when happy or curious
-    if (this.currentEyes.eyeCurve > 0.1) {
-      ctx.save();
-      ctx.strokeStyle = this.currentEyes.color;
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = 'round';
-      ctx.shadowColor = this.currentEyes.color;
-      ctx.shadowBlur = 12 * this.currentEyes.glowIntensity;
-      ctx.beginPath();
-      const mouthY = eyeCenterY + 44;
-      const mouthW = 14 + this.currentEyes.eyeCurve * 8;
-      ctx.arc(w / 2, mouthY - 4, mouthW, 0.2 * Math.PI, 0.8 * Math.PI, false);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Soft glowing blushing cheeks when happy or curious
-    if (this.currentEyes.eyeCurve > 0.2) {
-      const blushOpacity = Math.min(0.45, (this.currentEyes.eyeCurve - 0.2) * 0.8);
-      ctx.fillStyle = `rgba(255, 99, 165, ${blushOpacity})`;
-      ctx.shadowColor = 'rgba(255, 99, 165, 0.6)';
-      ctx.shadowBlur = 10;
-
-      ctx.beginPath();
-      ctx.ellipse(leftX - 8, eyeCenterY + 46, 18, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(rightX + 8, eyeCenterY + 46, 18, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-  }
-
-  private drawSingleEye(
-    cx: number,
-    cy: number,
-    rx: number,
-    ry: number,
-    curve: number,
-    pupilX: number,
-    pupilY: number,
-    color: string,
-    glow: number
-  ): void {
-    const ctx = this.ctx;
-
-    ctx.save();
-    ctx.translate(cx + pupilX, cy + pupilY);
-
-    if (curve > 0.4) {
-      // Happy inverted arch: joyful eye arc with bright glow
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(9, rx * 0.48);
-      ctx.lineCap = 'round';
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 24 * glow;
-
-      ctx.beginPath();
-      ctx.arc(0, ry * 0.22, rx, Math.PI * 1.15, Math.PI * 1.85, false);
-      ctx.stroke();
-
-      // Inner crisp white highlight
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(0, ry * 0.22, rx, Math.PI * 1.25, Math.PI * 1.75, false);
-      ctx.stroke();
-    } else {
-      // Expressive oval eye with layered neon glow and twin catchlights
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 28 * glow;
-
-      // Outer glowing body
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Main upper-left sparkle catchlight
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(-rx * 0.28, -ry * 0.32, rx * 0.42, ry * 0.38, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Secondary smaller sparkle catchlight at lower-right
-      ctx.beginPath();
-      ctx.ellipse(rx * 0.32, ry * 0.36, rx * 0.2, ry * 0.2, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
+    const textX = w / 2 + this.currentEyes.shakeX;
+    const textY = h / 2 + this.currentEyes.shakeY;
+    
+    ctx.fillText(this.currentEyes.text, textX, textY);
+    
+    // extra brightness pass
+    ctx.fillText(this.currentEyes.text, textX, textY);
+    ctx.shadowBlur = 0;
   }
 }

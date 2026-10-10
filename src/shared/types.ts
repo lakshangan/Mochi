@@ -11,6 +11,9 @@ export type PetAnimationState =
   | 'reminding'
   | 'celebrating'
   | 'dragging'
+  | 'typing'
+  | 'listening'
+  | 'coding'
   | 'focused';
 
 export type PomodoroPhase = 'focus' | 'short-break' | 'long-break' | 'idle';

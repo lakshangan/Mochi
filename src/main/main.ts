@@ -7,6 +7,7 @@ import { ReminderService } from './services/reminder-service';
 import { PetWindow } from './windows/pet-window';
 import { AssistantWindow } from './windows/assistant-window';
 import { PlatformAdapter } from './platform/platform-adapter';
+import { SystemActivityMonitor } from './services/system-activity';
 import { IPC_CHANNELS } from '../shared/ipc-contracts';
 import { AppSettings, PetAnimationState, PetPosition, TaskItem, NoteItem, PomodoroPhase } from '../shared/types';
 
@@ -24,6 +25,7 @@ let persistenceService: PersistenceService;
 let notificationService: NotificationService;
 let timerService: TimerService;
 let reminderService: ReminderService;
+let activityMonitor: SystemActivityMonitor;
 let petWindow: PetWindow;
 let assistantWindow: AssistantWindow;
 let wanderInterval: NodeJS.Timeout | null = null;
@@ -239,6 +241,14 @@ app.whenReady().then(() => {
   notificationService = new NotificationService();
   timerService = new TimerService(persistenceService, notificationService);
   reminderService = new ReminderService(persistenceService, notificationService);
+
+  activityMonitor = new SystemActivityMonitor((state) => {
+    broadcast(IPC_CHANNELS.PET_SET_STATE, state as PetAnimationState);
+  });
+  
+  // Only start activity monitor if user is on macOS and it's enabled in settings? 
+  // For now, always start it to fulfill the requested feature.
+  activityMonitor.start();
 
   const initialPos = persistenceService.getState().position;
   const settings = persistenceService.getState().settings;
