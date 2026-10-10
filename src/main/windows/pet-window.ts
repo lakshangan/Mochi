@@ -1,0 +1,120 @@
+import { BrowserWindow, screen } from 'electron';
+import path from 'path';
+import { AppSettings, PetPosition } from '../../shared/types';
+import { PlatformAdapter } from '../platform/platform-adapter';
+
+export class PetWindow {
+  private window: BrowserWindow | null = null;
+  private currentPosition: PetPosition;
+  private petSize: number;
+
+  constructor(initialPosition: PetPosition, settings: AppSettings) {
+    this.currentPosition = initialPosition;
+    this.petSize = settings.petSize || 180;
+  }
+
+  public create(preloadPath: string, isDev: boolean, devUrl: string): BrowserWindow {
+    const displays = screen.getAllDisplays();
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const bounds = primaryDisplay.workArea;
+
+    // Boundary check initial position
+    let x = this.currentPosition.x;
+    let y = this.currentPosition.y;
+
+    if (x < bounds.x || x > bounds.x + bounds.width - this.petSize) {
+      x = bounds.x + bounds.width - this.petSize - 50;
+    }
+    if (y < bounds.y || y > bounds.y + bounds.height - this.petSize) {
+      y = bounds.y + bounds.height - this.petSize - 50;
+    }
+    this.currentPosition = { x, y };
+
+    const windowW = this.petSize + 90;
+    const windowH = this.petSize + 90;
+
+    this.window = new BrowserWindow({
+      width: windowW,
+      height: windowH,
+      x,
+      y,
+      transparent: true,
+      frame: false,
+      resizable: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      hasShadow: false,
+      backgroundColor: '#00000000',
+      webPreferences: {
+        preload: preloadPath,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+        webSecurity: true,
+        backgroundThrottling: false, // keep pet smooth
+      },
+    });
+
+    PlatformAdapter.configureWindowForPlatform(this.window, true);
+
+    if (PlatformAdapter.isMac()) {
+      this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      this.window.setAlwaysOnTop(true, 'floating');
+    }
+
+    if (isDev) {
+      this.window.loadURL(`${devUrl}#pet`);
+    } else {
+      const prodPath = path.join(__dirname, '../renderer/index.html');
+      this.window.loadFile(prodPath, { hash: 'pet' });
+    }
+
+    this.window.on('closed', () => {
+      this.window = null;
+    });
+
+    return this.window;
+  }
+
+  public getWindow(): BrowserWindow | null {
+    return this.window;
+  }
+
+  public getPosition(): PetPosition {
+    if (this.window && !this.window.isDestroyed()) {
+      const [x, y] = this.window.getPosition();
+      this.currentPosition = { x, y };
+    }
+    return this.currentPosition;
+  }
+
+  public setPosition(pos: PetPosition): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.currentPosition = pos;
+      this.window.setPosition(Math.round(pos.x), Math.round(pos.y));
+    }
+  }
+
+  public moveBy(deltaX: number, deltaY: number): void {
+    if (this.window && !this.window.isDestroyed()) {
+      const [x, y] = this.window.getPosition();
+      const newX = Math.round(x + deltaX);
+      const newY = Math.round(y + deltaY);
+      this.window.setPosition(newX, newY);
+      this.currentPosition = { x: newX, y: newY };
+    }
+  }
+
+  public resize(size: number): void {
+    this.petSize = size;
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.setSize(size + 90, size + 90);
+    }
+  }
+
+  public setAlwaysOnTop(val: boolean): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.setAlwaysOnTop(val, val ? 'floating' : 'normal');
+    }
+  }
+}
