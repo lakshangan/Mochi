@@ -21,6 +21,30 @@ export const OrbPet: React.FC = () => {
     title: 'Hello there.',
     subtitle: 'Click me to open your assistant.',
   });
+  const [reactionMessage, setReactionMessage] = useState<{ title: string; subtitle: string } | null>(null);
+
+  // New useEffect to show temporary speech bubble based on system activity
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (currentState === 'typing') {
+      setReactionMessage({ title: 'Typing away...', subtitle: 'What are you writing?' });
+      timeout = setTimeout(() => setReactionMessage(null), 5000);
+    } else if (currentState === 'coding') {
+      setReactionMessage({ title: 'Coding Session', subtitle: 'Writing some awesome code!' });
+      timeout = setTimeout(() => setReactionMessage(null), 5000);
+    } else if (currentState === 'listening') {
+      setReactionMessage({ title: 'Jamming Out ♫', subtitle: 'Listening to a good song?' });
+      timeout = setTimeout(() => setReactionMessage(null), 5000);
+    } else if (currentState === 'sleeping') {
+      setReactionMessage({ title: 'Zzz...', subtitle: 'Taking a quick nap.' });
+      timeout = setTimeout(() => setReactionMessage(null), 5000);
+    } else {
+      setReactionMessage(null);
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [currentState]);
 
   const getDynamicGreeting = () => {
     const hour = new Date().getHours();
@@ -155,15 +179,15 @@ export const OrbPet: React.FC = () => {
       onMouseLeave={handleMouseLeave}
     >
       {/* Interactive Apple-Style Floating Welcome Speech Bubble */}
-      {isHovered && (
+      {(isHovered || reactionMessage) && (
         <div
           className="mochi-speech-bubble"
           onClick={handlePetAction}
           title="Click to open Mochi Assistant"
         >
           <div className="bubble-body">
-            <div className="bubble-title">{greeting.title}</div>
-            <div className="bubble-subtitle">{greeting.subtitle}</div>
+            <div className="bubble-title">{reactionMessage ? reactionMessage.title : greeting.title}</div>
+            <div className="bubble-subtitle">{reactionMessage ? reactionMessage.subtitle : greeting.subtitle}</div>
           </div>
           <div className="bubble-actions">
             <span className="bubble-badge">Open ⌘</span>
@@ -182,12 +206,12 @@ export const OrbPet: React.FC = () => {
       {/* 3D Orb Canvas */}
       <div
         ref={containerRef}
-        className={`mochi-orb-canvas-container ${isHovered ? 'hovered' : ''}`}
+        className={`mochi-orb-canvas-container ${(isHovered || reactionMessage) ? 'hovered' : ''}`}
         title="Mochi Companion (Click to open assistant, drag to move)"
       />
 
       {/* Sleek status & quick Turn Off pill below Mochi */}
-      <div className={`mochi-hover-pill ${isHovered ? 'visible' : ''}`}>
+      <div className={`mochi-hover-pill ${(isHovered || reactionMessage) ? 'visible' : ''}`}>
         <span className="mochi-dot" />
         <span className="mochi-label">{currentState.toUpperCase()}</span>
         <button

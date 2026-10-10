@@ -45,8 +45,11 @@ export class MochiOrbScene {
 
     this.faceManager = new FaceTextureManager(512);
 
-    // Inner Glowing Screen
-    const screenGeo = new THREE.PlaneGeometry(1.6, 0.85);
+    // Scale the entire orb down to make it smaller as requested
+    this.rootGroup.scale.set(0.7, 0.7, 0.7);
+
+    // Inner Glowing Screen (Moved forward to sit on the surface of the solid orb)
+    const screenGeo = new THREE.PlaneGeometry(1.5, 0.8);
     const screenMat = new THREE.MeshBasicMaterial({
       map: this.faceManager.texture,
       transparent: true,
@@ -54,19 +57,16 @@ export class MochiOrbScene {
       depthWrite: false
     });
     const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-    screenMesh.position.set(0, 0, 0.1); 
+    screenMesh.position.set(0, 0, 0.94); 
     this.rootGroup.add(screenMesh);
 
-    // Outer Glass Bubble
+    // Solid Opaque Body
     const shellGeo = new THREE.SphereGeometry(1.0, 64, 64);
     const shellMat = new THREE.MeshPhongMaterial({
-      color: 0x112244, // very dark blue tint
-      transparent: true,
-      opacity: 0.35,     // clear enough to see the screen inside perfectly
-      shininess: 150,
-      specular: 0x00f7ff, // cyan highlights
-      depthWrite: false,  // Don't obscure the inner screen
-      blending: THREE.NormalBlending
+      color: 0x090a10, // Solid dark body
+      transparent: false,
+      shininess: 90,
+      specular: 0x223355, 
     });
     const shellMesh = new THREE.Mesh(shellGeo, shellMat);
     this.rootGroup.add(shellMesh);
