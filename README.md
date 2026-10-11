@@ -1,202 +1,200 @@
-# Mochi Desktop Companion 🌟
+# Mochi Desktop Companion
 
-A cross-platform desktop application featuring an animated glowing AI orb companion and personal productivity assistant. Built with **Electron**, **TypeScript**, **React**, **Vite**, and **Three.js**.
+A cross-platform desktop application featuring a lightweight, animated Micro-LED companion and personal productivity assistant. Built with Electron, TypeScript, React 19, and Vite.
 
----
-
-## 🔮 Visual Identity & Design Philosophy
-
-Inspired by luminous digital companions, **Mochi** floats directly on your desktop with:
-- **Translucent Glass Outer Shell**: Layered WebGL `MeshPhysicalMaterial` with realistic refraction, high transmission, clearcoat sheen, and subtle violet/cyan Fresnel edge illumination.
-- **Glowing Core**: Deep navy/indigo surroundings illuminated by a pulsating inner light.
-- **Expressive Eyes**: Procedural canvas matrix display with smooth interpolation across 13 distinct emotional states (`idle`, `blink`, `curious`, `happy`, `walking`, `sleeping`, `waking`, `thinking`, `working`, `reminding`, `celebrating`, `dragging`, `focused`).
-- **Orbital Particles**: Floating ethereal light motes that orbit Mochi and burst upwards in celebration.
-- **Zero Opaque Boundaries**: True frameless, transparent window rendering floating seamlessly over desktop backgrounds.
-- **macOS-Native Aesthetics**: Features Apple-style vibrancy, background blur (backdrop-filter), native traffic light window controls, and segmented navigation bars.
+![Mochi Mascot Expressions](docs/images/mascot-expressions.png)
 
 ---
 
-## 🚀 Key Features
+## Overview
 
-1. **Floating Animated Digital Pet**
-   - True transparent, borderless window with smooth drag-and-drop movement.
-   - Intelligent gaze tracking that looks toward your cursor.
-   - Autonomic blinking, breathing, and bobbing animations.
-   - Autonomous wandering within visible monitor work areas (configurable).
-   - **Interactive Hover Greetings**: Hovering over Mochi displays an Apple-style floating speech bubble with personalized greetings and time-of-day tips.
-
-2. **Personal Productivity Assistant**
-   - Click Mochi anytime to reveal a compact, sleek glassmorphism dashboard with native macOS vibrancy.
-   - Multi-tab organization using Apple-style segmented controls: Overview, Timers, Hydration & Breaks, Tasks, Notes, AI Chat, Settings.
-
-3. **Countdown & Pomodoro Timers**
-   - Precision timestamp-based clock (`targetEndTime`) resistant to system sleep and throttling.
-   - Pomodoro cycle progression: Focus (25m), Short Break (5m), and Long Rest (15m) with automatic transitions and completed session counter.
-   - Procedural Web Audio chimes (crystal bell and celebration fanfare) with zero external audio assets.
-   - Crash & restart recovery: accurately recalculates remaining time after relaunching.
-
-4. **Hydration & Mindful Break Reminders**
-   - Configurable recurring intervals (e.g., water every 45m, breaks every 60m).
-   - Duplicate-suppressed alert cards with Snooze, Mark Done, and Dismiss actions.
-   - Native OS desktop notifications.
-   - Visual triggers: Mochi enters the glowing `reminding` expression when alerts are due.
-
-5. **Local Tasks & Quick Notes**
-   - Quick task entry with priority badges (Low, Medium, High).
-   - Filter by All, Pending, or Done; one-click completed clearance.
-   - Color-coded scratchpad notes with instant local persistence.
-
-6. **Natural-Language Command Parser**
-   - Deterministic offline parsing for voice-style desktop commands:
-     - `"Start a 25-minute timer"`
-     - `"Remind me to drink water in 30 minutes"`
-     - `"Add task to review pull request"`
-     - `"Start Pomodoro focus session"`
-     - `"Make Mochi happy"` or `"Go to sleep"`
-
-7. **Power Control**
-   - **Turn Off Buttons**: Readily accessible "Turn Off" buttons in the hover speech bubble, status pill, and assistant window title bar allow quick and easy shutdown of the companion.
-
-8. **Optional Conversational AI Layer**
-   - **Local Heuristic Mode (Default)**: 100% offline companion suggestions, jokes, productivity tips, and command shortcuts without needing an API key or internet connection.
-   - **Provider Abstraction**: Optional pluggable OpenAI/Anthropic/custom API configuration stored locally and securely.
+Mochi is an ambient desktop companion engineered for modern developer workflows. Floating directly on your desktop within a transparent, frameless canvas, Mochi combines retro-inspired hardware aesthetics with active desktop awareness to deliver a subtle, delightful, and non-intrusive focus companion.
 
 ---
 
-## 🧱 Architecture & Project Structure
+## Visual Design & Hardware Aesthetics
+
+- **Deep Velvet OLED Chassis**: The companion is framed in a dark titanium bezel with deep black internal backlighting, maximizing pixel contrast without washed-out gradients.
+- **Precision Micro-LED Face**: Facial expressions are rendered via an authentic pixel matrix canvas inspired by Divoom hardware displays. Each pixel bead features rounded physical pitch, distinct emitter glow, and responsive scaling.
+- **Razor-Thin Optical Lens Sheen**: Subtle top curvature glass reflection that mimics authentic physical glass without obstruction.
+- **17 Distinct Pixel Expressions**: Includes standby capsule eyes, energetic chevron typing eyes, smiling arches, cyberpunk shades, centered pixel heart, curious side glances, and winks.
+- **Organic Idle Micro-Behaviors**:
+  - Natural blinking every 2.4 to 3.8 seconds with procedural double-blinking.
+  - Curious wandering glances where eyes shift left or right to explore your screen before recentering.
+  - Subtle friendly winks and breathing animations.
+
+---
+
+## System Activity & Typing Reactivity
+
+Mochi actively monitors your desktop environment in real time without recording private keystrokes or data:
+
+- **Active Typing Flow**: Real-time typing detection triggers an immediate reactive bounce and energetic expressions such as bold chevrons or curious glances.
+- **Developer Environment Awareness**: Recognizes code editors (Antigravity IDE, VS Code, Cursor, Zed, Sublime Text, Xcode, Neovim) and responds with witty, flow-state thoughts.
+- **Soundtrack Synchronization**: Detects active audio streams (Spotify, Apple Music) and transitions into a relaxed listening state.
+- **Break & Sleep Detection**: Automatically enters rest mode after prolonged absence and warmly welcomes you back upon return.
+- **Single-Line Dynamic Island Capsule**: Contextual remarks float directly above the mascot in an Apple Vision-inspired glass capsule, strictly preventing text from covering the mascot.
+
+---
+
+## Key Features
+
+### 1. Floating Desktop Presence
+- Borderless, transparent window supporting drag-and-drop relocation.
+- Autonomous desktop wandering within safe monitor work areas (configurable).
+- Interactive hover greetings and click interactions with synthesized audio chirps.
+
+### 2. Compact Screen-Friendly Sizing
+- Space-efficient default size (115px) designed not to crowd coding workspaces.
+- Customizable dimensions ranging from 70px to 220px in Settings.
+- Quick one-click size presets:
+  - Mini (75px)
+  - Small (95px)
+  - Compact (115px)
+  - Medium (140px)
+  - Standard (170px)
+- Fully responsive pixel matrix that preserves crispness and optical proportions across all scales.
+
+### 3. Integrated Countdown & Pomodoro Timers
+- Timestamp-based timer engine resilient against system sleep and window throttling.
+- Pomodoro progression: Focus (25m), Short Break (5m), and Long Break (15m) with automatic transitions.
+- Zero-overlap Dynamic Island integration: active countdowns display as an embedded chip inside the speech capsule, eliminating UI collisions.
+
+### 4. Hydration & Mindful Break Reminders
+- Periodic health prompts with configurable intervals (e.g., water every 45m, breaks every 60m).
+- Native OS desktop notifications and duplicate-suppressed alerts.
+
+### 5. Local Tasks & Scratchpad Notes
+- Lightweight local task manager with priority flags (Low, Medium, High).
+- Color-coded quick scratchpad for fast ideas and snippets.
+- 100% offline local persistence with zero external cloud dependencies.
+
+### 6. Natural Language Command Parser
+- Offline deterministic parser supporting natural desktop queries:
+  - "Start a 25-minute timer"
+  - "Remind me to drink water in 30 minutes"
+  - "Add task to review pull request"
+  - "Start Pomodoro session"
+
+---
+
+## Architecture & Project Structure
 
 ```
 mochi-desktop-companion/
+├── docs/
+│   └── images/                     # Documentation assets and screenshots
 ├── src/
 │   ├── main/                       # Electron Main Process (Node.js)
-│   │   ├── main.ts                 # Main lifecycle, IPC handlers, auto-wander
+│   │   ├── main.ts                 # Lifecycle orchestration and IPC routing
 │   │   ├── windows/
-│   │   │   ├── pet-window.ts       # Transparent floating window
-│   │   │   └── assistant-window.ts # Glass companion window
+│   │   │   ├── pet-window.ts       # Frameless floating companion window
+│   │   │   └── assistant-window.ts # Glass companion dashboard window
 │   │   ├── services/
+│   │   │   ├── system-activity.ts  # Desktop activity & typing monitor
 │   │   │   ├── timer-service.ts    # Target timestamp timer & Pomodoro engine
 │   │   │   ├── reminder-service.ts # Water & break scheduler
-│   │   │   ├── notification-service.ts # Cross-platform OS notifications
-│   │   │   └── persistence-service.ts  # Atomic JSON persistence & recovery
+│   │   │   ├── notification-service.ts # Native OS notification dispatcher
+│   │   │   └── persistence-service.ts  # Atomic local storage engine
 │   │   └── platform/
-│   │       └── platform-adapter.ts # macOS / Windows / Linux OS hooks
+│   │       └── platform-adapter.ts # OS-specific integration hooks
 │   ├── preload/
-│   │   └── index.ts                # Secure contextBridge API
-│   ├── renderer/                   # React 19 + Three.js Frontend
-│   │   ├── index.html              # Shell with Google Outfit typography
+│   │   └── index.ts                # Secure typed contextBridge contract
+│   ├── renderer/                   # React 19 Frontend
+│   │   ├── index.html              # Shell markup
 │   │   ├── App.tsx                 # Route coordinator (#pet vs #assistant)
 │   │   ├── components/
-│   │   │   ├── OrbPet.tsx          # 3D orb canvas & interaction container
-│   │   │   ├── AssistantPanel.tsx  # Master dashboard
-│   │   │   ├── TimerPanel.tsx      # Radial SVG countdown & Pomodoro
-│   │   │   ├── ReminderPanel.tsx   # Water & break controls
+│   │   │   ├── GlowLavaOrb.tsx     # Micro-LED canvas renderer & expression engine
+│   │   │   ├── OrbPet.tsx          # Dynamic Island HUD & window coordinator
+│   │   │   ├── AssistantPanel.tsx  # Master productivity panel
+│   │   │   ├── TimerPanel.tsx      # Radial countdown & Pomodoro interface
+│   │   │   ├── ReminderPanel.tsx   # Health interval configuration
 │   │   │   ├── TaskPanel.tsx       # Priority task list
-│   │   │   ├── NotesPanel.tsx      # Color-coded scratchpad
-│   │   │   ├── AiChatPanel.tsx     # Conversational assistant & commands
-│   │   │   └── SettingsPanel.tsx   # Preferences & size/opacity sliders
-│   │   ├── graphics/
-│   │   │   ├── orb-scene.ts        # Three.js glass sphere & lighting
-│   │   │   ├── orb-materials.ts    # Dynamic Canvas face & eye morphing
-│   │   │   ├── particle-system.ts  # Ethereal floating light motes
-│   │   │   └── fallback-renderer.ts# 2D Canvas fallback if WebGL unavailable
-│   │   ├── engine/
-│   │   │   ├── animation-controller.ts # Priority-based state machine
-│   │   │   ├── behavior-engine.ts      # Contextual reaction orchestrator
-│   │   │   └── movement-controller.ts  # Coordinate dragging & gaze math
+│   │   │   ├── NotesPanel.tsx      # Quick scratchpad notes
+│   │   │   └── SettingsPanel.tsx   # Mascot size, opacity, and preferences
 │   │   └── styles/
-│   │       └── index.css           # Glassmorphism & neon design system
+│   │       ├── glow-lava-orb.css   # OLED hardware glass styles & keyframes
+│   │       └── index.css           # Glassmorphism design system
 │   └── shared/
-│       ├── types.ts                # Shared state & configuration types
-│       ├── ipc-contracts.ts        # Type-safe IPC channels & bridge contract
-│       ├── command-parser.ts       # Deterministic natural language parser
+│       ├── types.ts                # TypeScript domain models and settings
+│       ├── ipc-contracts.ts        # Type-safe IPC channels and payloads
+│       ├── command-parser.ts       # Natural language command parsing
 │       └── sound-effects.ts        # Procedural Web Audio synthesizer
 ├── tests/                          # Automated Vitest test suite
 │   ├── command-parser.test.ts
+│   ├── system-activity.test.ts
 │   ├── timer-and-persistence.test.ts
 │   └── reminder-and-behavior.test.ts
-├── vite.config.ts                  # Vite config for Renderer
-├── vite.main.config.ts             # Vite library build for Main & Preload
-├── vitest.config.ts                # Test runner configuration
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+├── vite.config.ts
+└── vite.main.config.ts
 ```
 
 ---
 
-## 🔒 Security Best Practices
+## Security & Privacy
 
-- `contextIsolation: true` is strictly enforced.
-- `nodeIntegration: false` in all renderer contexts.
-- Preload script uses `contextBridge.exposeInMainWorld('mochiApi', ...)` exposing only typed, validated methods.
-- No dynamic shell execution (`child_process.exec` is avoided).
-- Local-first architecture: no analytics, no keystroke loggers, and user tasks/notes never leave your machine.
+- **Strict Context Isolation**: Renderer executes with `contextIsolation: true` and `nodeIntegration: false`.
+- **Minimal Bridge Surface**: The preload layer exposes only strictly typed, validated IPC invocations.
+- **Local-First & Private**: Activity awareness analyzes window metadata locally on-device. No keystroke logs, audio recordings, or telemetry are collected or transmitted.
+- **Offline Capable**: All procedural audio, timers, task management, and animation engines function fully offline.
 
 ---
 
-## 💻 Development & Execution
+## Getting Started
 
 ### Prerequisites
-- **Node.js**: v18.0.0 or later (v20+ recommended)
-- **npm**: v9.0.0 or later
+- Node.js v18.0.0 or later (v20+ recommended)
+- npm v9.0.0 or later
 
-### Install Dependencies
+### Installation
 ```bash
 npm install
 ```
 
-### Run in Development
-Runs the Vite HMR server and Electron concurrently:
+### Development
+Starts the Vite renderer server and Electron concurrently:
 ```bash
 npm run dev
 ```
 
-### Run Automated Tests
-Executes the Vitest test suite covering timers, restart recovery, reminder deduplication, and command parsing:
+### Running Tests
+Executes the automated test suite covering activity monitoring, timers, persistence, and command parsing:
 ```bash
 npm test
 ```
 
-### Build Production Bundles
-Compiles both the React renderer and the Electron main process:
+### Building for Production
+Compiles the React renderer bundle and Electron main process:
 ```bash
 npm run build
 ```
 
 ---
 
-## 📦 Packaging & Distribution
+## Packaging
 
-Packaged using `electron-builder` with targets configured for all major desktop platforms:
+Packages binaries using `electron-builder`:
 
 ```bash
-# Package for current host OS:
+# Package for the current operating system:
 npm run package
 
-# Package specifically for macOS (DMG & ZIP, Apple Silicon / Intel):
+# macOS (DMG & ZIP):
 npm run package:mac
 
-# Package specifically for Windows (NSIS Installer & Portable EXE):
+# Windows (NSIS Installer & Portable EXE):
 npm run package:win
 
-# Package specifically for Linux (AppImage & DEB):
+# Linux (AppImage & DEB):
 npm run package:linux
 ```
 
-Output installers and packages are placed in the `release/` directory.
+All build artifacts are written to the `release/` directory.
 
 ---
 
-## ⚖️ Cross-Platform Behavior & Limitations
+## License
 
-- **macOS**:
-  - Full transparency and frameless rendering work out-of-the-box.
-  - Floating level is set to `floating` with `setVisibleOnAllWorkspaces(true)` so Mochi stays visible when switching Spaces.
-  - Native vibrancy and blur effects are utilized for a premium feel.
-- **Windows**:
-  - Transparent windows require DWM (Desktop Window Manager) compositing enabled (standard on Windows 10 and 11).
-  - Background color is set to `#00000000` to prevent black border flashing.
-- **Linux**:
-  - Transparent windows require a running compositor (e.g., Picom, Mutter, KWin, Wayland).
-  - On minimalist window managers lacking an alpha compositor, a transparent window will display with a black rectangular backdrop. In such environments, WebGL fallback mode is automatically enabled.
-- **Offline Reliability**:
-  - The entire application (3D orb, procedural sound synthesizer, timer engine, reminders, tasks, notes, command parser) functions completely offline without internet or cloud subscriptions.
+MIT License. See LICENSE for details.
