@@ -13,12 +13,21 @@ export interface AppClassification {
 }
 
 const DEV_SUBTITLES = [
-  'What are you building today?',
-  'Flow state activated. Crafting clean code!',
-  'VS Code workspace active. Need a focus timer?',
-  'Building something great. Stay hydrated!',
-  'Writing code magic line by line.',
-  'Deep in engineering flow. Keep crushing it!',
+  'Writing code that future you will actually understand.',
+  'Refactoring masterpieces, one line at a time.',
+  'Zero bugs found. (Don’t run tests yet).',
+  'Pure flow state. The terminal trembles.',
+  'Turning caffeine into production software.',
+  'Commit early, push fearlessly.',
+  '10x engineer mode fully unlocked.',
+];
+
+const TYPING_SUBTITLES = [
+  'Click-clack! Fingers flying across the keyboard.',
+  'Words flowing at warp speed.',
+  'Crushing keystrokes. Flow state locked in.',
+  'Fast hands! Keep that creative momentum.',
+  'Writing poetry or roasting someone in chat?',
 ];
 
 const APP_DATABASE: Record<string, AppClassification> = {
@@ -641,8 +650,8 @@ export class SystemActivityMonitor {
       // Logic for typing vs coding vs focused vs music
       if (isAudioPlaying && classification.category !== 'development' && idleSeconds > 5) {
         finalState = 'listening';
-        finalTitle = 'Audio Stream';
-        finalSubtitle = 'Soundtrack active. Vibing along with you.';
+        finalTitle = 'Soundtrack Flow';
+        finalSubtitle = 'Vibing hard. This playlist has elite taste.';
       } else if (isDevApp) {
         // In VS Code / Coding Apps:
         if (isInputActive || timeSinceLastInput < 1.8) {
@@ -650,7 +659,7 @@ export class SystemActivityMonitor {
           finalState = 'coding';
           finalTitle = `${classification.formattedName} Flow`;
           if (this.typingStreak > 4) {
-            finalSubtitle = `High-speed coding flow in ${classification.formattedName}!`;
+            finalSubtitle = `Keyboard smoking! Blazing coding velocity in ${classification.formattedName}.`;
           } else {
             finalSubtitle = classification.subtitles[Math.floor(Math.random() * classification.subtitles.length)];
           }
@@ -658,11 +667,11 @@ export class SystemActivityMonitor {
           // Paused typing in VS Code: thinking / reviewing code
           finalState = 'focused';
           finalTitle = `${classification.formattedName} Focused`;
-          finalSubtitle = 'Reviewing architecture and code logic.';
+          finalSubtitle = 'Contemplating architecture and line 42.';
         } else {
           finalState = 'idle';
-          finalTitle = `${classification.formattedName} Active`;
-          finalSubtitle = `Ready whenever you return to code.`;
+          finalTitle = `${classification.formattedName} Ready`;
+          finalSubtitle = 'Coffee hot, editor ready. Whenever you are.';
         }
       } else {
         // Non-dev apps (Slack, Notion, Chrome, etc.):
@@ -670,15 +679,15 @@ export class SystemActivityMonitor {
           // Actively typing in another app!
           finalState = 'typing';
           finalTitle = `Typing in ${classification.formattedName}`;
-          finalSubtitle = `Active typing session in progress.`;
+          finalSubtitle = TYPING_SUBTITLES[Math.floor(Math.random() * TYPING_SUBTITLES.length)];
         } else if (idleSeconds < 25) {
           finalState = classification.state;
           finalTitle = classification.title;
           finalSubtitle = classification.subtitles[0];
         } else {
           finalState = 'idle';
-          finalTitle = `${classification.formattedName} Active`;
-          finalSubtitle = `Standing by.`;
+          finalTitle = `${classification.formattedName} Standby`;
+          finalSubtitle = 'Ready for action.';
         }
       }
 

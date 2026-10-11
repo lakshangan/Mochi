@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MochiOrbScene } from '../graphics/orb-scene';
-import { FallbackOrbRenderer } from '../graphics/fallback-renderer';
 import { MovementController } from '../engine/movement-controller';
 import { AnimationController } from '../engine/animation-controller';
 import { BehaviorEngine } from '../engine/behavior-engine';
@@ -32,12 +30,11 @@ const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
 
 export const OrbPet: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<MochiOrbScene | FallbackOrbRenderer | null>(null);
   const animControllerRef = useRef<AnimationController | null>(null);
   const behaviorEngineRef = useRef<BehaviorEngine | null>(null);
   const moveControllerRef = useRef<MovementController | null>(null);
 
-  const [orbMode, setOrbMode] = useState<'glow-lava' | 'particles' | '3d-face'>('glow-lava');
+  const [orbMode, setOrbMode] = useState<'glow-lava' | 'particles'>('glow-lava');
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -46,8 +43,8 @@ export const OrbPet: React.FC = () => {
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
-    title: 'Hello there.',
-    subtitle: 'Click me to open your assistant.',
+    title: 'Ready to ship',
+    subtitle: 'Click me anytime to open assistant.',
   });
   const [reactionMessage, setReactionMessage] = useState<{
     title: string;
@@ -63,22 +60,23 @@ export const OrbPet: React.FC = () => {
 
   const getDynamicGreeting = () => {
     const hour = new Date().getHours();
-    let timeGreeting = 'Good evening';
+    let timeGreeting = 'Evening focus';
     if (hour >= 5 && hour < 12) {
-      timeGreeting = 'Good morning';
+      timeGreeting = 'Morning rhythm';
     } else if (hour >= 12 && hour < 17) {
-      timeGreeting = 'Good afternoon';
+      timeGreeting = 'Afternoon drive';
     } else if (hour >= 17 && hour < 22) {
-      timeGreeting = 'Good evening';
+      timeGreeting = 'Prime hours';
     } else {
-      timeGreeting = 'Working late';
+      timeGreeting = 'Night owl mode';
     }
 
     const tips = [
-      { title: `${timeGreeting}.`, subtitle: 'Ready to assist your focus & productivity.' },
-      { title: 'Welcome back.', subtitle: 'Let me know how I can help you today.' },
-      { title: 'Stay hydrated.', subtitle: 'Take deep breaths and keep flow going.' },
-      { title: 'Focus companion.', subtitle: 'Click anytime to manage timers or notes.' },
+      { title: `${timeGreeting} unlocked`, subtitle: 'Ready to turn ideas into reality.' },
+      { title: 'Flow state on deck', subtitle: 'Need a timer or quick scratchpad?' },
+      { title: 'Keyboard ready', subtitle: 'Let’s crush some tasks today.' },
+      { title: 'Stay hydrated, genius', subtitle: 'Deep breath. You’re doing great.' },
+      { title: 'At your command', subtitle: 'Click to brainstorm, search, or automate.' },
     ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -114,33 +112,20 @@ export const OrbPet: React.FC = () => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 1. Initialize Animation Controller
+    // 1. Animation Controller
     const anim = new AnimationController();
     animControllerRef.current = anim;
 
-    // 2. Initialize Behavior Engine
+    // 2. Behavior Engine
     const behavior = new BehaviorEngine(anim);
     behaviorEngineRef.current = behavior;
 
-    // 3. Initialize 3D Scene with WebGL fallback if in 3D face mode
-    if (orbMode === '3d-face') {
-      try {
-        const scene = new MochiOrbScene(containerRef.current);
-        sceneRef.current = scene;
-      } catch (err) {
-        console.warn('[OrbPet] WebGL init failed, falling back to 2D Canvas:', err);
-        const fallback = new FallbackOrbRenderer(containerRef.current);
-        sceneRef.current = fallback;
-      }
-    }
-
-    // 4. Hook up Animation Controller changes to 3D Scene
+    // 3. Sync animation state
     const unsubAnim = anim.onChange((state) => {
       setCurrentState(state);
-      sceneRef.current?.setState(state);
     });
 
-    // 5. Initialize Movement & Gaze Controller
+    // 4. Movement & Gaze Controller
     const move = new MovementController(containerRef.current, {
       onDragStart: () => {
         behavior.handleDragStart();
@@ -150,7 +135,6 @@ export const OrbPet: React.FC = () => {
       },
       onGazeMove: (nx, ny) => {
         setGaze({ x: nx, y: ny });
-        sceneRef.current?.setGaze(nx, ny);
       },
       onClick: () => {
         handlePetAction();
@@ -158,7 +142,7 @@ export const OrbPet: React.FC = () => {
     });
     moveControllerRef.current = move;
 
-    // 6. Listen to main process IPC triggers
+    // 5. IPC listeners
     let unsubIpc: (() => void) | undefined;
     let unsubTimerTick: (() => void) | undefined;
     let unsubTimerComp: (() => void) | undefined;
@@ -204,11 +188,9 @@ export const OrbPet: React.FC = () => {
         }
 
         setIsSpeaking(true);
-        sceneRef.current?.setSpeaking(true);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         speakingTimeout = setTimeout(() => {
           setIsSpeaking(false);
-          sceneRef.current?.setSpeaking(false);
         }, 2500);
 
         if (reactionTimeout) clearTimeout(reactionTimeout);
@@ -219,18 +201,10 @@ export const OrbPet: React.FC = () => {
 
       unsubTimerTick = window.mochiApi.onTimerTick((timer: ActiveTimerState) => {
         setActiveTimer(timer);
-        if (timer.status === 'running' && timer.totalDurationSeconds > 0) {
-          const progress = 1 - timer.remainingSeconds / timer.totalDurationSeconds;
-          const formatted = formatTime(timer.remainingSeconds);
-          sceneRef.current?.setTimer(true, progress, formatted);
-        } else {
-          sceneRef.current?.setTimer(false);
-        }
       });
 
       unsubTimerComp = window.mochiApi.onTimerCompleted(() => {
         setActiveTimer(null);
-        sceneRef.current?.setTimer(false);
         behavior.handleTimerComplete();
       });
 
@@ -252,8 +226,6 @@ export const OrbPet: React.FC = () => {
       move.destroy();
       anim.destroy();
       behavior.destroy();
-      sceneRef.current?.destroy();
-      sceneRef.current = null;
     };
   }, [orbMode]);
 
@@ -269,13 +241,14 @@ export const OrbPet: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Siri / Gemini Style Floating Context Speech Bubble */}
+      {/* Apple Dynamic Island Floating Context Pill */}
       {(isHovered || reactionMessage) && (
         <div
           className="mochi-speech-bubble"
           onClick={handlePetAction}
           title="Click to open Mochi Assistant"
         >
+          <div className="bubble-status-dot" data-state={currentState} />
           <div className="bubble-body">
             <div className="bubble-title">
               {reactionMessage ? reactionMessage.title : greeting.title}
@@ -285,20 +258,19 @@ export const OrbPet: React.FC = () => {
             </div>
           </div>
           <div className="bubble-actions">
-            <span className="bubble-badge">Open ⌘</span>
+            <span className="bubble-badge">⌘ Space</span>
             <button
               className="bubble-power-btn"
               onClick={handleQuit}
-              title="Turn Off Mochi (Quit App)"
+              title="Quit App"
             >
               <Power size={11} />
             </button>
           </div>
-          <div className="bubble-tail" />
         </div>
       )}
 
-      {/* Mascot Digital Timer Representation (Holographic Timer Badge) */}
+      {/* Holographic Timer Badge */}
       {isTimerRunning && (
         <div
           className="mochi-timer-hologram-pill"
@@ -312,13 +284,13 @@ export const OrbPet: React.FC = () => {
         </div>
       )}
 
-      {/* Living Orb Canvas Container */}
+      {/* Living Mascot Canvas Container */}
       <div
         ref={containerRef}
         className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
         title="Mochi Companion (Click to open assistant, drag to move)"
       >
-        {orbMode === 'glow-lava' && (
+        {orbMode === 'glow-lava' ? (
           <GlowLavaOrb
             state={currentState}
             isSpeaking={isSpeaking}
@@ -329,8 +301,7 @@ export const OrbPet: React.FC = () => {
             timerProgress={timerProgress}
             size={170}
           />
-        )}
-        {orbMode === 'particles' && (
+        ) : (
           <ParticlesOrb
             state={mapPetStateToOrbState(currentState)}
             size={168}
@@ -341,42 +312,34 @@ export const OrbPet: React.FC = () => {
         )}
       </div>
 
-      {/* Sleek Minimal Status, Mode Toggle & Quick Turn Off Pill below Mochi */}
+      {/* Apple-grade HUD Pill below Mochi */}
       <div className={`mochi-hover-pill ${isHovered || reactionMessage ? 'visible' : ''}`}>
-        <span className="mochi-dot" />
+        <span className="mochi-dot" data-state={currentState} />
         <span className="mochi-label">
           {isTyping && currentState === 'coding'
             ? 'CODING FLOW'
             : isTyping
-            ? 'TYPING'
+            ? 'FAST TYPING'
             : currentState.toUpperCase()}
         </span>
         <button
           className="mochi-mode-toggle-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setOrbMode((prev) =>
-              prev === 'glow-lava' ? 'particles' : prev === 'particles' ? '3d-face' : 'glow-lava'
-            );
+            setOrbMode((prev) => (prev === 'glow-lava' ? 'particles' : 'glow-lava'));
           }}
-          title="Switch between Cyber Mascot, Particles, and 3D Cyber Face"
+          title="Switch between Cyber Mascot and Particle Orb"
         >
           <Sparkles size={10} />
-          <span>
-            {orbMode === 'glow-lava'
-              ? 'Cyber Mascot'
-              : orbMode === 'particles'
-              ? 'Particles'
-              : '3D Face'}
-          </span>
+          <span>{orbMode === 'glow-lava' ? 'Cyber Mascot' : 'Particles'}</span>
         </button>
         <button
           className="mochi-turn-off-btn"
           onClick={handleQuit}
-          title="Turn Off Mochi (Quit App)"
+          title="Quit Mochi"
         >
           <Power size={10} />
-          <span>Turn Off</span>
+          <span>Quit</span>
         </button>
       </div>
     </div>
