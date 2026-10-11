@@ -35,6 +35,8 @@ export interface SystemActivityEvent {
   title: string;
   subtitle: string;
   timestamp: number;
+  isTyping?: boolean;
+  typingBurst?: boolean;
 }
 
 export interface PetPosition {

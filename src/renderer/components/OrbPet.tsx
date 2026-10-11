@@ -41,6 +41,8 @@ export const OrbPet: React.FC = () => {
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingBurst, setTypingBurst] = useState(false);
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
@@ -165,6 +167,7 @@ export const OrbPet: React.FC = () => {
 
     let reactionTimeout: NodeJS.Timeout;
     let speakingTimeout: NodeJS.Timeout;
+    let typingTimeout: NodeJS.Timeout;
 
     if (window.mochiApi) {
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
@@ -177,6 +180,28 @@ export const OrbPet: React.FC = () => {
           subtitle: event.subtitle,
           appName: event.appName,
         });
+
+        // Typing reactivity
+        if (event.isTyping) {
+          setIsTyping(true);
+          if (event.typingBurst) {
+            setTypingBurst(true);
+            SoundEffects.keyboardTap(0.2);
+          } else {
+            SoundEffects.keyboardTap(0.12);
+          }
+
+          if (typingTimeout) clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(() => {
+            setIsTyping(false);
+            setTypingBurst(false);
+          }, 1800);
+        }
+
+        // Entering coding mode chime
+        if (event.category === 'development' && event.state === 'coding') {
+          SoundEffects.codeFlow(0.3);
+        }
 
         setIsSpeaking(true);
         sceneRef.current?.setSpeaking(true);
@@ -223,6 +248,7 @@ export const OrbPet: React.FC = () => {
       unsubActivity?.();
       if (reactionTimeout) clearTimeout(reactionTimeout);
       if (speakingTimeout) clearTimeout(speakingTimeout);
+      if (typingTimeout) clearTimeout(typingTimeout);
       move.destroy();
       anim.destroy();
       behavior.destroy();
@@ -296,6 +322,8 @@ export const OrbPet: React.FC = () => {
           <GlowLavaOrb
             state={currentState}
             isSpeaking={isSpeaking}
+            isTyping={isTyping}
+            typingBurst={typingBurst}
             gaze={gaze}
             isTimerActive={isTimerRunning}
             timerProgress={timerProgress}
@@ -316,7 +344,13 @@ export const OrbPet: React.FC = () => {
       {/* Sleek Minimal Status, Mode Toggle & Quick Turn Off Pill below Mochi */}
       <div className={`mochi-hover-pill ${isHovered || reactionMessage ? 'visible' : ''}`}>
         <span className="mochi-dot" />
-        <span className="mochi-label">{currentState.toUpperCase()}</span>
+        <span className="mochi-label">
+          {isTyping && currentState === 'coding'
+            ? 'CODING FLOW'
+            : isTyping
+            ? 'TYPING'
+            : currentState.toUpperCase()}
+        </span>
         <button
           className="mochi-mode-toggle-btn"
           onClick={(e) => {
@@ -325,12 +359,12 @@ export const OrbPet: React.FC = () => {
               prev === 'glow-lava' ? 'particles' : prev === 'particles' ? '3d-face' : 'glow-lava'
             );
           }}
-          title="Switch between AI Glow Orb, Particles, and 3D Cyber Face"
+          title="Switch between Cyber Mascot, Particles, and 3D Cyber Face"
         >
           <Sparkles size={10} />
           <span>
             {orbMode === 'glow-lava'
-              ? 'Glow Orb'
+              ? 'Cyber Mascot'
               : orbMode === 'particles'
               ? 'Particles'
               : '3D Face'}

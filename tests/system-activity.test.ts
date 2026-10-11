@@ -20,6 +20,23 @@ describe('System Activity Application Classifier', () => {
     const terminal = classifyApplication('Terminal');
     expect(terminal.category).toBe('development');
     expect(terminal.state).toBe('coding');
+
+    const zed = classifyApplication('Zed');
+    expect(zed.category).toBe('development');
+    expect(zed.state).toBe('coding');
+    expect(zed.formattedName).toBe('Zed Editor');
+
+    const sublime = classifyApplication('Sublime Text');
+    expect(sublime.category).toBe('development');
+    expect(sublime.state).toBe('coding');
+
+    const ghostty = classifyApplication('Ghostty');
+    expect(ghostty.category).toBe('development');
+    expect(ghostty.state).toBe('coding');
+
+    const nvim = classifyApplication('Neovim');
+    expect(nvim.category).toBe('development');
+    expect(nvim.state).toBe('coding');
   });
 
   it('correctly classifies design tools like Figma', () => {

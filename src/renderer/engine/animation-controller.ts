@@ -8,6 +8,9 @@ const STATE_PRIORITIES: Record<PetAnimationState, number> = {
   celebrating: 8,
   happy: 7,
   curious: 6,
+  coding: 6,
+  typing: 5,
+  listening: 5,
   waking: 5,
   thinking: 5,
   working: 4,
@@ -41,6 +44,11 @@ export class AnimationController {
 
   public getState(): PetAnimationState {
     return this.currentState;
+  }
+
+  public setState(state: PetAnimationState): void {
+    this.setBaseline(state);
+    this.transitionTo(state);
   }
 
   private notify(): void {

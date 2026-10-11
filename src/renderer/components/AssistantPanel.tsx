@@ -168,7 +168,7 @@ export const AssistantPanel: React.FC = () => {
             {/* Friendly Greeting Card */}
             <div className="greeting-card">
               <div className="greeting-text">
-                <h3>Hello, Human Friend! ✨</h3>
+                <h3>Hello, Human Friend</h3>
                 <p>
                   Mochi is floating on your desktop. Here is your productivity pulse for today:
                 </p>
@@ -177,7 +177,7 @@ export const AssistantPanel: React.FC = () => {
                 className="btn btn-sm btn-outline"
                 onClick={() => setPetState('happy')}
               >
-                Pet Mochi 🐾
+                Pet Mochi
               </button>
             </div>
 

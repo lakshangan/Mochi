@@ -5,42 +5,152 @@ import '../styles/glow-lava-orb.css';
 export interface GlowLavaOrbProps {
   state?: PetAnimationState;
   isSpeaking?: boolean;
+  isTyping?: boolean;
+  typingBurst?: boolean;
   gaze?: { x: number; y: number };
-  timerProgress?: number; // 0 to 1
+  timerProgress?: number;
   isTimerActive?: boolean;
   size?: number;
   className?: string;
   onClick?: () => void;
 }
 
+// ─── Pixel LED renderer constants ─────────────────────────────────────────────
+const PX   = 10;        // each LED block size (logical px)
+const GAP  = 3;         // gap between LEDs
+const CELL = PX + GAP;  // 13 px per grid cell
+
+type PixelGrid = (0 | 1 | number)[][];
+
+interface Expression {
+  eye:       PixelGrid;
+  rightEye?: PixelGrid;   // if omitted, mirrors left eye horizontally
+  mouth:     PixelGrid;
+  eyeColor:  string;
+  glowColor: string;
+  intensity: number;
+  eyeOffset: number;      // half-distance center→each eye center
+}
+
+function mirrorGrid(g: PixelGrid): PixelGrid {
+  return g.map(row => [...row].reverse());
+}
+
+// ─── Expression Library (Divoom-inspired pixel LED faces) ─────────────────────
+const EXPR: Partial<Record<string, Expression>> = {
+  idle: {
+    eye:    [[1,1,1],[1,1,1],[1,1,1],[1,1,1]],
+    mouth:  [[0,0,1,1,1,0,0]],
+    eyeColor: '#ffffff', glowColor: '#00c8ff', intensity: 1.0, eyeOffset: 30,
+  },
+  blink: {
+    eye:   [[1,1,1,1,1]],
+    mouth: [[0,1,1,1,0]],
+    eyeColor: '#ffffff', glowColor: '#00c8ff', intensity: 0.65, eyeOffset: 28,
+  },
+  happy: {
+    eye:   [[1,0,1],[1,0,1],[0,1,0]],
+    mouth: [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1]],
+    eyeColor: '#fde047', glowColor: '#f59e0b', intensity: 1.6, eyeOffset: 32,
+  },
+  celebrating: {
+    eye:   [[0,1,0],[1,1,1],[0,1,0]],
+    mouth: [[0,1,1,1,1,1,0],[1,0,0,0,0,0,1]],
+    eyeColor: '#fde047', glowColor: '#f97316', intensity: 2.0, eyeOffset: 32,
+  },
+  curious: {
+    eye:   [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],
+    mouth: [[0,1,1,1,0],[1,0,0,0,1],[0,1,1,1,0]],
+    eyeColor: '#a5f3fc', glowColor: '#0284c7', intensity: 1.3, eyeOffset: 35,
+  },
+  sleeping: {
+    eye:   [[1,1,1,1,1]],
+    mouth: [[0,0,1,1,1,0,0]],
+    eyeColor: 'rgba(180,190,255,0.45)', glowColor: '#818cf8', intensity: 0.32, eyeOffset: 28,
+  },
+  coding: {
+    eye:      [[1,1,1,1],[1,1,1,1],[1,1,1,1]],
+    rightEye: [[0,1,1,1],[0,1,1,1],[0,1,1,1]],   // pupil shifted (looking at screen)
+    mouth:    [[0,0,1,1,1,0,0]],
+    eyeColor: '#00f7ff', glowColor: '#00f7ff', intensity: 1.85, eyeOffset: 33,
+  },
+  focused: {
+    eye:   [[1,1,1],[1,1,1],[1,1,1]],
+    mouth: [[1,1,1,1]],
+    eyeColor: '#a5f3fc', glowColor: '#0284c7', intensity: 1.4, eyeOffset: 30,
+  },
+  typing: {
+    eye:      [[0,0,1],[0,1,0],[0,0,1]],   // > shape
+    rightEye: [[1,0,0],[0,1,0],[1,0,0]],   // < shape
+    mouth:    [[0,1,1,1,0]],
+    eyeColor: '#c084fc', glowColor: '#a855f7', intensity: 1.55, eyeOffset: 28,
+  },
+  listening: {
+    eye:   [[0,1,0],[1,1,1],[1,1,1],[0,1,0]],
+    mouth: [[0,1,0],[1,1,1],[0,1,0]],
+    eyeColor: '#f9a8d4', glowColor: '#ec4899', intensity: 1.45, eyeOffset: 30,
+  },
+  thinking: {
+    eye:      [[0,1,1],[1,1,0],[1,1,0]],
+    rightEye: [[1,1,0],[0,1,1],[0,1,1]],
+    mouth:    [[0,0,0,1,1,1]],
+    eyeColor: '#a5f3fc', glowColor: '#6366f1', intensity: 1.2, eyeOffset: 29,
+  },
+  reminding: {
+    eye:      [[1,1,0],[0,1,1],[1,1,0]],
+    rightEye: [[0,1,1],[1,1,0],[0,1,1]],
+    mouth:    [[0,1,1,1,0],[1,0,0,0,1]],
+    eyeColor: '#fde047', glowColor: '#f59e0b', intensity: 1.6, eyeOffset: 30,
+  },
+  waking: {
+    eye:   [[1,1,1,1],[1,1,1,1]],
+    mouth: [[0,1,1,1,0]],
+    eyeColor: '#a5f3fc', glowColor: '#00c8ff', intensity: 0.85, eyeOffset: 30,
+  },
+  dragging: {
+    eye:   [[1,0,1],[0,1,0],[1,0,1]],
+    mouth: [[1,1,1,1,1]],
+    eyeColor: '#ffffff', glowColor: '#00c8ff', intensity: 1.0, eyeOffset: 29,
+  },
+  working: {
+    eye:   [[1,1,1,1],[1,1,1,1],[1,1,1,1]],
+    mouth: [[1,1,1,1,1]],
+    eyeColor: '#00f7ff', glowColor: '#0284c7', intensity: 1.65, eyeOffset: 33,
+  },
+  walking: {
+    eye:   [[1,1,1],[1,1,1],[1,1,1]],
+    mouth: [[0,1,1,1,0]],
+    eyeColor: '#ffffff', glowColor: '#00c8ff', intensity: 1.1, eyeOffset: 29,
+  },
+};
+
+const getExpr = (state: string): Expression =>
+  (EXPR[state] ?? EXPR['idle']) as Expression;
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
-  state = 'idle',
+  state      = 'idle',
   isSpeaking = false,
-  gaze = { x: 0, y: 0 },
+  isTyping   = false,
+  typingBurst = false,
   timerProgress = 0,
   isTimerActive = false,
-  size = 170,
+  size      = 170,
   className = '',
   onClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef(state);
-  const speakingRef = useRef(isSpeaking);
-  const gazeRef = useRef(gaze);
 
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+  // Live refs so render loop reads latest props without re-registering effect
+  const stateRef     = useRef(state);
+  const speakRef     = useRef(isSpeaking);
+  const typingRef    = useRef(isTyping);
 
-  useEffect(() => {
-    speakingRef.current = isSpeaking;
-  }, [isSpeaking]);
+  useEffect(() => { stateRef.current   = state;     }, [state]);
+  useEffect(() => { speakRef.current   = isSpeaking; }, [isSpeaking]);
+  useEffect(() => { typingRef.current  = isTyping;   }, [isTyping]);
 
-  useEffect(() => {
-    gazeRef.current = gaze;
-  }, [gaze]);
-
-  // Face Rendering Engine inside the Glow Orb
+  // ── Main canvas render loop ──────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -50,359 +160,189 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
     let rafId: number;
     let lastTime = performance.now();
 
-    // Eye interpolation states
-    let curEyeWidth = 18;
-    let curEyeHeight = 36;
-    let curEyeCurve = 0; // positive = happy, negative = sleeping
-    let curGlow = 1.0;
-    let curPupilX = 0;
-    let curPupilY = 0;
+    // Transition state
+    let prevState = stateRef.current;
+    let fromExpr  = getExpr(prevState);
+    let toExpr    = fromExpr;
+    let transAlpha = 1.0;   // 0 = fromExpr, 1 = toExpr (fully arrived)
 
-    // Mouth interpolation states
-    let curMouthWidth = 18;
-    let curMouthHeight = 4;
-    let curMouthCurve = 4;
-    let curMouthOpen = 0;
-    let curMouthOpacity = 0.8;
+    // Simple rising-dot particle pool
+    const dots: {
+      x: number; y: number; vy: number; alpha: number; color: string; r: number;
+    }[] = [];
+    let dotTimer = 0;
 
-    let speechPhase = 0;
-    let blinkTimer = 0;
-    let isBlinking = false;
-    let blinkDuration = 0;
+    // ── Draw a pixel grid centered at (cx, cy) ───────────────────────────
+    const drawGrid = (
+      grid: PixelGrid,
+      cx: number, cy: number,
+      color: string, glowColor: string,
+      intensity: number, alpha: number,
+    ) => {
+      if (alpha < 0.008) return;
+      const cols = Math.max(...grid.map(r => r.length));
+      const rows = grid.length;
+      const totalW = cols * CELL - GAP;
+      const totalH = rows * CELL - GAP;
+      const sx = cx - totalW / 2;
+      const sy = cy - totalH / 2;
+
+      ctx.save();
+      ctx.shadowBlur  = 18 * intensity;
+      ctx.shadowColor = glowColor;
+      ctx.fillStyle   = color;
+
+      for (let r = 0; r < rows; r++) {
+        const row = grid[r];
+        for (let c = 0; c < row.length; c++) {
+          const val = row[c] ?? 0;
+          if (val > 0) {
+            ctx.globalAlpha = Math.max(0, Math.min(1, alpha * val));
+            ctx.beginPath();
+            ctx.roundRect(sx + c * CELL, sy + r * CELL, PX, PX, 2);
+            ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
+    };
+
+    // ── Draw a full expression (both eyes + mouth) ───────────────────────
+    const drawExpression = (
+      expr: Expression, alpha: number,
+      eyeY: number, mouthY: number, cx: number,
+    ) => {
+      if (alpha < 0.008) return;
+      const lGrid = expr.eye;
+      const rGrid = expr.rightEye ?? mirrorGrid(lGrid);
+
+      drawGrid(lGrid, cx - expr.eyeOffset, eyeY,    expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+      drawGrid(rGrid, cx + expr.eyeOffset, eyeY,    expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+      if (expr.mouth.length > 0) {
+        drawGrid(expr.mouth, cx, mouthY, expr.eyeColor, expr.glowColor, expr.intensity * 0.75, alpha * 0.85);
+      }
+    };
 
     const render = (now: number) => {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      const currentState = stateRef.current;
-      const speaking = speakingRef.current;
-      const targetGaze = gazeRef.current;
+      const curState  = stateRef.current;
+      const speaking  = speakRef.current;
+      const isTypingNow = typingRef.current || curState === 'coding' || curState === 'typing';
 
-      // Natural random blinking
-      blinkTimer += dt;
-      if (blinkTimer > 3.5 + Math.sin(now * 0.001) * 1.5) {
-        if (!isBlinking && currentState !== 'sleeping') {
-          isBlinking = true;
-          blinkDuration = 0;
-          blinkTimer = 0;
+      // Detect state change → begin cross-fade
+      if (curState !== prevState) {
+        fromExpr   = toExpr;
+        toExpr     = getExpr(curState);
+        transAlpha = 0;
+        prevState  = curState;
+      }
+      if (transAlpha < 1) {
+        transAlpha = Math.min(1, transAlpha + dt / 0.26);  // 260 ms cross-fade
+      }
+
+      // ── Retina / HiDPI scaling ─────────────────────────────────────────
+      const dpr   = Math.min(window.devicePixelRatio || 1, 3);
+      const logW  = size;
+      const logH  = size;
+      const physW = Math.round(logW * dpr);
+      const physH = Math.round(logH * dpr);
+      if (canvas.width !== physW || canvas.height !== physH) {
+        canvas.width  = physW;
+        canvas.height = physH;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, logW, logH);
+
+      const cx    = logW / 2;
+      const cy    = logH / 2;
+      // subtle typing bob
+      const bobY  = isTypingNow ? Math.sin(now * 0.016) * 1.6 : 0;
+      const eyeY  = cy - 8 + bobY;
+      const mouthY = cy + 26 + bobY;
+
+      // ── Cross-fade expressions ─────────────────────────────────────────
+      if (transAlpha < 1) {
+        drawExpression(fromExpr, 1 - transAlpha, eyeY, mouthY, cx);
+      }
+      drawExpression(toExpr, transAlpha, eyeY, mouthY, cx);
+
+      // ── Speaking mouth pulse overlay ────────────────────────────────────
+      if (speaking && transAlpha > 0.5) {
+        const pulse = Math.abs(Math.sin(now * 0.014));
+        if (pulse > 0.3) {
+          const extraRow: PixelGrid = [[pulse > 0.6 ? 1 : 0.4, 1, pulse > 0.7 ? 1 : 0.4]];
+          drawGrid(extraRow, cx, mouthY + 16, toExpr.eyeColor, toExpr.glowColor, toExpr.intensity * 0.6, transAlpha * 0.6);
         }
       }
 
-      if (isBlinking) {
-        blinkDuration += dt;
-        if (blinkDuration > 0.16) {
-          isBlinking = false;
-        }
+      // ── Ambient rising dots ────────────────────────────────────────────
+      dotTimer += dt;
+      const dotInterval = curState === 'celebrating' ? 0.12
+        : curState === 'happy' ? 0.7
+        : isTypingNow ? 0.55
+        : 2.8;
+      if (dotTimer >= dotInterval && dots.length < 12) {
+        dotTimer = 0;
+        dots.push({
+          x: cx + (Math.random() - 0.5) * 42,
+          y: eyeY + 14,
+          vy: -(20 + Math.random() * 18),
+          alpha: 0.7,
+          color: toExpr.glowColor,
+          r: 2 + Math.random() * 2.2,
+        });
+      }
+      for (let i = dots.length - 1; i >= 0; i--) {
+        const d = dots[i];
+        d.y    += d.vy * dt;
+        d.alpha -= dt * 0.6;
+        if (d.alpha <= 0) { dots.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, d.alpha);
+        ctx.shadowBlur  = 7;
+        ctx.shadowColor = d.color;
+        ctx.fillStyle   = d.color;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
 
-      // Target geometry based on pet state
-      let tgtEyeWidth = 18;
-      let tgtEyeHeight = 36;
-      let tgtEyeCurve = 0;
-      let tgtGlow = 1.0;
-      let tgtPupilX = Math.max(-1, Math.min(1, targetGaze.x)) * 6;
-      let tgtPupilY = Math.max(-1, Math.min(1, targetGaze.y)) * 5;
-
-      let tgtMouthWidth = 18;
-      let tgtMouthHeight = 4;
-      let tgtMouthCurve = 4;
-      let tgtMouthOpen = 0;
-      let tgtMouthOpacity = 0.8;
-
-      if (isBlinking || currentState === 'blink') {
-        tgtEyeHeight = 2.5;
-        tgtEyeWidth = 20;
-        tgtEyeCurve = 0;
-        tgtGlow = 0.8;
-      } else {
-        switch (currentState) {
-          case 'happy':
-          case 'celebrating':
-            tgtEyeHeight = 12;
-            tgtEyeWidth = 22;
-            tgtEyeCurve = 12; // Happy inverted crescent
-            tgtGlow = 1.5;
-            tgtPupilY = -3;
-            tgtMouthWidth = 24;
-            tgtMouthHeight = 12;
-            tgtMouthCurve = 14;
-            tgtMouthOpen = 0.7;
-            tgtMouthOpacity = 0.95;
-            break;
-
-          case 'curious':
-            tgtEyeHeight = 44;
-            tgtEyeWidth = 20;
-            tgtEyeCurve = 0;
-            tgtGlow = 1.3;
-            tgtMouthWidth = 10;
-            tgtMouthHeight = 10;
-            tgtMouthCurve = 0;
-            tgtMouthOpen = 0.9; // Open cute 'o'
-            tgtMouthOpacity = 0.9;
-            break;
-
-          case 'sleeping':
-            tgtEyeHeight = 6;
-            tgtEyeWidth = 20;
-            tgtEyeCurve = -8; // Peaceful sleep curve
-            tgtGlow = 0.4;
-            tgtPupilX = 0;
-            tgtPupilY = 0;
-            tgtMouthWidth = 12;
-            tgtMouthHeight = 2;
-            tgtMouthCurve = 2;
-            tgtMouthOpen = 0;
-            tgtMouthOpacity = 0.35;
-            break;
-
-          case 'coding':
-          case 'focused':
-            tgtEyeHeight = 26;
-            tgtEyeWidth = 20;
-            tgtEyeCurve = 0;
-            tgtGlow = 1.6;
-            tgtMouthWidth = 16;
-            tgtMouthHeight = 2.5;
-            tgtMouthCurve = 2;
-            tgtMouthOpen = 0;
-            tgtMouthOpacity = 0.85;
-            break;
-
-          case 'listening':
-            tgtEyeHeight = 32;
-            tgtEyeWidth = 18;
-            tgtEyeCurve = 4;
-            tgtGlow = 1.4;
-            tgtPupilY = Math.sin(now * 0.008) * 3;
-            tgtMouthWidth = 20;
-            tgtMouthHeight = 6;
-            tgtMouthCurve = 8;
-            tgtMouthOpen = 0.35;
-            tgtMouthOpacity = 0.9;
-            break;
-
-          case 'typing':
-            tgtEyeHeight = 30;
-            tgtEyeWidth = 18;
-            tgtEyeCurve = 0;
-            tgtGlow = 1.3;
-            tgtPupilX += (Math.random() - 0.5) * 2;
-            tgtMouthWidth = 16;
-            tgtMouthHeight = 3;
-            tgtMouthCurve = 3;
-            tgtMouthOpen = 0;
-            tgtMouthOpacity = 0.75;
-            break;
-
-          case 'idle':
-          default:
-            tgtEyeHeight = 36;
-            tgtEyeWidth = 18;
-            tgtEyeCurve = 0;
-            tgtGlow = 1.0;
-            tgtMouthWidth = 16;
-            tgtMouthHeight = 3.5;
-            tgtMouthCurve = 3.5;
-            tgtMouthOpen = 0;
-            tgtMouthOpacity = 0.75;
-            break;
-        }
-      }
-
-      // Smooth lerp
-      const lerpFactor = Math.min(1, dt * 14);
-      curEyeWidth += (tgtEyeWidth - curEyeWidth) * lerpFactor;
-      curEyeHeight += (tgtEyeHeight - curEyeHeight) * lerpFactor;
-      curEyeCurve += (tgtEyeCurve - curEyeCurve) * lerpFactor;
-      curGlow += (tgtGlow - curGlow) * lerpFactor;
-      curPupilX += (tgtPupilX - curPupilX) * lerpFactor;
-      curPupilY += (tgtPupilY - curPupilY) * lerpFactor;
-
-      curMouthWidth += (tgtMouthWidth - curMouthWidth) * lerpFactor;
-      curMouthHeight += (tgtMouthHeight - curMouthHeight) * lerpFactor;
-      curMouthCurve += (tgtMouthCurve - curMouthCurve) * lerpFactor;
-      curMouthOpen += (tgtMouthOpen - curMouthOpen) * lerpFactor;
-      curMouthOpacity += (tgtMouthOpacity - curMouthOpacity) * lerpFactor;
-
-      if (speaking) {
-        speechPhase += dt * 14;
-      }
-
-      // Clear Canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const eyeSpacing = 34;
-
-      // Draw Left & Right Eyes
-      drawEye(ctx, cx - eyeSpacing + curPupilX, cy - 6 + curPupilY, curEyeWidth, curEyeHeight, curEyeCurve, curGlow);
-      drawEye(ctx, cx + eyeSpacing + curPupilX, cy - 6 + curPupilY, curEyeWidth, curEyeHeight, curEyeCurve, curGlow);
-
-      // Draw Expressive Cyber Mouth
-      drawMouth(
-        ctx,
-        cx + curPupilX * 0.5,
-        cy + 26 + curPupilY * 0.5,
-        curMouthWidth,
-        curMouthHeight,
-        curMouthCurve,
-        curMouthOpen,
-        curMouthOpacity,
-        speaking,
-        speechPhase
-      );
-
+      ctx.restore();
       rafId = requestAnimationFrame(render);
     };
 
     rafId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(rafId);
+  }, [size]);
 
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  const drawEye = (
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    curve: number,
-    glow: number
-  ) => {
-    ctx.save();
-    ctx.shadowBlur = 18 * glow;
-    ctx.shadowColor = 'rgba(0, 247, 255, 0.95)';
-    ctx.fillStyle = '#ffffff';
-
-    if (curve > 2) {
-      // Happy inverted crescent
-      ctx.lineWidth = Math.min(w * 0.42, 6.5);
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(x, y + curve * 0.45, w * 0.78, Math.PI * 1.15, Math.PI * 1.85);
-      ctx.stroke();
-    } else if (curve < -2) {
-      // Sleeping downward curve
-      ctx.lineWidth = 5;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.beginPath();
-      ctx.arc(x, y - Math.abs(curve) * 0.45, w * 0.78, Math.PI * 0.15, Math.PI * 0.85);
-      ctx.stroke();
-    } else if (h <= 3) {
-      // Blink line
-      ctx.lineWidth = 3.5;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(x - w * 0.5, y);
-      ctx.lineTo(x + w * 0.5, y);
-      ctx.stroke();
-    } else {
-      // Capsule Eye
-      ctx.beginPath();
-      const r = Math.min(w / 2, h / 2);
-      ctx.roundRect(x - w / 2, y - h / 2, w, h, r);
-      ctx.fill();
-
-      // Specular pupil reflection glints
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-      ctx.beginPath();
-      ctx.arc(x - w * 0.16, y - h * 0.2, Math.max(2, w * 0.22), 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = 'rgba(0, 247, 255, 0.75)';
-      ctx.beginPath();
-      ctx.arc(x + w * 0.18, y + h * 0.16, Math.max(1.5, w * 0.12), 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  };
-
-  const drawMouth = (
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    curve: number,
-    open: number,
-    opacity: number,
-    speaking: boolean,
-    speechPhase: number
-  ) => {
-    if (opacity <= 0.05) return;
-
-    ctx.save();
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = 'rgba(0, 247, 255, 0.75)';
-
-    let finalOpen = open;
-    let finalH = h;
-    let finalW = w;
-
-    if (speaking) {
-      const talkPulse = Math.abs(Math.sin(speechPhase));
-      finalOpen = Math.max(finalOpen, talkPulse * 0.8);
-      finalH = Math.max(finalH, 4 + talkPulse * 7);
-      finalW = finalW + talkPulse * 3;
-    }
-
-    if (finalOpen > 0.3) {
-      // Open cute mouth
-      ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-      ctx.beginPath();
-      ctx.ellipse(x, y, finalW * 0.45, Math.max(2.5, finalH * 0.5), 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Cyber curved/straight line
-      ctx.lineWidth = Math.max(2.2, finalH);
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-
-      ctx.beginPath();
-      if (Math.abs(curve) > 2) {
-        ctx.arc(x, y - curve * 0.5, finalW * 0.55, Math.PI * 0.2, Math.PI * 0.8);
-      } else {
-        ctx.moveTo(x - finalW * 0.4, y);
-        ctx.lineTo(x + finalW * 0.4, y);
-      }
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  };
-
+  // ── Timer ring geometry ───────────────────────────────────────────────────
   const circumference = 2 * Math.PI * 80;
-  const strokeOffset = circumference - Math.max(0, Math.min(1, timerProgress)) * circumference;
+  const strokeOffset  = circumference - Math.max(0, Math.min(1, timerProgress)) * circumference;
 
   return (
     <div
       className={`glow-orb-wrapper ${className}`}
       data-state={state}
+      data-typing={isTyping}
       style={{ width: size, height: size }}
       onClick={onClick}
     >
-      {/* 1. Outer Soft Glow Halo */}
+      {/* Outer halo bloom */}
       <div className="glow-orb-halo" />
 
-      {/* 2. Optional Countdown Timer Orbital Ring */}
+      {/* Countdown timer orbital ring */}
       {isTimerActive && (
         <div className="glow-orb-timer-ring">
           <svg className="glow-orb-timer-svg" viewBox="0 0 170 170">
-            <circle className="glow-orb-timer-track" cx="85" cy="85" r="80" />
+            <circle className="glow-orb-timer-track"    cx="85" cy="85" r="80" />
             <circle
               className="glow-orb-timer-progress"
-              cx="85"
-              cy="85"
-              r="80"
+              cx="85" cy="85" r="80"
               strokeDasharray={circumference}
               strokeDashoffset={strokeOffset}
             />
@@ -410,27 +350,22 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
         </div>
       )}
 
-      {/* 3. The Glass Sphere Body from CodePen */}
+      {/* Glass sphere body */}
       <div className="glow-orb-sphere">
-        {/* Animated Fluid Lava Blobs */}
+        {/* Fluid lava blobs (subtle depth/atmosphere) */}
         <div className="glow-orb-lava">
           <div className="lava-blob lava-blob-1" />
           <div className="lava-blob lava-blob-2" />
           <div className="lava-blob lava-blob-3" />
         </div>
 
-        {/* Realistic Physical Specular Curvature Reflections */}
+        {/* Physical glass specular highlights */}
         <div className="glow-orb-specular" />
         <div className="glow-orb-bottom-rim" />
 
-        {/* Embedded Living Face Canvas */}
+        {/* Pixel LED face canvas */}
         <div className="glow-orb-face-container">
-          <canvas
-            ref={canvasRef}
-            className="glow-orb-face-canvas"
-            width={240}
-            height={240}
-          />
+          <canvas ref={canvasRef} className="glow-orb-face-canvas" />
         </div>
       </div>
     </div>
