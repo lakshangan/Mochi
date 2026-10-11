@@ -1,0 +1,267 @@
+/* ========================================================
+   AI GLOW LAVA ORB (Inspired by HomesteadMovies / EsperAI)
+   ======================================================== */
+
+.glow-orb-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 170px;
+  height: 170px;
+  user-select: none;
+  cursor: grab;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  margin: 0 auto;
+}
+
+.glow-orb-wrapper:active {
+  cursor: grabbing;
+  transform: scale(0.96);
+}
+
+/* 1. Outer Ethereal Halo Bloom */
+.glow-orb-halo {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 247, 255, 0.45) 0%,
+    rgba(99, 102, 241, 0.35) 45%,
+    rgba(168, 85, 247, 0.22) 65%,
+    transparent 80%
+  );
+  filter: blur(28px);
+  opacity: 0.85;
+  animation: haloPulsing 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* 2. Glass Sphere Body from CodePen */
+.glow-orb-sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  overflow: hidden;
+  background: rgba(6, 10, 22, 0.35);
+  backdrop-filter: blur(12px) saturate(190%);
+  -webkit-backdrop-filter: blur(12px) saturate(190%);
+  box-shadow: 
+    0 0 50px 5px rgba(0, 0, 0, 0.65),
+    0 0 35px 3px rgba(0, 247, 255, 0.35),
+    inset 0 0 35px rgba(255, 255, 255, 0.45),
+    inset 0 -22px 50px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sphereBreathing 3.6s ease-in-out infinite alternate;
+  z-index: 10;
+}
+
+/* 3. Fluid Animated Lava Core */
+.glow-orb-lava {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  filter: blur(26px);
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.glow-orb-lava .lava-blob {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.glow-orb-lava .lava-blob-1 {
+  width: 115px;
+  height: 115px;
+  background: radial-gradient(circle, #00f7ff 25%, #3b82f6 75%, transparent 100%);
+  top: 15%;
+  left: 18%;
+  animation: lavaMove1 5.5s ease-in-out infinite alternate;
+}
+
+.glow-orb-lava .lava-blob-2 {
+  width: 125px;
+  height: 125px;
+  background: radial-gradient(circle, #a855f7 25%, #ec4899 75%, transparent 100%);
+  bottom: 12%;
+  right: 12%;
+  animation: lavaMove2 6.5s ease-in-out infinite alternate;
+}
+
+.glow-orb-lava .lava-blob-3 {
+  width: 95px;
+  height: 95px;
+  background: radial-gradient(circle, #38bdf8 25%, #6366f1 75%, transparent 100%);
+  top: 38%;
+  left: 42%;
+  animation: lavaMove3 4.8s ease-in-out infinite alternate;
+}
+
+/* State-based mood tints for Lava */
+.glow-orb-wrapper[data-state='coding'] .lava-blob-1,
+.glow-orb-wrapper[data-state='focused'] .lava-blob-1 {
+  background: radial-gradient(circle, #00f7ff 40%, #0284c7 80%, transparent 100%);
+}
+.glow-orb-wrapper[data-state='coding'] .lava-blob-2,
+.glow-orb-wrapper[data-state='focused'] .lava-blob-2 {
+  background: radial-gradient(circle, #6366f1 40%, #3b82f6 80%, transparent 100%);
+}
+
+.glow-orb-wrapper[data-state='listening'] .lava-blob-1 {
+  animation-duration: 2.5s;
+}
+.glow-orb-wrapper[data-state='listening'] .lava-blob-2 {
+  animation-duration: 2.8s;
+}
+
+.glow-orb-wrapper[data-state='sleeping'] .glow-orb-halo {
+  opacity: 0.45;
+  filter: blur(34px);
+}
+.glow-orb-wrapper[data-state='sleeping'] .glow-orb-lava {
+  opacity: 0.55;
+  filter: blur(32px);
+}
+
+/* 4. Glass Specular Highlight (Physical Curvature) */
+.glow-orb-specular {
+  position: absolute;
+  top: 9%;
+  left: 17%;
+  width: 44%;
+  height: 22%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 100%);
+  transform: rotate(-26deg);
+  pointer-events: none;
+  filter: blur(1.2px);
+  z-index: 25;
+}
+
+/* Bottom subtle rim reflection */
+.glow-orb-bottom-rim {
+  position: absolute;
+  bottom: 8%;
+  right: 22%;
+  width: 32%;
+  height: 12%;
+  border-radius: 50%;
+  background: linear-gradient(0deg, rgba(0, 247, 255, 0.45) 0%, transparent 100%);
+  transform: rotate(18deg);
+  pointer-events: none;
+  filter: blur(2px);
+  z-index: 25;
+}
+
+/* 5. Living Vector Face Inside Sphere */
+.glow-orb-face-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.glow-orb-face-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 6. Orbital Countdown Ring (Active Timer Mode) */
+.glow-orb-timer-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.4s ease;
+}
+
+.glow-orb-timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.glow-orb-timer-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 3;
+}
+
+.glow-orb-timer-progress {
+  fill: none;
+  stroke: #00f7ff;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px #00f7ff);
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+/* Keyframes */
+@keyframes sphereBreathing {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+@keyframes haloPulsing {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes lavaMove1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(32px, 24px) scale(1.15);
+  }
+  100% {
+    transform: translate(-18px, 12px) scale(0.92);
+  }
+}
+
+@keyframes lavaMove2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-30px, -20px) scale(1.18);
+  }
+  100% {
+    transform: translate(16px, -14px) scale(0.88);
+  }
+}
+
+@keyframes lavaMove3 {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+  }
+  50% {
+    transform: translate(-14px, 26px) scale(1.22);
+  }
+  100% {
+    transform: translate(22px, -18px) scale(1);
+  }
+}

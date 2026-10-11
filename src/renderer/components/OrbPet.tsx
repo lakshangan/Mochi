@@ -8,6 +8,7 @@ import { PetAnimationState, SystemActivityEvent, ActiveTimerState } from '../../
 import { SoundEffects } from '../../shared/sound-effects';
 import { Power, Timer as TimerIcon, Sparkles } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
+import { GlowLavaOrb } from './GlowLavaOrb';
 import type { OrbState } from '@/registry/lib/orb-state';
 
 const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
@@ -36,9 +37,11 @@ export const OrbPet: React.FC = () => {
   const behaviorEngineRef = useRef<BehaviorEngine | null>(null);
   const moveControllerRef = useRef<MovementController | null>(null);
 
-  const [orbMode, setOrbMode] = useState<'particles' | '3d-face'>('particles');
+  const [orbMode, setOrbMode] = useState<'glow-lava' | 'particles' | '3d-face'>('glow-lava');
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
     title: 'Hello there.',
@@ -144,6 +147,7 @@ export const OrbPet: React.FC = () => {
         behavior.handleDragEnd();
       },
       onGazeMove: (nx, ny) => {
+        setGaze({ x: nx, y: ny });
         sceneRef.current?.setGaze(nx, ny);
       },
       onClick: () => {
@@ -174,9 +178,11 @@ export const OrbPet: React.FC = () => {
           appName: event.appName,
         });
 
+        setIsSpeaking(true);
         sceneRef.current?.setSpeaking(true);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         speakingTimeout = setTimeout(() => {
+          setIsSpeaking(false);
           sceneRef.current?.setSpeaking(false);
         }, 2500);
 
@@ -226,6 +232,10 @@ export const OrbPet: React.FC = () => {
   }, [orbMode]);
 
   const isTimerRunning = activeTimer && activeTimer.status === 'running';
+  const timerProgress =
+    isTimerRunning && activeTimer.totalDurationSeconds > 0
+      ? 1 - activeTimer.remainingSeconds / activeTimer.totalDurationSeconds
+      : 0;
 
   return (
     <div
@@ -282,6 +292,16 @@ export const OrbPet: React.FC = () => {
         className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
         title="Mochi Companion (Click to open assistant, drag to move)"
       >
+        {orbMode === 'glow-lava' && (
+          <GlowLavaOrb
+            state={currentState}
+            isSpeaking={isSpeaking}
+            gaze={gaze}
+            isTimerActive={isTimerRunning}
+            timerProgress={timerProgress}
+            size={170}
+          />
+        )}
         {orbMode === 'particles' && (
           <ParticlesOrb
             state={mapPetStateToOrbState(currentState)}
@@ -301,12 +321,20 @@ export const OrbPet: React.FC = () => {
           className="mochi-mode-toggle-btn"
           onClick={(e) => {
             e.stopPropagation();
-            setOrbMode((prev) => (prev === 'particles' ? '3d-face' : 'particles'));
+            setOrbMode((prev) =>
+              prev === 'glow-lava' ? 'particles' : prev === 'particles' ? '3d-face' : 'glow-lava'
+            );
           }}
-          title="Switch between Particles Orb and 3D Cyber Face"
+          title="Switch between AI Glow Orb, Particles, and 3D Cyber Face"
         >
           <Sparkles size={10} />
-          <span>{orbMode === 'particles' ? 'Particles' : '3D Face'}</span>
+          <span>
+            {orbMode === 'glow-lava'
+              ? 'Glow Orb'
+              : orbMode === 'particles'
+              ? 'Particles'
+              : '3D Face'}
+          </span>
         </button>
         <button
           className="mochi-turn-off-btn"
