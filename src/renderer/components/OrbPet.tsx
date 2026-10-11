@@ -272,6 +272,16 @@ export const OrbPet: React.FC = () => {
           title="Click to open Mochi Assistant"
         >
           <div className="bubble-status-dot" data-state={currentState} />
+
+          {/* Integrated Live Timer Chip inside speech bubble (prevents ANY overlap) */}
+          {isTimerRunning && (
+            <div className="bubble-timer-chip">
+              <TimerIcon size={11} className="timer-chip-icon" />
+              <span>{formatTime(activeTimer.remainingSeconds)}</span>
+              <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
+            </div>
+          )}
+
           <div className="bubble-body">
             <div className="bubble-text">
               {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
@@ -293,8 +303,8 @@ export const OrbPet: React.FC = () => {
         </div>
       )}
 
-      {/* Holographic Timer Badge */}
-      {isTimerRunning && (
+      {/* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */}
+      {isTimerRunning && !(isHovered || reactionMessage) && (
         <div
           className="mochi-timer-hologram-pill"
           onClick={handlePetAction}
@@ -333,37 +343,6 @@ export const OrbPet: React.FC = () => {
             colorTo="#818cf8"
           />
         )}
-      </div>
-
-      {/* Apple-grade HUD Pill below Mochi */}
-      <div className={`mochi-hover-pill ${isHovered || reactionMessage ? 'visible' : ''}`}>
-        <span className="mochi-dot" data-state={currentState} />
-        <span className="mochi-label">
-          {isTyping && currentState === 'coding'
-            ? 'CODING FLOW'
-            : isTyping
-            ? 'FAST TYPING'
-            : currentState.toUpperCase()}
-        </span>
-        <button
-          className="mochi-mode-toggle-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOrbMode((prev) => (prev === 'glow-lava' ? 'particles' : 'glow-lava'));
-          }}
-          title="Switch between Cyber Mascot and Particle Orb"
-        >
-          <Sparkles size={10} />
-          <span>{orbMode === 'glow-lava' ? 'Cyber Mascot' : 'Particles'}</span>
-        </button>
-        <button
-          className="mochi-turn-off-btn"
-          onClick={handleQuit}
-          title="Quit Mochi"
-        >
-          <Power size={10} />
-          <span>Quit</span>
-        </button>
       </div>
     </div>
   );
