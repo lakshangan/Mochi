@@ -51,6 +51,7 @@ export const IPC_CHANNELS = {
   // Pet Behavior & Emotion
   PET_SET_STATE: 'pet:set-state',
   PET_REACT: 'pet:react',
+  PET_GAZE_UPDATE: 'pet:gaze-update',
 
   // Platform & System
   SYSTEM_ACTIVITY_CHANGED: 'system:activity-changed',
@@ -99,6 +100,7 @@ export interface ElectronMochiAPI {
   setPetState: (state: PetAnimationState) => Promise<void>;
   triggerPetReaction: (reaction: PetAnimationState) => Promise<void>;
   onPetStateChange: (callback: (state: PetAnimationState) => void) => () => void;
+  onGazeUpdate?: (callback: (gaze: { x: number; y: number }) => void) => () => void;
 
   // System
   onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => () => void;

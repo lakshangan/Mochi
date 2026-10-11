@@ -133,6 +133,13 @@ const mochiApi: ElectronMochiAPI = {
       ipcRenderer.removeListener(IPC_CHANNELS.PET_SET_STATE, handler);
     };
   },
+  onGazeUpdate: (callback: (gaze: { x: number; y: number }) => void) => {
+    const handler = (_event: any, gaze: { x: number; y: number }) => callback(gaze);
+    ipcRenderer.on(IPC_CHANNELS.PET_GAZE_UPDATE, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.PET_GAZE_UPDATE, handler);
+    };
+  },
 
   // System
   onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => {

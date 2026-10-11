@@ -280,7 +280,45 @@ app.whenReady().then(() => {
   });
 
   setupAutoWander();
+  setupGlobalGazeTracking();
 });
+
+let gazeInterval: NodeJS.Timeout | null = null;
+let lastGazeSent = { x: 0, y: 0 };
+
+function setupGlobalGazeTracking(): void {
+  if (gazeInterval) {
+    clearInterval(gazeInterval);
+    gazeInterval = null;
+  }
+  gazeInterval = setInterval(() => {
+    if (!petWindow) return;
+    const pWin = petWindow.getWindow();
+    if (!pWin || pWin.isDestroyed() || !pWin.isVisible()) return;
+
+    try {
+      const cursor = screen.getCursorScreenPoint();
+      const petPos = petWindow.getPosition();
+      const petSize = persistenceService?.getState()?.settings?.petSize || 115;
+      const petCenterX = petPos.x + petSize / 2;
+      const petCenterY = petPos.y + petSize / 2;
+
+      const dx = cursor.x - petCenterX;
+      const dy = cursor.y - petCenterY;
+
+      // Soft clamp to [-1, 1] with comfortable 400x320 px zone
+      const normX = Math.max(-1, Math.min(1, dx / 400));
+      const normY = Math.max(-1, Math.min(1, dy / 320));
+
+      if (Math.abs(normX - lastGazeSent.x) > 0.02 || Math.abs(normY - lastGazeSent.y) > 0.02) {
+        lastGazeSent = { x: normX, y: normY };
+        pWin.webContents.send(IPC_CHANNELS.PET_GAZE_UPDATE, { x: normX, y: normY });
+      }
+    } catch {
+      // ignore
+    }
+  }, 60);
+}
 
 app.on('window-all-closed', () => {
   if (PlatformAdapter.isMac()) {

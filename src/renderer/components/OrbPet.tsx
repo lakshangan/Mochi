@@ -150,12 +150,19 @@ export const OrbPet: React.FC = () => {
     let unsubTimerComp: (() => void) | undefined;
     let unsubReminder: (() => void) | undefined;
     let unsubActivity: (() => void) | undefined;
+    let unsubGaze: (() => void) | undefined;
 
     let reactionTimeout: NodeJS.Timeout;
     let speakingTimeout: NodeJS.Timeout;
     let typingTimeout: NodeJS.Timeout;
 
     if (window.mochiApi) {
+      if (window.mochiApi.onGazeUpdate) {
+        unsubGaze = window.mochiApi.onGazeUpdate((newGaze) => {
+          setGaze(newGaze);
+        });
+      }
+
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
         anim.setState(state);
       });
@@ -235,6 +242,7 @@ export const OrbPet: React.FC = () => {
         unsubTimerComp?.();
         unsubReminder?.();
         unsubActivity?.();
+        unsubGaze?.();
         unsubSettings?.();
         if (reactionTimeout) clearTimeout(reactionTimeout);
         if (speakingTimeout) clearTimeout(speakingTimeout);
@@ -318,7 +326,7 @@ export const OrbPet: React.FC = () => {
             isTyping={isTyping}
             typingBurst={typingBurst}
             gaze={gaze}
-            isTimerActive={isTimerRunning}
+            isTimerActive={Boolean(isTimerRunning)}
             timerProgress={timerProgress}
             size={petSize}
           />

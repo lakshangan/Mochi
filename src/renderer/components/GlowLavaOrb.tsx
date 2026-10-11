@@ -33,64 +33,83 @@ function mirrorGrid(g: PixelGrid): PixelGrid {
 
 // ─── Reference Pixel Art Eye Matrices (100% matched to reference Divoom art) ──
 
-// 1. Standby / Idle (待机): 4x8 rounded capsules
+// 1. Standby / Idle (待机): 5x8 rounded capsule with specular glint
 const PILL_EYE: PixelGrid = [
-  [0, 1, 1, 0],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [0, 1, 1, 0],
+  [0, 1, 1, 1, 0],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 0.45, 1], // specular glimmer
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 0],
 ];
 
 // Blink: Crisp horizontal line
 const BLINK_EYE: PixelGrid = [
-  [1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 0],
 ];
 
 // 2. Smile / Happy (微笑 `∩ ∩`): Arched anime eyes
 const ARCH_HAPPY_EYE: PixelGrid = [
-  [0, 1, 1, 0],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
+  [0, 1, 1, 1, 0],
+  [1, 0, 0, 0, 1],
+  [1, 0, 0, 0, 1],
+  [1, 0, 0, 0, 1],
 ];
 
 // 3. Resting / Sleeping (闭眼 `∪ ∪`): Gentle curved U
 const SLEEP_EYE: PixelGrid = [
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [0, 1, 1, 0],
+  [1, 0, 0, 0, 1],
+  [1, 0, 0, 0, 1],
+  [1, 0, 0, 0, 1],
+  [0, 1, 1, 1, 0],
 ];
 
-// 4. Excited / Typing Burst (激动 `> <`): Bold 5x7 chevrons (2px thick)
-const CHEVRON_LEFT: PixelGrid = [
-  [1, 1, 0, 0, 0],
-  [0, 1, 1, 0, 0],
-  [0, 0, 1, 1, 0],
-  [0, 0, 0, 1, 1],
-  [0, 0, 1, 1, 0],
-  [0, 1, 1, 0, 0],
-  [1, 1, 0, 0, 0],
+// 4. Energetic Focus / Active Typing: Bright alert anime eyes with pupil highlights
+const FLOW_TYPING_EYE: PixelGrid = [
+  [0, 1, 1, 1, 0],
+  [1, 1, 1, 1, 1],
+  [1, 1, 0.35, 1, 1], // energetic shine
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 0],
 ];
 
-// 5. Wink / Cheeky (狡黠): Left pill, Right `<` wink
-const WINK_CHEVRON: PixelGrid = [
-  [0, 0, 0, 1],
-  [0, 0, 1, 1],
-  [0, 1, 1, 0],
-  [1, 1, 0, 0],
-  [0, 1, 1, 0],
-  [0, 0, 1, 1],
-  [0, 0, 0, 1],
+// 5. Joyful Flow / High Streak Typing: Sweet curved anime eyes (`^ ^`)
+const HAPPY_FLOW_EYE: PixelGrid = [
+  [0, 1, 1, 1, 1, 0],
+  [1, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1],
+  [0, 1, 0, 0, 1, 0],
 ];
 
-// 6. Centered Heart (爱心)
+// 6. Playful Wink: Left open, Right smooth curved happy wink
+const WINK_ARC: PixelGrid = [
+  [0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 0],
+  [1, 0, 0, 0, 1],
+];
+
+// 7. Curious / Watching Eye: Wide attentive eyes that look toward the cursor
+const CURIOUS_EYE: PixelGrid = [
+  [0, 1, 1, 1, 0],
+  [1, 1, 1, 1, 1],
+  [1, 0.35, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 0],
+];
+
+// 8. Centered Heart (爱心)
 const CENTERED_HEART: PixelGrid = [
   [0, 1, 1, 0, 0, 0, 1, 1, 0],
   [1, 1, 1, 1, 0, 1, 1, 1, 1],
@@ -102,7 +121,7 @@ const CENTERED_HEART: PixelGrid = [
   [0, 0, 0, 0, 1, 0, 0, 0, 0],
 ];
 
-// 7. Cyber Shades (墨镜)
+// 9. Cyber Shades (墨镜)
 const SHADES_CENTERED: PixelGrid = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0],
@@ -110,7 +129,7 @@ const SHADES_CENTERED: PixelGrid = [
   [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
 ];
 
-// 8. Sparkle (星星)
+// 10. Sparkle (星星)
 const SPARKLE_EYE: PixelGrid = [
   [0, 1, 1, 1, 0],
   [1, 0, 0, 0, 1],
@@ -121,25 +140,17 @@ const SPARKLE_EYE: PixelGrid = [
   [0, 1, 1, 1, 0],
 ];
 
-// 9. Side Glance / Curious (斜视)
-const SIDE_GLANCE_EYE: PixelGrid = [
+// 11. Focused / Concentrated Attention: Sharp focused capsules
+const FOCUSED_EYE: PixelGrid = [
+  [0, 1, 1, 1, 0],
   [1, 1, 1, 1, 1],
-  [1, 1, 0, 0, 0],
-  [1, 1, 0, 0, 0],
-  [1, 1, 0, 0, 0],
   [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 0],
 ];
 
-// 10. Determined / Angry / Sharp Focus (专注 `\ /`)
-const ANGRY_EYE_LEFT: PixelGrid = [
-  [1, 1, 0, 0, 0, 0],
-  [0, 1, 1, 0, 0, 0],
-  [0, 0, 1, 1, 0, 0],
-  [0, 0, 0, 1, 1, 0],
-  [0, 0, 0, 0, 1, 1],
-];
-
-// 11. Shocked Hollow Eyes (吓 `O O`)
+// 12. Shocked Hollow Eyes (吓 `O O`)
 const SHOCKED_HOLLOW_EYE: PixelGrid = [
   [0, 1, 1, 0],
   [1, 0, 0, 1],
@@ -151,7 +162,7 @@ const SHOCKED_HOLLOW_EYE: PixelGrid = [
   [0, 1, 1, 0],
 ];
 
-// 12. Thinking / Skeptical
+// 13. Thinking / Skeptical
 const SKEPTICAL_EYE_LEFT: PixelGrid = [
   [0, 1, 1, 0],
   [1, 1, 0, 0],
@@ -168,7 +179,7 @@ const SKEPTICAL_EYE_RIGHT: PixelGrid = [
 ];
 
 // Expression map for animation states
-const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious', Expression> = {
+const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst', Expression> = {
   idle: {
     eye: PILL_EYE,
     eyeColor: '#ffffff',
@@ -185,26 +196,31 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
   },
   wink: {
     eye: PILL_EYE,
-    rightEye: WINK_CHEVRON,
+    rightEye: WINK_ARC,
     eyeColor: '#38bdf8',
     glowColor: '#00e5ff',
     intensity: 1.25,
     eyeOffset: 26,
   },
   curious_glance: {
-    eye: SIDE_GLANCE_EYE,
-    rightEye: SIDE_GLANCE_EYE,
+    eye: CURIOUS_EYE,
     eyeColor: '#38bdf8',
     glowColor: '#0284c7',
-    intensity: 1.2,
+    intensity: 1.25,
     eyeOffset: 26,
   },
   typing_curious: {
-    eye: SIDE_GLANCE_EYE,
-    rightEye: WINK_CHEVRON,
-    eyeColor: '#c084fc',
-    glowColor: '#a855f7',
+    eye: FLOW_TYPING_EYE,
+    eyeColor: '#38bdf8',
+    glowColor: '#00e5ff',
     intensity: 1.5,
+    eyeOffset: 26,
+  },
+  typing_burst: {
+    eye: HAPPY_FLOW_EYE,
+    eyeColor: '#f472b6',
+    glowColor: '#ec4899',
+    intensity: 1.65,
     eyeOffset: 26,
   },
   happy: {
@@ -223,11 +239,10 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     eyeOffset: 0,
   },
   curious: {
-    eye: SIDE_GLANCE_EYE,
-    rightEye: SIDE_GLANCE_EYE,
+    eye: CURIOUS_EYE,
     eyeColor: '#38bdf8',
     glowColor: '#0284c7',
-    intensity: 1.2,
+    intensity: 1.25,
     eyeOffset: 26,
   },
   sleeping: {
@@ -238,7 +253,7 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     eyeOffset: 26,
   },
   waking: {
-    eye: WINK_CHEVRON,
+    eye: WINK_ARC,
     rightEye: PILL_EYE,
     eyeColor: '#38bdf8',
     glowColor: '#00e5ff',
@@ -275,11 +290,11 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     eyeOffset: 26,
   },
   typing: {
-    eye: CHEVRON_LEFT, // Exciting face > <
+    eye: FLOW_TYPING_EYE,
     eyeColor: '#c084fc',
     glowColor: '#a855f7',
     intensity: 1.6,
-    eyeOffset: 27,
+    eyeOffset: 26,
   },
   listening: {
     eye: ARCH_HAPPY_EYE,
@@ -297,7 +312,7 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     eyeOffset: 0,
   },
   focused: {
-    eye: ANGRY_EYE_LEFT,
+    eye: FOCUSED_EYE,
     eyeColor: '#00f5ff',
     glowColor: '#0284c7',
     intensity: 1.5,
@@ -316,6 +331,8 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
   state = 'idle',
   isSpeaking = false,
   isTyping = false,
+  typingBurst = false,
+  gaze = { x: 0, y: 0 },
   timerProgress = 0,
   isTimerActive = false,
   size = 115,
@@ -326,10 +343,14 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
 
   const stateRef = useRef(state);
   const isTypingRef = useRef(isTyping);
+  const typingBurstRef = useRef(typingBurst);
+  const gazeRef = useRef(gaze);
   const sizeRef = useRef(size);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
+  useEffect(() => { typingBurstRef.current = typingBurst; }, [typingBurst]);
+  useEffect(() => { gazeRef.current = gaze; }, [gaze]);
   useEffect(() => { sizeRef.current = size; }, [size]);
 
   useEffect(() => {
@@ -342,10 +363,19 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
     let lastTime = performance.now();
 
     // Cross-fade state transitions
-    let prevState = stateRef.current;
+    let prevState: PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst' = stateRef.current;
     let fromExpr = EXPR_MAP[prevState] || EXPR_MAP.idle;
     let toExpr = fromExpr;
     let transAlpha = 1.0;
+
+    // Gaze tracking interpolation
+    let smoothGazeX = 0;
+    let smoothGazeY = 0;
+
+    // Natural micro-saccades (subtle living eye shift when idle)
+    let nextSaccadeTime = performance.now() + 2500;
+    let saccadeTargetX = 0;
+    let saccadeTargetY = 0;
 
     // Natural micro-expression timers
     let nextBlinkTime = performance.now() + 2400 + Math.random() * 1600;
@@ -362,10 +392,6 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
     let nextWinkTime = performance.now() + 14000 + Math.random() * 8000;
     let winkEndTime = 0;
     let isWinking = false;
-
-    // Typing alternate expression timer (swaps between exciting > < and curious wink)
-    let typingCycleTimer = 0;
-    let typingCycleState: 'excited' | 'curious' = 'excited';
 
     // Particle embers
     const embers: { x: number; y: number; vy: number; alpha: number; color: string; size: number }[] = [];
@@ -385,6 +411,32 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       const CELL = Math.max(3.2, 9.0 * scale);
       const PX = Math.max(2.4, CELL * 0.72);
       const GAP = CELL - PX;
+
+      // ── Natural Gaze & Micro-Saccade Tracking ────────────────────────────
+      const rawGaze = gazeRef.current || { x: 0, y: 0 };
+      const hasActiveCursor = Math.abs(rawGaze.x) > 0.04 || Math.abs(rawGaze.y) > 0.04;
+
+      let targetGazeX = rawGaze.x;
+      let targetGazeY = rawGaze.y;
+
+      if (typingNow) {
+        // While typing, eyes focus downwards toward editor/keyboard
+        targetGazeY = Math.max(targetGazeY, 0.28);
+      } else if (!hasActiveCursor && activeState === 'idle') {
+        // Idle living micro-saccades: glance gently around
+        if (now > nextSaccadeTime) {
+          nextSaccadeTime = now + 2400 + Math.random() * 2800;
+          saccadeTargetX = (Math.random() - 0.5) * 0.4;
+          saccadeTargetY = (Math.random() - 0.5) * 0.25;
+        }
+        targetGazeX = saccadeTargetX;
+        targetGazeY = saccadeTargetY;
+      }
+
+      // Smooth organic lerp
+      const lerpSpeed = hasActiveCursor ? 12 : 6;
+      smoothGazeX += (targetGazeX - smoothGazeX) * Math.min(1, dt * lerpSpeed);
+      smoothGazeY += (targetGazeY - smoothGazeY) * Math.min(1, dt * lerpSpeed);
 
       // Helper: draw single pixel grid scaled
       const drawGrid = (
@@ -427,36 +479,29 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
         ctx.restore();
       };
 
-      // Helper: draw full face expression
+      // Helper: draw full face expression with gaze shift
       const drawFace = (expr: Expression, alpha: number, cx: number, cy: number) => {
         if (alpha < 0.01) return;
         const offset = Math.round(expr.eyeOffset * scale);
 
+        // Calculate smooth gaze shift
+        const gazeShiftX = smoothGazeX * (6.5 * scale);
+        const gazeShiftY = smoothGazeY * (4.5 * scale);
+
         if (expr.centered) {
-          drawGrid(expr.eye, cx, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+          drawGrid(expr.eye, cx + gazeShiftX * 0.35, cy + gazeShiftY * 0.35, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
         } else {
           const lGrid = expr.eye;
           const rGrid = expr.rightEye ?? mirrorGrid(lGrid);
 
-          drawGrid(lGrid, cx - offset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
-          drawGrid(rGrid, cx + offset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+          drawGrid(lGrid, cx - offset + gazeShiftX, cy + gazeShiftY, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+          drawGrid(rGrid, cx + offset + gazeShiftX, cy + gazeShiftY, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
         }
       };
 
-      // ── Typing Cycle Animation (Exciting > < vs Curious Glance) ─────────
-      if (typingNow) {
-        typingCycleTimer += dt;
-        if (typingCycleTimer > 1.8) {
-          typingCycleTimer = 0;
-          typingCycleState = typingCycleState === 'excited' ? 'curious' : 'excited';
-        }
-      } else {
-        typingCycleTimer = 0;
-        typingCycleState = 'excited';
-      }
-
       // ── Handle spontaneous natural blinking with occasional double-blink ──
-      if (activeState === 'idle' && !typingNow && blinkStage === 0 && now > nextBlinkTime) {
+      const canBlink = activeState === 'idle' || activeState === 'focused' || activeState === 'curious' || typingNow;
+      if (canBlink && blinkStage === 0 && now > nextBlinkTime) {
         blinkStage = 1;
         isDoubleBlink = Math.random() < 0.25; // 25% chance double-blink
         blinkEndTime = now + 120;
@@ -492,7 +537,7 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       // ── Handle playful wink when idle ────────────────────────────────────
       if (activeState === 'idle' && !typingNow && blinkStage === 0 && !isGlancing && !isWinking && now > nextWinkTime) {
         isWinking = true;
-        winkEndTime = now + 600; // 600ms friendly wink
+        winkEndTime = now + 650; // 650ms friendly wink
       }
       if (isWinking && now > winkEndTime) {
         isWinking = false;
@@ -500,12 +545,12 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       }
 
       // Determine effective visual state
-      let effectiveState: PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' = activeState;
+      let effectiveState: PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst' = activeState;
 
-      if (typingNow) {
-        effectiveState = typingCycleState === 'curious' ? 'typing_curious' : 'typing';
-      } else if (blinkStage === 1 || blinkStage === 3) {
+      if (blinkStage === 1 || blinkStage === 3) {
         effectiveState = 'blink';
+      } else if (typingNow) {
+        effectiveState = typingBurstRef.current ? 'typing_burst' : 'typing';
       } else if (isWinking && activeState === 'idle') {
         effectiveState = 'wink';
       } else if (isGlancing && activeState === 'idle') {
@@ -543,7 +588,7 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       const cy = logH / 2;
 
       // Keystroke bounce when typing
-      const typingBob = typingNow ? Math.sin(now * 0.02) * (1.6 * scale) : 0;
+      const typingBob = typingNow ? Math.sin(now * 0.024) * (1.8 * scale) : 0;
       const faceY = cy + typingBob;
 
       // Render Face

@@ -4,6 +4,15 @@ import { SystemActivityEvent, AppActivityCategory, PetAnimationState } from '../
 
 const execAsync = promisify(exec);
 
+let electronScreen: typeof import('electron').screen | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const electron = require('electron');
+  electronScreen = electron.screen;
+} catch {
+  // Safe in non-electron test environments
+}
+
 export interface AppClassification {
   formattedName: string;
   category: AppActivityCategory;
@@ -506,6 +515,7 @@ export class SystemActivityMonitor {
   private lastInputActiveTime = 0;
   private typingStreak = 0;
   private lastBubbleEmitTime = 0;
+  private lastCursorPos = { x: 0, y: 0 };
   private onActivityChange: (event: SystemActivityEvent) => void;
 
   constructor(onActivityChange: (event: SystemActivityEvent) => void) {
@@ -538,9 +548,9 @@ export class SystemActivityMonitor {
     try {
       const event = await this.checkActivity();
       // Adaptive polling rate:
-      // If actively typing or state is coding/typing, check rapidly (450ms) for instant responsiveness.
+      // If actively typing, check rapidly (450ms) for instant responsiveness.
       // If idle, slow down to 1500ms or 2500ms to conserve resources.
-      if (event?.isTyping || event?.state === 'coding' || event?.state === 'typing') {
+      if (event?.isTyping || event?.state === 'typing') {
         return 450;
       }
       if (this.lastState === 'sleeping') {
@@ -612,12 +622,36 @@ export class SystemActivityMonitor {
 
       const classification = classifyApplication(rawApp);
       const isDevApp = classification.category === 'development';
-      const isInputActive = idleSeconds < 0.75; // touched keyboard or mouse in the last 750ms
+      const isRawInputActive = idleSeconds < 0.75; // touched keyboard or mouse in the last 750ms
 
-      if (isInputActive) {
+      // Check cursor motion to distinguish mouse pointing/movement from keyboard typing
+      let isMouseMoving = false;
+      if (electronScreen) {
+        try {
+          const currentCursor = electronScreen.getCursorScreenPoint();
+          const dist = Math.hypot(
+            currentCursor.x - this.lastCursorPos.x,
+            currentCursor.y - this.lastCursorPos.y
+          );
+          this.lastCursorPos = currentCursor;
+          if (dist > 4) {
+            isMouseMoving = true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Keyboard typing is detected when input was active but mouse cursor was NOT moving
+      const isKeyboardTyping = isRawInputActive && !isMouseMoving;
+
+      if (isKeyboardTyping) {
         this.lastInputActiveTime = now;
         this.typingStreak++;
-      } else if (idleSeconds > 2.5) {
+      } else if (isMouseMoving) {
+        // Pointing/moving mouse - cool down typing streak so we don't falsely claim keyboard smoking
+        this.typingStreak = 0;
+      } else if (idleSeconds > 2.0) {
         this.typingStreak = 0;
       }
 
@@ -644,7 +678,7 @@ export class SystemActivityMonitor {
       }
 
       // Waking up from sleep
-      if (this.lastState === 'sleeping' && isInputActive) {
+      if (this.lastState === 'sleeping' && (isKeyboardTyping || isMouseMoving)) {
         this.lastState = 'waking';
         const wakeEvent: SystemActivityEvent = {
           appName: classification.formattedName,
@@ -653,7 +687,7 @@ export class SystemActivityMonitor {
           title: 'Welcome Back',
           subtitle: `Ready to flow in ${classification.formattedName}.`,
           timestamp: now,
-          isTyping: true,
+          isTyping: false,
         };
         this.onActivityChange(wakeEvent);
         return wakeEvent;
@@ -670,15 +704,26 @@ export class SystemActivityMonitor {
         finalSubtitle = 'Vibing hard.';
       } else if (isDevApp) {
         // In VS Code / Coding Apps / Antigravity:
-        if (isInputActive || timeSinceLastInput < 1.8) {
-          // Actively coding / typing in editor -> Exciting face (> <) / curious face
+        if (isKeyboardTyping || (timeSinceLastInput < 1.4 && this.typingStreak >= 2)) {
+          // Genuinely typing on keyboard in code editor!
           finalState = 'typing';
           finalTitle = classification.formattedName;
-          if (this.typingStreak > 4) {
+          if (this.typingStreak > 6) {
             finalSubtitle = 'Keyboard smoking!';
           } else {
-            finalSubtitle = classification.subtitles[Math.floor(Math.random() * classification.subtitles.length)];
+            const devTypingSubtitles = [
+              'Writing logic.',
+              'Crafting code.',
+              'Clean syntax.',
+              'In the flow zone.',
+            ];
+            finalSubtitle = devTypingSubtitles[Math.floor(Math.random() * devTypingSubtitles.length)];
           }
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          // User pointed mouse or navigated in editor -> curious attentive eyes!
+          finalState = 'curious';
+          finalTitle = classification.formattedName;
+          finalSubtitle = 'Reviewing code.';
         } else if (idleSeconds < 30) {
           // Paused typing in code editor: thinking / reviewing code
           finalState = 'focused';
@@ -691,11 +736,14 @@ export class SystemActivityMonitor {
         }
       } else {
         // Non-dev apps (Slack, Notion, Chrome, etc.):
-        if ((isInputActive || timeSinceLastInput < 1.4) && idleSeconds < 1.5) {
-          // Actively typing in another app -> Exciting face
+        if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
           finalTitle = classification.formattedName;
           finalSubtitle = TYPING_SUBTITLES[Math.floor(Math.random() * TYPING_SUBTITLES.length)];
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          finalState = 'curious';
+          finalTitle = classification.formattedName;
+          finalSubtitle = classification.subtitles[0];
         } else if (idleSeconds < 25) {
           finalState = classification.state;
           finalTitle = classification.title;
@@ -709,7 +757,7 @@ export class SystemActivityMonitor {
 
       const appChanged = rawApp.toLowerCase() !== this.lastAppName.toLowerCase();
       const stateChanged = finalState !== this.lastState;
-      const isBurstTyping = isInputActive && this.typingStreak > 2;
+      const isBurstTyping = isKeyboardTyping && this.typingStreak > 5;
 
       // Decide if we should notify listeners
       if (appChanged || stateChanged || (isBurstTyping && now - this.lastBubbleEmitTime > 8000)) {
@@ -727,7 +775,7 @@ export class SystemActivityMonitor {
           title: finalTitle,
           subtitle: finalSubtitle,
           timestamp: now,
-          isTyping: isInputActive,
+          isTyping: isKeyboardTyping,
           typingBurst: isBurstTyping,
         };
 
