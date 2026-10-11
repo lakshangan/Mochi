@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, AiSettings } from '../../shared/types';
 import { AiCompanionService } from '../services/ai-service';
 import { Send, Bot, User, Sparkles, CornerDownLeft } from 'lucide-react';
+import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
+import { OrbStatus } from '@/registry/lib/orb-status';
 
 interface AiChatPanelProps {
   messages: ChatMessage[];
@@ -68,8 +70,26 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
     'Tell me a productivity tip',
   ];
 
+  const chatOrbState = isTyping
+    ? 'thinking'
+    : messages.length > 0 && messages[messages.length - 1].sender === 'mochi'
+    ? 'speaking'
+    : 'idle';
+
   return (
     <div className="panel-container chat-layout">
+      {/* Animated AI Assistant Particles Orb Hero */}
+      <div className="chat-hero-orb-wrap">
+        <ParticlesOrb
+          state={chatOrbState}
+          size={120}
+          speed={1}
+          colorFrom="#f0abfc"
+          colorTo="#818cf8"
+        />
+        <OrbStatus state={chatOrbState} className="chat-hero-orb-status" />
+      </div>
+
       {/* Quick Prompts Carousel */}
       <div className="quick-prompts-row">
         {QUICK_PROMPTS.map((prompt) => (

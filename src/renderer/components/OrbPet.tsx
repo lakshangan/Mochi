@@ -6,7 +6,28 @@ import { AnimationController } from '../engine/animation-controller';
 import { BehaviorEngine } from '../engine/behavior-engine';
 import { PetAnimationState, SystemActivityEvent, ActiveTimerState } from '../../shared/types';
 import { SoundEffects } from '../../shared/sound-effects';
-import { Power, Timer as TimerIcon } from 'lucide-react';
+import { Power, Timer as TimerIcon, Sparkles } from 'lucide-react';
+import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
+import type { OrbState } from '@/registry/lib/orb-state';
+
+const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
+  switch (petState) {
+    case 'listening':
+      return 'listening';
+    case 'coding':
+    case 'thinking':
+    case 'focused':
+      return 'thinking';
+    case 'happy':
+    case 'celebrating':
+    case 'reminding':
+      return 'speaking';
+    case 'sleeping':
+      return 'disabled';
+    default:
+      return 'idle';
+  }
+};
 
 export const OrbPet: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -15,6 +36,7 @@ export const OrbPet: React.FC = () => {
   const behaviorEngineRef = useRef<BehaviorEngine | null>(null);
   const moveControllerRef = useRef<MovementController | null>(null);
 
+  const [orbMode, setOrbMode] = useState<'particles' | '3d-face'>('particles');
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
@@ -95,14 +117,16 @@ export const OrbPet: React.FC = () => {
     const behavior = new BehaviorEngine(anim);
     behaviorEngineRef.current = behavior;
 
-    // 3. Initialize 3D Scene with WebGL fallback
-    try {
-      const scene = new MochiOrbScene(containerRef.current);
-      sceneRef.current = scene;
-    } catch (err) {
-      console.warn('[OrbPet] WebGL init failed, falling back to 2D Canvas:', err);
-      const fallback = new FallbackOrbRenderer(containerRef.current);
-      sceneRef.current = fallback;
+    // 3. Initialize 3D Scene with WebGL fallback if in 3D face mode
+    if (orbMode === '3d-face') {
+      try {
+        const scene = new MochiOrbScene(containerRef.current);
+        sceneRef.current = scene;
+      } catch (err) {
+        console.warn('[OrbPet] WebGL init failed, falling back to 2D Canvas:', err);
+        const fallback = new FallbackOrbRenderer(containerRef.current);
+        sceneRef.current = fallback;
+      }
     }
 
     // 4. Hook up Animation Controller changes to 3D Scene
@@ -139,35 +163,29 @@ export const OrbPet: React.FC = () => {
     let speakingTimeout: NodeJS.Timeout;
 
     if (window.mochiApi) {
-      // Pet state sync
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
         anim.setState(state);
       });
 
-      // Rich System Activity sync
       unsubActivity = window.mochiApi.onSystemActivity((event: SystemActivityEvent) => {
-        // Subtle context reaction
         setReactionMessage({
           title: event.title,
           subtitle: event.subtitle,
           appName: event.appName,
         });
 
-        // Trigger subtle speaking mouth animation on mascot
         sceneRef.current?.setSpeaking(true);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         speakingTimeout = setTimeout(() => {
           sceneRef.current?.setSpeaking(false);
         }, 2500);
 
-        // Auto fade reaction gently so it never disturbs workflow
         if (reactionTimeout) clearTimeout(reactionTimeout);
         reactionTimeout = setTimeout(() => {
           setReactionMessage(null);
         }, 6000);
       });
 
-      // Digital Timer sync directly to 3D Mascot representation
       unsubTimerTick = window.mochiApi.onTimerTick((timer: ActiveTimerState) => {
         setActiveTimer(timer);
         if (timer.status === 'running' && timer.totalDurationSeconds > 0) {
@@ -203,8 +221,9 @@ export const OrbPet: React.FC = () => {
       anim.destroy();
       behavior.destroy();
       sceneRef.current?.destroy();
+      sceneRef.current = null;
     };
-  }, []);
+  }, [orbMode]);
 
   const isTimerRunning = activeTimer && activeTimer.status === 'running';
 
@@ -257,17 +276,38 @@ export const OrbPet: React.FC = () => {
         </div>
       )}
 
-      {/* 3D Living Orb Canvas */}
+      {/* Living Orb Canvas Container */}
       <div
         ref={containerRef}
         className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
         title="Mochi Companion (Click to open assistant, drag to move)"
-      />
+      >
+        {orbMode === 'particles' && (
+          <ParticlesOrb
+            state={mapPetStateToOrbState(currentState)}
+            size={168}
+            speed={1}
+            colorFrom="#f0abfc"
+            colorTo="#818cf8"
+          />
+        )}
+      </div>
 
-      {/* Sleek Minimal Status & Quick Turn Off Pill below Mochi */}
+      {/* Sleek Minimal Status, Mode Toggle & Quick Turn Off Pill below Mochi */}
       <div className={`mochi-hover-pill ${isHovered || reactionMessage ? 'visible' : ''}`}>
         <span className="mochi-dot" />
         <span className="mochi-label">{currentState.toUpperCase()}</span>
+        <button
+          className="mochi-mode-toggle-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOrbMode((prev) => (prev === 'particles' ? '3d-face' : 'particles'));
+          }}
+          title="Switch between Particles Orb and 3D Cyber Face"
+        >
+          <Sparkles size={10} />
+          <span>{orbMode === 'particles' ? 'Particles' : '3D Face'}</span>
+        </button>
         <button
           className="mochi-turn-off-btn"
           onClick={handleQuit}
