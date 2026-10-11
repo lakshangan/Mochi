@@ -13,21 +13,23 @@ export interface AppClassification {
 }
 
 const DEV_SUBTITLES = [
-  'Writing code that future you will actually understand.',
-  'Refactoring masterpieces, one line at a time.',
-  'Zero bugs found. (Don’t run tests yet).',
-  'Pure flow state. The terminal trembles.',
-  'Turning caffeine into production software.',
-  'Commit early, push fearlessly.',
-  '10x engineer mode fully unlocked.',
+  'Crafting clean code.',
+  'Zero bugs found.',
+  '10x dev mode.',
+  'Terminal trembles.',
+  'Turning caffeine to code.',
+  'Push fearlessly.',
+  'Pure flow state.',
 ];
 
 const TYPING_SUBTITLES = [
-  'Click-clack! Fingers flying across the keyboard.',
-  'Words flowing at warp speed.',
-  'Crushing keystrokes. Flow state locked in.',
-  'Fast hands! Keep that creative momentum.',
-  'Writing poetry or roasting someone in chat?',
+  'Fingers flying!',
+  'Fast hands!',
+  'Keyboard on fire!',
+  'Crushing syntax.',
+  'Writing magic.',
+  'In the zone.',
+  'Flow state locked in.',
 ];
 
 const APP_DATABASE: Record<string, AppClassification> = {
@@ -665,7 +667,7 @@ export class SystemActivityMonitor {
       if (isAudioPlaying && classification.category !== 'development' && idleSeconds > 5) {
         finalState = 'listening';
         finalTitle = 'Soundtrack Flow';
-        finalSubtitle = 'Vibing hard. This playlist has elite taste.';
+        finalSubtitle = 'Vibing hard.';
       } else if (isDevApp) {
         // In VS Code / Coding Apps / Antigravity:
         if (isInputActive || timeSinceLastInput < 1.8) {
@@ -673,7 +675,7 @@ export class SystemActivityMonitor {
           finalState = 'typing';
           finalTitle = classification.formattedName;
           if (this.typingStreak > 4) {
-            finalSubtitle = `Keyboard smoking! Blazing coding velocity.`;
+            finalSubtitle = 'Keyboard smoking!';
           } else {
             finalSubtitle = classification.subtitles[Math.floor(Math.random() * classification.subtitles.length)];
           }
@@ -681,11 +683,11 @@ export class SystemActivityMonitor {
           // Paused typing in code editor: thinking / reviewing code
           finalState = 'focused';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Contemplating architecture and line 42.';
+          finalSubtitle = 'Reviewing logic.';
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Coffee hot, editor ready. Whenever you are.';
+          finalSubtitle = 'Ready to code.';
         }
       } else {
         // Non-dev apps (Slack, Notion, Chrome, etc.):
@@ -701,7 +703,7 @@ export class SystemActivityMonitor {
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Ready for action.';
+          finalSubtitle = 'Standing by.';
         }
       }
 

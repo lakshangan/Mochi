@@ -30,8 +30,8 @@ export class PetWindow {
     }
     this.currentPosition = { x, y };
 
-    const windowW = this.petSize + 90;
-    const windowH = this.petSize + 90;
+    const windowW = Math.max(260, this.petSize + 100);
+    const windowH = Math.max(160, this.petSize + 85);
 
     this.window = new BrowserWindow({
       width: windowW,
@@ -108,7 +108,9 @@ export class PetWindow {
   public resize(size: number): void {
     this.petSize = size;
     if (this.window && !this.window.isDestroyed()) {
-      this.window.setSize(size + 90, size + 90);
+      const windowW = Math.max(260, size + 100);
+      const windowH = Math.max(160, size + 85);
+      this.window.setSize(windowW, windowH);
     }
   }
 

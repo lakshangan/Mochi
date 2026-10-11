@@ -73,11 +73,12 @@ export const OrbPet: React.FC = () => {
     }
 
     const tips = [
-      { title: `${timeGreeting} unlocked`, subtitle: 'Ready to turn ideas into reality.' },
-      { title: 'Flow state on deck', subtitle: 'Need a timer or quick scratchpad?' },
-      { title: 'Keyboard ready', subtitle: 'Let’s crush some tasks today.' },
-      { title: 'Stay hydrated, genius', subtitle: 'Deep breath. You’re doing great.' },
-      { title: 'At your command', subtitle: 'Click to brainstorm, search, or automate.' },
+      { title: 'Ready to build', subtitle: '' },
+      { title: 'Flow state on deck', subtitle: '' },
+      { title: 'Keyboard ready', subtitle: '' },
+      { title: 'Stay hydrated', subtitle: '' },
+      { title: 'System optimal', subtitle: '' },
+      { title: 'Pure momentum', subtitle: '' },
     ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -286,19 +287,6 @@ export const OrbPet: React.FC = () => {
             <div className="bubble-text">
               {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
             </div>
-            {isHovered && !reactionMessage && (
-              <div className="bubble-hint">{greeting.subtitle}</div>
-            )}
-          </div>
-          <div className="bubble-actions">
-            <span className="bubble-badge">⌘ Space</span>
-            <button
-              className="bubble-power-btn"
-              onClick={handleQuit}
-              title="Quit App"
-            >
-              <Power size={11} />
-            </button>
           </div>
         </div>
       )}
