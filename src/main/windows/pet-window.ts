@@ -10,7 +10,7 @@ export class PetWindow {
 
   constructor(initialPosition: PetPosition, settings: AppSettings) {
     this.currentPosition = initialPosition;
-    this.petSize = settings.petSize || 180;
+    this.petSize = settings.petSize || 115;
   }
 
   public create(preloadPath: string, isDev: boolean, devUrl: string): BrowserWindow {

@@ -130,8 +130,26 @@ body {
 .bubble-body {
   display: flex;
   flex-direction: column;
-  gap: 1.5px;
+  gap: 2px;
   min-width: 0;
+  max-width: 260px;
+}
+
+.bubble-text {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.15px;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.bubble-hint {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: -0.1px;
+  line-height: 1.2;
 }
 
 .bubble-title {
@@ -145,9 +163,6 @@ body {
 .bubble-subtitle {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.52);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   letter-spacing: -0.1px;
   line-height: 1.2;
 }

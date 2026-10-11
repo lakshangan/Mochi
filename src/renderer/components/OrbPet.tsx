@@ -35,6 +35,7 @@ export const OrbPet: React.FC = () => {
   const moveControllerRef = useRef<MovementController | null>(null);
 
   const [orbMode, setOrbMode] = useState<'glow-lava' | 'particles'>('glow-lava');
+  const [petSize, setPetSize] = useState<number>(115);
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -211,18 +212,40 @@ export const OrbPet: React.FC = () => {
       unsubReminder = window.mochiApi.onReminderTriggered(() => {
         behavior.handleReminderTriggered();
       });
+
+      // Load initial petSize from saved settings
+      window.mochiApi.getInitialState().then((initial) => {
+        if (initial?.settings?.petSize) {
+          setPetSize(initial.settings.petSize);
+        }
+      }).catch(console.error);
+
+      // Listen for settings changes (e.g. user moves size slider or picks preset)
+      const unsubSettings = window.mochiApi.onStateUpdated((state) => {
+        if (state.settings?.petSize) {
+          setPetSize(state.settings.petSize);
+        }
+      });
+
+      return () => {
+        unsubAnim();
+        unsubIpc?.();
+        unsubTimerTick?.();
+        unsubTimerComp?.();
+        unsubReminder?.();
+        unsubActivity?.();
+        unsubSettings?.();
+        if (reactionTimeout) clearTimeout(reactionTimeout);
+        if (speakingTimeout) clearTimeout(speakingTimeout);
+        if (typingTimeout) clearTimeout(typingTimeout);
+        move.destroy();
+        anim.destroy();
+        behavior.destroy();
+      };
     }
 
     return () => {
       unsubAnim();
-      unsubIpc?.();
-      unsubTimerTick?.();
-      unsubTimerComp?.();
-      unsubReminder?.();
-      unsubActivity?.();
-      if (reactionTimeout) clearTimeout(reactionTimeout);
-      if (speakingTimeout) clearTimeout(speakingTimeout);
-      if (typingTimeout) clearTimeout(typingTimeout);
       move.destroy();
       anim.destroy();
       behavior.destroy();
@@ -241,7 +264,7 @@ export const OrbPet: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Apple Dynamic Island Floating Context Pill */}
+      {/* Apple Dynamic Island Floating Context Pill - Showing fun text alone */}
       {(isHovered || reactionMessage) && (
         <div
           className="mochi-speech-bubble"
@@ -250,12 +273,12 @@ export const OrbPet: React.FC = () => {
         >
           <div className="bubble-status-dot" data-state={currentState} />
           <div className="bubble-body">
-            <div className="bubble-title">
-              {reactionMessage ? reactionMessage.title : greeting.title}
+            <div className="bubble-text">
+              {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
             </div>
-            <div className="bubble-subtitle">
-              {reactionMessage ? reactionMessage.subtitle : greeting.subtitle}
-            </div>
+            {isHovered && !reactionMessage && (
+              <div className="bubble-hint">{greeting.subtitle}</div>
+            )}
           </div>
           <div className="bubble-actions">
             <span className="bubble-badge">⌘ Space</span>
@@ -299,12 +322,12 @@ export const OrbPet: React.FC = () => {
             gaze={gaze}
             isTimerActive={isTimerRunning}
             timerProgress={timerProgress}
-            size={170}
+            size={petSize}
           />
         ) : (
           <ParticlesOrb
             state={mapPetStateToOrbState(currentState)}
-            size={168}
+            size={Math.round(petSize * 0.98)}
             speed={1}
             colorFrom="#f0abfc"
             colorTo="#818cf8"

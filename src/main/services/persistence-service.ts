@@ -4,7 +4,7 @@ import { app } from 'electron';
 import { AppSettings, MochiFullState, PetPosition, TaskItem, NoteItem, ActiveTimerState } from '../../shared/types';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  petSize: 180,
+  petSize: 115,
   opacity: 0.98,
   animationIntensity: 'normal',
   alwaysOnTop: true,

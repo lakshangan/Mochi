@@ -15,34 +15,25 @@ export interface GlowLavaOrbProps {
   onClick?: () => void;
 }
 
-// ─── Micro-LED Grid Configuration ─────────────────────────────────────────────
-// Sized so expressions occupy ~55% of the 170px orb with high-definition clarity
-const PX = 6.5;         // Size of each LED pixel
-const GAP = 2.5;        // Gap between LED pixels
-const CELL = PX + GAP;  // 9.0px cell pitch
-
 type PixelGrid = number[][];
 
 interface Expression {
-  // If centered is true, 'eye' is drawn once at center (e.g. Heart, Sunglasses)
   centered?: boolean;
   eye: PixelGrid;
-  rightEye?: PixelGrid;   // If omitted and not centered, mirrors left eye
+  rightEye?: PixelGrid;
   eyeColor: string;
   glowColor: string;
   intensity: number;
-  eyeOffset: number;      // Distance from center to each eye center
-  dimEyeColor?: string;
+  eyeOffset: number;
 }
 
 function mirrorGrid(g: PixelGrid): PixelGrid {
   return g.map((row) => [...row].reverse());
 }
 
-// ─── Pixel Expression Library (Faithfully matching reference Divoom LED art) ───
-// Reference: 4-6 columns, 7-8 rows per eye for crisp, instantly recognizable faces
+// ─── Reference Pixel Art Eye Matrices (100% matched to reference Divoom art) ──
 
-// 1. 待机 (Standby / Idle): Iconic 4x8 rounded capsules
+// 1. Standby / Idle (待机): 4x8 rounded capsules
 const PILL_EYE: PixelGrid = [
   [0, 1, 1, 0],
   [1, 1, 1, 1],
@@ -54,12 +45,12 @@ const PILL_EYE: PixelGrid = [
   [0, 1, 1, 0],
 ];
 
-// Blink: single horizontal bar
+// Blink: Crisp horizontal line
 const BLINK_EYE: PixelGrid = [
   [1, 1, 1, 1, 1, 1],
 ];
 
-// 2. 微笑 (Smile / Joy / Happy `∩ ∩`): Inverted U arches
+// 2. Smile / Happy (微笑 `∩ ∩`): Arched anime eyes
 const ARCH_HAPPY_EYE: PixelGrid = [
   [0, 1, 1, 0],
   [1, 0, 0, 1],
@@ -69,7 +60,7 @@ const ARCH_HAPPY_EYE: PixelGrid = [
   [1, 0, 0, 1],
 ];
 
-// 3. 闭眼 (Closed / Sleeping `∪ ∪`): Gentle curved U
+// 3. Resting / Sleeping (闭眼 `∪ ∪`): Gentle curved U
 const SLEEP_EYE: PixelGrid = [
   [1, 0, 0, 1],
   [1, 0, 0, 1],
@@ -77,7 +68,7 @@ const SLEEP_EYE: PixelGrid = [
   [0, 1, 1, 0],
 ];
 
-// 4. 激动 / Typing (Excited squeeze `> <`): Bold 5x7 chevrons (2px thick)
+// 4. Excited / Typing Burst (激动 `> <`): Bold 5x7 chevrons (2px thick)
 const CHEVRON_LEFT: PixelGrid = [
   [1, 1, 0, 0, 0],
   [0, 1, 1, 0, 0],
@@ -88,7 +79,7 @@ const CHEVRON_LEFT: PixelGrid = [
   [1, 1, 0, 0, 0],
 ];
 
-// 5. 狡黠 (Mischievous / Wink): Left standard pill, Right `<` wink
+// 5. Wink / Cheeky (狡黠): Left pill, Right `<` wink
 const WINK_CHEVRON: PixelGrid = [
   [0, 0, 0, 1],
   [0, 0, 1, 1],
@@ -99,7 +90,7 @@ const WINK_CHEVRON: PixelGrid = [
   [0, 0, 0, 1],
 ];
 
-// 6. 爱心 (Heart / Loved / Celebrating): Big centered pixel heart
+// 6. Centered Heart (爱心)
 const CENTERED_HEART: PixelGrid = [
   [0, 1, 1, 0, 0, 0, 1, 1, 0],
   [1, 1, 1, 1, 0, 1, 1, 1, 1],
@@ -111,7 +102,7 @@ const CENTERED_HEART: PixelGrid = [
   [0, 0, 0, 0, 1, 0, 0, 0, 0],
 ];
 
-// 7. 墨镜 (Sunglasses / Dev Boss / Coding): Iconic pixel sunglasses across face
+// 7. Cyber Shades (墨镜)
 const SHADES_CENTERED: PixelGrid = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0],
@@ -119,7 +110,7 @@ const SHADES_CENTERED: PixelGrid = [
   [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
 ];
 
-// 8. 星星 (Sparkle / Star eyes): Glint inside box
+// 8. Sparkle (星星)
 const SPARKLE_EYE: PixelGrid = [
   [0, 1, 1, 1, 0],
   [1, 0, 0, 0, 1],
@@ -130,13 +121,37 @@ const SPARKLE_EYE: PixelGrid = [
   [0, 1, 1, 1, 0],
 ];
 
-// 9. 冷淡 (Deadpan / Chill): Flat horizontal bars
-const DEADPAN_BAR: PixelGrid = [
-  [1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1],
+// 9. Side Glance / Curious (斜视)
+const SIDE_GLANCE_EYE: PixelGrid = [
+  [1, 1, 1, 1, 1],
+  [1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0],
+  [1, 1, 1, 1, 1],
 ];
 
-// 10. 皱眉 (Skeptical / Thinking): Eyebrow dot over bar
+// 10. Determined / Angry / Sharp Focus (专注 `\ /`)
+const ANGRY_EYE_LEFT: PixelGrid = [
+  [1, 1, 0, 0, 0, 0],
+  [0, 1, 1, 0, 0, 0],
+  [0, 0, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 0, 1, 1],
+];
+
+// 11. Shocked Hollow Eyes (吓 `O O`)
+const SHOCKED_HOLLOW_EYE: PixelGrid = [
+  [0, 1, 1, 0],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [0, 1, 1, 0],
+];
+
+// 12. Thinking / Skeptical
 const SKEPTICAL_EYE_LEFT: PixelGrid = [
   [0, 1, 1, 0],
   [1, 1, 0, 0],
@@ -152,38 +167,8 @@ const SKEPTICAL_EYE_RIGHT: PixelGrid = [
   [1, 1, 1, 1, 1],
 ];
 
-// 11. 生气 / 专注 (Determined / Angry `\ /`): Sharp angled eyes
-const ANGRY_EYE_LEFT: PixelGrid = [
-  [1, 1, 0, 0, 0, 0],
-  [0, 1, 1, 0, 0, 0],
-  [0, 0, 1, 1, 0, 0],
-  [0, 0, 0, 1, 1, 0],
-  [0, 0, 0, 0, 1, 1],
-];
-
-// 12. 吓 (Shocked / Wide open `O O`): Hollow capsules
-const SHOCKED_HOLLOW_EYE: PixelGrid = [
-  [0, 1, 1, 0],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [0, 1, 1, 0],
-];
-
-// 13. 斜视 (Side glance / Curious): Eyes shifted to the left
-const SIDE_GLANCE_EYE: PixelGrid = [
-  [1, 1, 1, 1, 1],
-  [1, 1, 0, 0, 0],
-  [1, 1, 0, 0, 0],
-  [1, 1, 0, 0, 0],
-  [1, 1, 1, 1, 1],
-];
-
-// Complete map of all pet animation states to premium LED expressions
-const EXPR_MAP: Record<PetAnimationState, Expression> = {
+// Expression map for animation states
+const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious', Expression> = {
   idle: {
     eye: PILL_EYE,
     eyeColor: '#ffffff',
@@ -196,6 +181,30 @@ const EXPR_MAP: Record<PetAnimationState, Expression> = {
     eyeColor: '#ffffff',
     glowColor: '#00d2ff',
     intensity: 0.8,
+    eyeOffset: 26,
+  },
+  wink: {
+    eye: PILL_EYE,
+    rightEye: WINK_CHEVRON,
+    eyeColor: '#38bdf8',
+    glowColor: '#00e5ff',
+    intensity: 1.25,
+    eyeOffset: 26,
+  },
+  curious_glance: {
+    eye: SIDE_GLANCE_EYE,
+    rightEye: SIDE_GLANCE_EYE,
+    eyeColor: '#38bdf8',
+    glowColor: '#0284c7',
+    intensity: 1.2,
+    eyeOffset: 26,
+  },
+  typing_curious: {
+    eye: SIDE_GLANCE_EYE,
+    rightEye: WINK_CHEVRON,
+    eyeColor: '#c084fc',
+    glowColor: '#a855f7',
+    intensity: 1.5,
     eyeOffset: 26,
   },
   happy: {
@@ -215,7 +224,7 @@ const EXPR_MAP: Record<PetAnimationState, Expression> = {
   },
   curious: {
     eye: SIDE_GLANCE_EYE,
-    rightEye: SIDE_GLANCE_EYE, // both look same direction
+    rightEye: SIDE_GLANCE_EYE,
     eyeColor: '#38bdf8',
     glowColor: '#0284c7',
     intensity: 1.2,
@@ -266,8 +275,7 @@ const EXPR_MAP: Record<PetAnimationState, Expression> = {
     eyeOffset: 26,
   },
   typing: {
-    eye: CHEVRON_LEFT,
-    // rightEye is mirrored CHEVRON_LEFT (<)
+    eye: CHEVRON_LEFT, // Exciting face > <
     eyeColor: '#c084fc',
     glowColor: '#a855f7',
     intensity: 1.6,
@@ -290,7 +298,6 @@ const EXPR_MAP: Record<PetAnimationState, Expression> = {
   },
   focused: {
     eye: ANGRY_EYE_LEFT,
-    // rightEye will mirror to /
     eyeColor: '#00f5ff',
     glowColor: '#0284c7',
     intensity: 1.5,
@@ -311,7 +318,7 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
   isTyping = false,
   timerProgress = 0,
   isTimerActive = false,
-  size = 170,
+  size = 115,
   className = '',
   onClick,
 }) => {
@@ -319,11 +326,11 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
 
   const stateRef = useRef(state);
   const isTypingRef = useRef(isTyping);
-  const isSpeakingRef = useRef(isSpeaking);
+  const sizeRef = useRef(size);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
-  useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
+  useEffect(() => { sizeRef.current = size; }, [size]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -340,93 +347,170 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
     let toExpr = fromExpr;
     let transAlpha = 1.0;
 
-    // Natural blink timer for idle state
-    let nextBlinkTime = performance.now() + 2500 + Math.random() * 2000;
-    let isBlinking = false;
+    // Natural micro-expression timers
+    let nextBlinkTime = performance.now() + 2400 + Math.random() * 1600;
+    let blinkStage = 0; // 0 = not blinking, 1 = first blink, 2 = pause, 3 = second blink
     let blinkEndTime = 0;
+    let isDoubleBlink = false;
 
-    // Particle embers (ultra subtle)
+    // Curious glance timer (eyes subtly look around desktop)
+    let nextGlanceTime = performance.now() + 5500 + Math.random() * 3500;
+    let glanceEndTime = 0;
+    let isGlancing = false;
+
+    // Playful wink timer
+    let nextWinkTime = performance.now() + 14000 + Math.random() * 8000;
+    let winkEndTime = 0;
+    let isWinking = false;
+
+    // Typing alternate expression timer (swaps between exciting > < and curious wink)
+    let typingCycleTimer = 0;
+    let typingCycleState: 'excited' | 'curious' = 'excited';
+
+    // Particle embers
     const embers: { x: number; y: number; vy: number; alpha: number; color: string; size: number }[] = [];
     let emberTimer = 0;
-
-    // Helper: draw single pixel grid
-    const drawGrid = (
-      grid: PixelGrid,
-      cx: number,
-      cy: number,
-      color: string,
-      glowColor: string,
-      intensity: number,
-      alpha: number
-    ) => {
-      if (alpha < 0.01) return;
-      const cols = Math.max(...grid.map((r) => r.length));
-      const rows = grid.length;
-      const totalW = cols * CELL - GAP;
-      const totalH = rows * CELL - GAP;
-      const sx = cx - totalW / 2;
-      const sy = cy - totalH / 2;
-
-      ctx.save();
-      // LED Glow halo
-      ctx.shadowBlur = Math.round(10 * intensity);
-      ctx.shadowColor = glowColor;
-      ctx.fillStyle = color;
-
-      for (let r = 0; r < rows; r++) {
-        const row = grid[r];
-        for (let c = 0; c < row.length; c++) {
-          const val = row[c] ?? 0;
-          if (val > 0) {
-            ctx.globalAlpha = Math.max(0, Math.min(1, alpha * val));
-            const x = sx + c * CELL;
-            const y = sy + r * CELL;
-
-            // Physical LED bead with subtle rounded corners
-            ctx.beginPath();
-            ctx.roundRect(x, y, PX, PX, 1.8);
-            ctx.fill();
-          }
-        }
-      }
-      ctx.restore();
-    };
-
-    // Helper: draw full face expression
-    const drawFace = (expr: Expression, alpha: number, cx: number, cy: number) => {
-      if (alpha < 0.01) return;
-
-      if (expr.centered) {
-        // Single central motif (Heart, Sunglasses)
-        drawGrid(expr.eye, cx, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
-      } else {
-        // Two distinct eyes
-        const lGrid = expr.eye;
-        const rGrid = expr.rightEye ?? mirrorGrid(lGrid);
-
-        drawGrid(lGrid, cx - expr.eyeOffset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
-        drawGrid(rGrid, cx + expr.eyeOffset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
-      }
-    };
 
     const render = (now: number) => {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
+      const currentSize = sizeRef.current;
       const activeState = stateRef.current;
-      const typingNow = isTypingRef.current || activeState === 'coding' || activeState === 'typing';
+      const typingNow = isTypingRef.current || activeState === 'typing';
 
-      // ── Handle spontaneous natural blinking when idle ───────────────────
-      if (activeState === 'idle' && !isBlinking && now > nextBlinkTime) {
-        isBlinking = true;
-        blinkEndTime = now + 120; // quick 120ms blink
-      }
-      if (isBlinking && now > blinkEndTime) {
-        isBlinking = false;
-        nextBlinkTime = now + 3200 + Math.random() * 2800;
+      // ── Dynamic Responsive Pixel Grid Sizing ────────────────────────────
+      // Scales with perfect proportions at any size (from 70px to 220px)
+      const scale = currentSize / 170;
+      const CELL = Math.max(3.2, 9.0 * scale);
+      const PX = Math.max(2.4, CELL * 0.72);
+      const GAP = CELL - PX;
+
+      // Helper: draw single pixel grid scaled
+      const drawGrid = (
+        grid: PixelGrid,
+        cx: number,
+        cy: number,
+        color: string,
+        glowColor: string,
+        intensity: number,
+        alpha: number
+      ) => {
+        if (alpha < 0.01) return;
+        const cols = Math.max(...grid.map((r) => r.length));
+        const rows = grid.length;
+        const totalW = cols * CELL - GAP;
+        const totalH = rows * CELL - GAP;
+        const sx = cx - totalW / 2;
+        const sy = cy - totalH / 2;
+
+        ctx.save();
+        ctx.shadowBlur = Math.round(8 * intensity * Math.max(0.65, scale));
+        ctx.shadowColor = glowColor;
+        ctx.fillStyle = color;
+
+        for (let r = 0; r < rows; r++) {
+          const row = grid[r];
+          for (let c = 0; c < row.length; c++) {
+            const val = row[c] ?? 0;
+            if (val > 0) {
+              ctx.globalAlpha = Math.max(0, Math.min(1, alpha * val));
+              const x = sx + c * CELL;
+              const y = sy + r * CELL;
+
+              ctx.beginPath();
+              ctx.roundRect(x, y, PX, PX, Math.max(1, 1.8 * scale));
+              ctx.fill();
+            }
+          }
+        }
+        ctx.restore();
+      };
+
+      // Helper: draw full face expression
+      const drawFace = (expr: Expression, alpha: number, cx: number, cy: number) => {
+        if (alpha < 0.01) return;
+        const offset = Math.round(expr.eyeOffset * scale);
+
+        if (expr.centered) {
+          drawGrid(expr.eye, cx, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+        } else {
+          const lGrid = expr.eye;
+          const rGrid = expr.rightEye ?? mirrorGrid(lGrid);
+
+          drawGrid(lGrid, cx - offset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+          drawGrid(rGrid, cx + offset, cy, expr.eyeColor, expr.glowColor, expr.intensity, alpha);
+        }
+      };
+
+      // ── Typing Cycle Animation (Exciting > < vs Curious Glance) ─────────
+      if (typingNow) {
+        typingCycleTimer += dt;
+        if (typingCycleTimer > 1.8) {
+          typingCycleTimer = 0;
+          typingCycleState = typingCycleState === 'excited' ? 'curious' : 'excited';
+        }
+      } else {
+        typingCycleTimer = 0;
+        typingCycleState = 'excited';
       }
 
-      const effectiveState = (isBlinking && activeState === 'idle') ? 'blink' : activeState;
+      // ── Handle spontaneous natural blinking with occasional double-blink ──
+      if (activeState === 'idle' && !typingNow && blinkStage === 0 && now > nextBlinkTime) {
+        blinkStage = 1;
+        isDoubleBlink = Math.random() < 0.25; // 25% chance double-blink
+        blinkEndTime = now + 120;
+      }
+      if (blinkStage === 1 && now > blinkEndTime) {
+        if (isDoubleBlink) {
+          blinkStage = 2; // brief pause open
+          blinkEndTime = now + 70;
+        } else {
+          blinkStage = 0;
+          nextBlinkTime = now + 2400 + Math.random() * 2000;
+        }
+      }
+      if (blinkStage === 2 && now > blinkEndTime) {
+        blinkStage = 3; // second blink
+        blinkEndTime = now + 110;
+      }
+      if (blinkStage === 3 && now > blinkEndTime) {
+        blinkStage = 0;
+        nextBlinkTime = now + 2600 + Math.random() * 2200;
+      }
+
+      // ── Handle curious wandering glance when idle ───────────────────────
+      if (activeState === 'idle' && !typingNow && blinkStage === 0 && !isGlancing && !isWinking && now > nextGlanceTime) {
+        isGlancing = true;
+        glanceEndTime = now + 1400; // look aside for 1.4s
+      }
+      if (isGlancing && now > glanceEndTime) {
+        isGlancing = false;
+        nextGlanceTime = now + 6500 + Math.random() * 4500;
+      }
+
+      // ── Handle playful wink when idle ────────────────────────────────────
+      if (activeState === 'idle' && !typingNow && blinkStage === 0 && !isGlancing && !isWinking && now > nextWinkTime) {
+        isWinking = true;
+        winkEndTime = now + 600; // 600ms friendly wink
+      }
+      if (isWinking && now > winkEndTime) {
+        isWinking = false;
+        nextWinkTime = now + 16000 + Math.random() * 10000;
+      }
+
+      // Determine effective visual state
+      let effectiveState: PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' = activeState;
+
+      if (typingNow) {
+        effectiveState = typingCycleState === 'curious' ? 'typing_curious' : 'typing';
+      } else if (blinkStage === 1 || blinkStage === 3) {
+        effectiveState = 'blink';
+      } else if (isWinking && activeState === 'idle') {
+        effectiveState = 'wink';
+      } else if (isGlancing && activeState === 'idle') {
+        effectiveState = 'curious_glance';
+      }
 
       // ── State Transition cross-fade ──────────────────────────────────────
       if (effectiveState !== prevState) {
@@ -436,13 +520,13 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
         prevState = effectiveState;
       }
       if (transAlpha < 1) {
-        transAlpha = Math.min(1, transAlpha + dt / 0.18); // 180ms fast crisp transition
+        transAlpha = Math.min(1, transAlpha + dt / 0.16);
       }
 
-      // ── HiDPI / Retina Canvas Setup ───────────────────────────────────────
+      // ── HiDPI Canvas Scaling ─────────────────────────────────────────────
       const dpr = Math.min(window.devicePixelRatio || 1, 3);
-      const logW = size;
-      const logH = size;
+      const logW = currentSize;
+      const logH = currentSize;
       const physW = Math.round(logW * dpr);
       const physH = Math.round(logH * dpr);
 
@@ -458,42 +542,42 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       const cx = logW / 2;
       const cy = logH / 2;
 
-      // Subtle dynamic bounce when typing / coding
-      const typingBob = typingNow ? Math.sin(now * 0.018) * 1.5 : 0;
+      // Keystroke bounce when typing
+      const typingBob = typingNow ? Math.sin(now * 0.02) * (1.6 * scale) : 0;
       const faceY = cy + typingBob;
 
-      // ── Render Face Expressions ──────────────────────────────────────────
+      // Render Face
       if (transAlpha < 1) {
         drawFace(fromExpr, 1 - transAlpha, cx, faceY);
       }
       drawFace(toExpr, transAlpha, cx, faceY);
 
-      // ── Subtle Floating LED Sparkles when celebrating / music ────────────
+      // Subtle rising sparkle embers
       emberTimer += dt;
       const shouldSpawnEmber = activeState === 'celebrating' || activeState === 'happy' || activeState === 'listening';
-      if (shouldSpawnEmber && emberTimer > 0.35 && embers.length < 8) {
+      if (shouldSpawnEmber && emberTimer > 0.4 && embers.length < 6) {
         emberTimer = 0;
         embers.push({
-          x: cx + (Math.random() - 0.5) * 60,
-          y: faceY + 18,
-          vy: -(16 + Math.random() * 14),
-          alpha: 0.8,
+          x: cx + (Math.random() - 0.5) * (40 * scale),
+          y: faceY + (12 * scale),
+          vy: -(14 + Math.random() * 12),
+          alpha: 0.75,
           color: toExpr.glowColor,
-          size: 2 + Math.random() * 1.5,
+          size: Math.max(1.5, 2.2 * scale),
         });
       }
 
       for (let i = embers.length - 1; i >= 0; i--) {
         const p = embers[i];
         p.y += p.vy * dt;
-        p.alpha -= dt * 0.5;
+        p.alpha -= dt * 0.55;
         if (p.alpha <= 0) {
           embers.splice(i, 1);
           continue;
         }
         ctx.save();
         ctx.globalAlpha = p.alpha;
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 5;
         ctx.shadowColor = p.color;
         ctx.fillStyle = p.color;
         ctx.beginPath();
@@ -508,10 +592,10 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
 
     rafId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(rafId);
-  }, [size]);
+  }, []);
 
-  // Timer ring geometry
-  const circumference = 2 * Math.PI * 80;
+  const radius = Math.max(20, (size / 2) - 4);
+  const circumference = 2 * Math.PI * radius;
   const strokeOffset = circumference - Math.max(0, Math.min(1, timerProgress)) * circumference;
 
   return (
@@ -522,17 +606,24 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       style={{ width: size, height: size }}
       onClick={onClick}
     >
-      {/* 1. Precision Ethereal Ambient Halo Bloom */}
+      {/* 1. Outer Ambient Halo Bloom */}
       <div className="glow-orb-halo" />
 
       {/* 2. Optional Orbital Timer Progress Ring */}
       {isTimerActive && (
         <div className="glow-orb-timer-ring">
-          <svg className="glow-orb-timer-svg" viewBox="0 0 170 170">
-            <circle className="glow-orb-timer-track" cx="85" cy="85" r="80" />
+          <svg className="glow-orb-timer-svg" viewBox={`0 0 ${size} ${size}`}>
+            <circle
+              className="glow-orb-timer-track"
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+            />
             <circle
               className="glow-orb-timer-progress"
-              cx="85" cy="85" r="80"
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
               strokeDasharray={circumference}
               strokeDashoffset={strokeOffset}
             />
@@ -542,13 +633,8 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
 
       {/* 3. Deep OLED Glass Chassis */}
       <div className="glow-orb-sphere">
-        {/* Subtle dark internal ambient depth */}
         <div className="glow-orb-ambient-depth" />
-
-        {/* Precision Optical Edge Reflection Arc (Razor-thin Apple glass edge) */}
         <div className="glow-orb-lens-sheen" />
-
-        {/* Micro-LED Display Canvas */}
         <div className="glow-orb-face-container">
           <canvas ref={canvasRef} className="glow-orb-face-canvas" />
         </div>

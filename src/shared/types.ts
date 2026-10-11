@@ -76,7 +76,7 @@ export interface AiSettings {
 }
 
 export interface AppSettings {
-  petSize: number; // 120 - 320 px (default 180)
+  petSize: number; // 70 - 240 px (default 115)
   opacity: number; // 0.3 - 1.0 (default 0.98)
   animationIntensity: 'subtle' | 'normal' | 'vibrant';
   alwaysOnTop: boolean;

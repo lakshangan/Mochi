@@ -21,20 +21,50 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <Sliders size={16} /> Pet Appearance & Display
         </div>
 
-        <div className="setting-item">
-          <div className="setting-label-col">
-            <span className="setting-name">Pet Size</span>
-            <span className="setting-desc">{settings.petSize}px</span>
+        <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="setting-label-col">
+              <span className="setting-name">Mascot Size</span>
+              <span className="setting-desc">{settings.petSize}px (Compact & Screen-friendly)</span>
+            </div>
+            <input
+              type="range"
+              min="70"
+              max="220"
+              step="5"
+              value={settings.petSize}
+              onChange={(e) => onUpdateSettings({ petSize: parseInt(e.target.value, 10) })}
+              className="range-slider"
+              style={{ width: '130px' }}
+            />
           </div>
-          <input
-            type="range"
-            min="120"
-            max="300"
-            step="10"
-            value={settings.petSize}
-            onChange={(e) => onUpdateSettings({ petSize: parseInt(e.target.value, 10) })}
-            className="range-slider"
-          />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Mini', size: 75 },
+              { label: 'Small', size: 95 },
+              { label: 'Compact', size: 115 },
+              { label: 'Medium', size: 140 },
+              { label: 'Standard', size: 170 },
+            ].map((preset) => (
+              <button
+                key={preset.size}
+                type="button"
+                onClick={() => onUpdateSettings({ petSize: preset.size })}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: settings.petSize === preset.size ? '1px solid #00f7ff' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: settings.petSize === preset.size ? 'rgba(0, 247, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  color: settings.petSize === preset.size ? '#00f7ff' : 'rgba(255, 255, 255, 0.65)',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {preset.label} ({preset.size}px)
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="setting-item">
