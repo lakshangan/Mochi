@@ -11,6 +11,7 @@ export class MochiOrbScene {
   private rootGroup: THREE.Group;
   private faceManager: FaceTextureManager;
   private particleSystem: MochiParticleSystem;
+  private orbitalRing: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>;
 
   private isRunning = true;
   private clock: THREE.Clock;
@@ -19,6 +20,7 @@ export class MochiOrbScene {
   private currentTilt = { x: 0, y: 0 };
   private bounceOffset = 0;
   private bounceVelocity = 0;
+  private isTimerActive = false;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -36,7 +38,6 @@ export class MochiOrbScene {
     });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    // Soften tone mapping so it doesn't crush colors
     this.renderer.toneMapping = THREE.NoToneMapping;
     container.appendChild(this.renderer.domElement);
 
@@ -45,47 +46,58 @@ export class MochiOrbScene {
 
     this.faceManager = new FaceTextureManager(512);
 
-    // Scale the entire orb down to make it smaller as requested
-    this.rootGroup.scale.set(0.7, 0.7, 0.7);
+    // Scale the entire orb down slightly for sleek minimal desktop footprint
+    this.rootGroup.scale.set(0.72, 0.72, 0.72);
 
-    // Inner Glowing Screen (Moved forward to sit on the surface of the solid orb)
-    const screenGeo = new THREE.PlaneGeometry(1.5, 0.8);
+    // 1. Inner Glowing Living Aura Screen (Gemini / Siri iridescent face)
+    const screenGeo = new THREE.PlaneGeometry(1.65, 1.65);
     const screenMat = new THREE.MeshBasicMaterial({
       map: this.faceManager.texture,
       transparent: true,
       blending: THREE.AdditiveBlending,
-      depthWrite: false
+      depthWrite: false,
     });
     const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-    screenMesh.position.set(0, 0, 0.94); 
+    screenMesh.position.set(0, 0, 0.95);
     this.rootGroup.add(screenMesh);
 
-    // Solid Opaque Body
+    // 2. Solid Deep Obsidian Sphere Body
     const shellGeo = new THREE.SphereGeometry(1.0, 64, 64);
     const shellMat = new THREE.MeshPhongMaterial({
-      color: 0x090a10, // Solid dark body
+      color: 0x080911,
       transparent: false,
-      shininess: 90,
-      specular: 0x223355, 
+      shininess: 100,
+      specular: 0x1e293b,
     });
     const shellMesh = new THREE.Mesh(shellGeo, shellMat);
     this.rootGroup.add(shellMesh);
 
-    // Particles (emitting from top)
+    // 3. Holographic Orbital Countdown Ring (Visible during Active Timers)
+    const ringGeo = new THREE.TorusGeometry(1.24, 0.02, 16, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00f7ff,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+    });
+    this.orbitalRing = new THREE.Mesh(ringGeo, ringMat);
+    this.orbitalRing.rotation.x = Math.PI / 2.3;
+    this.rootGroup.add(this.orbitalRing);
+
+    // 4. Stardust Particles (Emitting softly around the aura)
     this.particleSystem = new MochiParticleSystem();
-    // Move particle system up slightly to look like it's emitting from the top of the bubble
-    this.particleSystem.group.position.y = 0.8;
+    this.particleSystem.group.position.y = 0.85;
     this.rootGroup.add(this.particleSystem.group);
 
-    // Lighting to make the glass bubble pop
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // 5. Studio Lighting with Siri / Gemini Cyber Rim Glow
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     this.scene.add(ambientLight);
 
-    const rimLight = new THREE.DirectionalLight(0x7f5af0, 1.5);
+    const rimLight = new THREE.DirectionalLight(0x7f5af0, 1.8);
     rimLight.position.set(-2, 3, -2);
     this.scene.add(rimLight);
-    
-    const keyLight = new THREE.DirectionalLight(0x00f7ff, 2.0);
+
+    const keyLight = new THREE.DirectionalLight(0x00f7ff, 2.2);
     keyLight.position.set(2, 2, 2);
     this.scene.add(keyLight);
 
@@ -116,6 +128,15 @@ export class MochiOrbScene {
     }
   }
 
+  public setTimer(active: boolean, progress = 0, remainingText = ''): void {
+    this.isTimerActive = active;
+    this.faceManager.setTimer(active, progress, remainingText);
+  }
+
+  public setSpeaking(speaking: boolean): void {
+    this.faceManager.setSpeaking(speaking);
+  }
+
   public setGaze(x: number, y: number): void {
     this.targetGaze = { x, y };
     this.faceManager.setExpression(this.currentState, this.targetGaze);
@@ -139,6 +160,16 @@ export class MochiOrbScene {
     this.faceManager.update(delta);
     this.particleSystem.update(delta, this.currentState);
 
+    // Animate orbital ring opacity & rotation when timer is active
+    if (this.orbitalRing) {
+      const targetOpacity = this.isTimerActive ? 0.85 : 0;
+      this.orbitalRing.material.opacity += (targetOpacity - this.orbitalRing.material.opacity) * delta * 5;
+      if (this.isTimerActive) {
+        this.orbitalRing.rotation.z += delta * 0.8;
+      }
+    }
+
+    // Physical bounce physics
     if (this.bounceVelocity !== 0 || this.bounceOffset > 0) {
       this.bounceOffset += this.bounceVelocity * delta * 8;
       this.bounceVelocity -= 9.8 * delta * 0.4;
@@ -148,10 +179,13 @@ export class MochiOrbScene {
       }
     }
 
-    const floatY = Math.sin(elapsedTime * 1.5) * 0.04 + this.bounceOffset;
+    // Organic floating sine wave
+    const floatFrequency = this.currentState === 'sleeping' ? 0.8 : 1.5;
+    const floatAmplitude = this.currentState === 'sleeping' ? 0.02 : 0.04;
+    const floatY = Math.sin(elapsedTime * floatFrequency) * floatAmplitude + this.bounceOffset;
     this.rootGroup.position.y = floatY;
 
-    // Smooth tilt
+    // Smooth head-tilt gaze tracking
     const targetTiltX = this.targetGaze.y * 0.2;
     const targetTiltY = this.targetGaze.x * 0.3;
     this.currentTilt.x += (targetTiltX - this.currentTilt.x) * delta * 5;

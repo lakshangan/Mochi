@@ -28,6 +28,10 @@ export class FallbackOrbRenderer {
 
   public triggerBlink(): void {}
 
+  public setTimer(_active: boolean, _progress = 0, _remainingText = ''): void {}
+
+  public setSpeaking(_isSpeaking: boolean): void {}
+
   private render = (): void => {
     if (!this.isRunning) return;
     requestAnimationFrame(this.render);

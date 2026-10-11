@@ -263,6 +263,87 @@ body {
   transform: scale(1.05);
 }
 
+/* Siri & Gemini Digital Hologram Timer Badge on Mascot */
+.mochi-timer-hologram-pill {
+  position: absolute;
+  top: 14px;
+  z-index: 105;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 15, 32, 0.88);
+  backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(0, 247, 255, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 247, 255, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  animation: timerPillGlow 3s ease-in-out infinite alternate;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.mochi-timer-hologram-pill:hover {
+  transform: translateY(-2px) scale(1.04);
+  border-color: rgba(0, 247, 255, 0.7);
+  box-shadow: 0 12px 36px rgba(0, 247, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.timer-hologram-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00f7ff;
+  box-shadow: 0 0 10px #00f7ff;
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+.timer-hologram-icon {
+  color: #00f7ff;
+  filter: drop-shadow(0 0 4px rgba(0, 247, 255, 0.6));
+}
+
+.timer-hologram-time {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.timer-hologram-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.4px;
+}
+
+@keyframes timerPillGlow {
+  0% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 247, 255, 0.2);
+  }
+  100% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.35);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
 .mac-turn-off-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);

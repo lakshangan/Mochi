@@ -4,9 +4,9 @@ import { FallbackOrbRenderer } from '../graphics/fallback-renderer';
 import { MovementController } from '../engine/movement-controller';
 import { AnimationController } from '../engine/animation-controller';
 import { BehaviorEngine } from '../engine/behavior-engine';
-import { PetAnimationState } from '../../shared/types';
+import { PetAnimationState, SystemActivityEvent, ActiveTimerState } from '../../shared/types';
 import { SoundEffects } from '../../shared/sound-effects';
-import { Power } from 'lucide-react';
+import { Power, Timer as TimerIcon } from 'lucide-react';
 
 export const OrbPet: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -17,34 +17,22 @@ export const OrbPet: React.FC = () => {
 
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [isHovered, setIsHovered] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
     title: 'Hello there.',
     subtitle: 'Click me to open your assistant.',
   });
-  const [reactionMessage, setReactionMessage] = useState<{ title: string; subtitle: string } | null>(null);
+  const [reactionMessage, setReactionMessage] = useState<{
+    title: string;
+    subtitle: string;
+    appName?: string;
+  } | null>(null);
 
-  // New useEffect to show temporary speech bubble based on system activity
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (currentState === 'typing') {
-      setReactionMessage({ title: 'Typing away...', subtitle: 'What are you writing?' });
-      timeout = setTimeout(() => setReactionMessage(null), 5000);
-    } else if (currentState === 'coding') {
-      setReactionMessage({ title: 'Coding Session', subtitle: 'Writing some awesome code!' });
-      timeout = setTimeout(() => setReactionMessage(null), 5000);
-    } else if (currentState === 'listening') {
-      setReactionMessage({ title: 'Jamming Out ♫', subtitle: 'Listening to a good song?' });
-      timeout = setTimeout(() => setReactionMessage(null), 5000);
-    } else if (currentState === 'sleeping') {
-      setReactionMessage({ title: 'Zzz...', subtitle: 'Taking a quick nap.' });
-      timeout = setTimeout(() => setReactionMessage(null), 5000);
-    } else {
-      setReactionMessage(null);
-    }
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [currentState]);
+  const formatTime = (totalSec: number) => {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const getDynamicGreeting = () => {
     const hour = new Date().getHours();
@@ -60,10 +48,10 @@ export const OrbPet: React.FC = () => {
     }
 
     const tips = [
-      { title: `${timeGreeting}.`, subtitle: 'I am here if you need to focus or take a break.' },
+      { title: `${timeGreeting}.`, subtitle: 'Ready to assist your focus & productivity.' },
       { title: 'Welcome back.', subtitle: 'Let me know how I can help you today.' },
-      { title: 'Hello there.', subtitle: 'Remember to stay hydrated and take short breaks.' },
-      { title: 'Focus mode.', subtitle: 'Ready to start a deep work session when you are.' },
+      { title: 'Stay hydrated.', subtitle: 'Take deep breaths and keep flow going.' },
+      { title: 'Focus companion.', subtitle: 'Click anytime to manage timers or notes.' },
     ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -72,7 +60,7 @@ export const OrbPet: React.FC = () => {
     setIsHovered(true);
     setGreeting(getDynamicGreeting());
     animControllerRef.current?.triggerReaction('happy', 2500);
-    SoundEffects.chirp(0.25);
+    SoundEffects.chirp(0.2);
   };
 
   const handleMouseLeave = () => {
@@ -81,7 +69,7 @@ export const OrbPet: React.FC = () => {
 
   const handlePetAction = () => {
     behaviorEngineRef.current?.handlePetClick();
-    SoundEffects.chirp(0.45);
+    SoundEffects.chirp(0.35);
     if (window.mochiApi) {
       window.mochiApi.toggleAssistant();
     }
@@ -140,18 +128,60 @@ export const OrbPet: React.FC = () => {
     });
     moveControllerRef.current = move;
 
-    // 6. Listen to main process IPC pet state triggers
+    // 6. Listen to main process IPC triggers
     let unsubIpc: (() => void) | undefined;
+    let unsubTimerTick: (() => void) | undefined;
     let unsubTimerComp: (() => void) | undefined;
     let unsubReminder: (() => void) | undefined;
+    let unsubActivity: (() => void) | undefined;
+
+    let reactionTimeout: NodeJS.Timeout;
+    let speakingTimeout: NodeJS.Timeout;
 
     if (window.mochiApi) {
+      // Pet state sync
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
-        // Continuous state update instead of a 3-second reaction
         anim.setState(state);
       });
 
+      // Rich System Activity sync
+      unsubActivity = window.mochiApi.onSystemActivity((event: SystemActivityEvent) => {
+        // Subtle context reaction
+        setReactionMessage({
+          title: event.title,
+          subtitle: event.subtitle,
+          appName: event.appName,
+        });
+
+        // Trigger subtle speaking mouth animation on mascot
+        sceneRef.current?.setSpeaking(true);
+        if (speakingTimeout) clearTimeout(speakingTimeout);
+        speakingTimeout = setTimeout(() => {
+          sceneRef.current?.setSpeaking(false);
+        }, 2500);
+
+        // Auto fade reaction gently so it never disturbs workflow
+        if (reactionTimeout) clearTimeout(reactionTimeout);
+        reactionTimeout = setTimeout(() => {
+          setReactionMessage(null);
+        }, 6000);
+      });
+
+      // Digital Timer sync directly to 3D Mascot representation
+      unsubTimerTick = window.mochiApi.onTimerTick((timer: ActiveTimerState) => {
+        setActiveTimer(timer);
+        if (timer.status === 'running' && timer.totalDurationSeconds > 0) {
+          const progress = 1 - timer.remainingSeconds / timer.totalDurationSeconds;
+          const formatted = formatTime(timer.remainingSeconds);
+          sceneRef.current?.setTimer(true, progress, formatted);
+        } else {
+          sceneRef.current?.setTimer(false);
+        }
+      });
+
       unsubTimerComp = window.mochiApi.onTimerCompleted(() => {
+        setActiveTimer(null);
+        sceneRef.current?.setTimer(false);
         behavior.handleTimerComplete();
       });
 
@@ -163,8 +193,12 @@ export const OrbPet: React.FC = () => {
     return () => {
       unsubAnim();
       unsubIpc?.();
+      unsubTimerTick?.();
       unsubTimerComp?.();
       unsubReminder?.();
+      unsubActivity?.();
+      if (reactionTimeout) clearTimeout(reactionTimeout);
+      if (speakingTimeout) clearTimeout(speakingTimeout);
       move.destroy();
       anim.destroy();
       behavior.destroy();
@@ -172,13 +206,15 @@ export const OrbPet: React.FC = () => {
     };
   }, []);
 
+  const isTimerRunning = activeTimer && activeTimer.status === 'running';
+
   return (
     <div
       className="mochi-pet-window"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Interactive Apple-Style Floating Welcome Speech Bubble */}
+      {/* Siri / Gemini Style Floating Context Speech Bubble */}
       {(isHovered || reactionMessage) && (
         <div
           className="mochi-speech-bubble"
@@ -186,8 +222,12 @@ export const OrbPet: React.FC = () => {
           title="Click to open Mochi Assistant"
         >
           <div className="bubble-body">
-            <div className="bubble-title">{reactionMessage ? reactionMessage.title : greeting.title}</div>
-            <div className="bubble-subtitle">{reactionMessage ? reactionMessage.subtitle : greeting.subtitle}</div>
+            <div className="bubble-title">
+              {reactionMessage ? reactionMessage.title : greeting.title}
+            </div>
+            <div className="bubble-subtitle">
+              {reactionMessage ? reactionMessage.subtitle : greeting.subtitle}
+            </div>
           </div>
           <div className="bubble-actions">
             <span className="bubble-badge">Open ⌘</span>
@@ -203,15 +243,29 @@ export const OrbPet: React.FC = () => {
         </div>
       )}
 
-      {/* 3D Orb Canvas */}
+      {/* Mascot Digital Timer Representation (Holographic Timer Badge) */}
+      {isTimerRunning && (
+        <div
+          className="mochi-timer-hologram-pill"
+          onClick={handlePetAction}
+          title="Click to open timer controls"
+        >
+          <span className="timer-hologram-dot" />
+          <TimerIcon size={12} className="timer-hologram-icon" />
+          <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
+          <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
+        </div>
+      )}
+
+      {/* 3D Living Orb Canvas */}
       <div
         ref={containerRef}
-        className={`mochi-orb-canvas-container ${(isHovered || reactionMessage) ? 'hovered' : ''}`}
+        className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
         title="Mochi Companion (Click to open assistant, drag to move)"
       />
 
-      {/* Sleek status & quick Turn Off pill below Mochi */}
-      <div className={`mochi-hover-pill ${(isHovered || reactionMessage) ? 'visible' : ''}`}>
+      {/* Sleek Minimal Status & Quick Turn Off Pill below Mochi */}
+      <div className={`mochi-hover-pill ${isHovered || reactionMessage ? 'visible' : ''}`}>
         <span className="mochi-dot" />
         <span className="mochi-label">{currentState.toUpperCase()}</span>
         <button

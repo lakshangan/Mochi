@@ -242,8 +242,9 @@ app.whenReady().then(() => {
   timerService = new TimerService(persistenceService, notificationService);
   reminderService = new ReminderService(persistenceService, notificationService);
 
-  activityMonitor = new SystemActivityMonitor((state) => {
-    broadcast(IPC_CHANNELS.PET_SET_STATE, state as PetAnimationState);
+  activityMonitor = new SystemActivityMonitor((activity) => {
+    broadcast(IPC_CHANNELS.SYSTEM_ACTIVITY_CHANGED, activity);
+    broadcast(IPC_CHANNELS.PET_SET_STATE, activity.state);
   });
   
   // Only start activity monitor if user is on macOS and it's enabled in settings? 

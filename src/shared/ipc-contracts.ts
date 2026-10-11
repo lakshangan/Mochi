@@ -8,6 +8,7 @@ import {
   ActiveTimerState,
   ReminderNotificationEvent,
   PomodoroPhase,
+  SystemActivityEvent,
 } from './types';
 
 export const IPC_CHANNELS = {
@@ -52,6 +53,7 @@ export const IPC_CHANNELS = {
   PET_REACT: 'pet:react',
 
   // Platform & System
+  SYSTEM_ACTIVITY_CHANGED: 'system:activity-changed',
   SYSTEM_SHOW_NOTIFICATION: 'system:show-notification',
   SYSTEM_GET_PLATFORM: 'system:get-platform',
   SYSTEM_QUIT: 'system:quit',
@@ -99,6 +101,7 @@ export interface ElectronMochiAPI {
   onPetStateChange: (callback: (state: PetAnimationState) => void) => () => void;
 
   // System
+  onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => () => void;
   showNotification: (title: string, body: string) => Promise<void>;
   getPlatform: () => Promise<'darwin' | 'win32' | 'linux'>;
   quitApp: () => Promise<void>;

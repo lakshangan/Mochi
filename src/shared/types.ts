@@ -18,6 +18,25 @@ export type PetAnimationState =
 
 export type PomodoroPhase = 'focus' | 'short-break' | 'long-break' | 'idle';
 
+export type AppActivityCategory =
+  | 'development'
+  | 'design'
+  | 'browser'
+  | 'communication'
+  | 'productivity'
+  | 'entertainment'
+  | 'idle'
+  | 'system';
+
+export interface SystemActivityEvent {
+  appName: string;
+  category: AppActivityCategory;
+  state: PetAnimationState;
+  title: string;
+  subtitle: string;
+  timestamp: number;
+}
+
 export interface PetPosition {
   x: number;
   y: number;

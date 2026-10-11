@@ -10,6 +10,7 @@ import {
   ActiveTimerState,
   ReminderNotificationEvent,
   PomodoroPhase,
+  SystemActivityEvent,
 } from '../shared/types';
 
 const mochiApi: ElectronMochiAPI = {
@@ -134,6 +135,13 @@ const mochiApi: ElectronMochiAPI = {
   },
 
   // System
+  onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => {
+    const handler = (_event: any, activity: SystemActivityEvent) => callback(activity);
+    ipcRenderer.on(IPC_CHANNELS.SYSTEM_ACTIVITY_CHANGED, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.SYSTEM_ACTIVITY_CHANGED, handler);
+    };
+  },
   showNotification: (title: string, body: string) => {
     return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_SHOW_NOTIFICATION, title, body);
   },
