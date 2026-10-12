@@ -239,7 +239,6 @@ export const AssistantPanel: React.FC = () => {
                 className="shortcut-card"
                 onClick={() => {
                   completeWater();
-                  setPetState('happy');
                 }}
               >
                 <Droplet size={18} className="text-cyan" />

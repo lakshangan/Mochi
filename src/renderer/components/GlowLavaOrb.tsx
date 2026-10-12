@@ -178,6 +178,46 @@ const SKEPTICAL_EYE_RIGHT: PixelGrid = [
   [1, 1, 1, 1, 1],
 ];
 
+// 14. Classic Smile Emoticon `:)` (Eyes + Cheerful Smiling Mouth)
+const SMILE_EMOTICON: PixelGrid = [
+  [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+  [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+  [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+  [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+];
+
+// 15. Sad / Pouty Emoticon `:(` (Eyes + Downturned Pout Mouth)
+const SAD_EMOTICON: PixelGrid = [
+  [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+  [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+  [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+];
+
+// 16. Water Drop with Glowing Heart Core (Hydrated 💧💖)
+const WATER_DROP_HEART: PixelGrid = [
+  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+  [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+  [0, 1, 1, 2, 2, 0, 2, 2, 1, 1, 0],
+  [1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [1, 1, 0, 2, 2, 2, 2, 2, 0, 1, 1],
+  [0, 1, 1, 0, 2, 2, 2, 0, 1, 1, 0],
+  [0, 0, 1, 1, 0, 2, 0, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+];
+
 // Expression map for animation states
 const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst', Expression> = {
   idle: {
@@ -229,6 +269,30 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     glowColor: '#f59e0b',
     intensity: 1.4,
     eyeOffset: 26,
+  },
+  smile: {
+    centered: true,
+    eye: SMILE_EMOTICON,
+    eyeColor: '#fde047',
+    glowColor: '#eab308',
+    intensity: 1.5,
+    eyeOffset: 0,
+  },
+  sad: {
+    centered: true,
+    eye: SAD_EMOTICON,
+    eyeColor: '#60a5fa',
+    glowColor: '#3b82f6',
+    intensity: 1.3,
+    eyeOffset: 0,
+  },
+  hydrated: {
+    centered: true,
+    eye: WATER_DROP_HEART,
+    eyeColor: '#00f7ff',
+    glowColor: '#00f7ff',
+    intensity: 1.6,
+    eyeOffset: 0,
   },
   celebrating: {
     centered: true,
@@ -466,7 +530,11 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
           for (let c = 0; c < row.length; c++) {
             const val = row[c] ?? 0;
             if (val > 0) {
-              ctx.globalAlpha = Math.max(0, Math.min(1, alpha * val));
+              const isHeartPixel = val >= 2;
+              ctx.shadowColor = isHeartPixel ? '#f43f5e' : glowColor;
+              ctx.fillStyle = isHeartPixel ? '#ff3b88' : color;
+              ctx.globalAlpha = Math.max(0, Math.min(1, alpha * (isHeartPixel ? 1 : val)));
+
               const x = sx + c * CELL;
               const y = sy + r * CELL;
 

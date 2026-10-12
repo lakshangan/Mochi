@@ -66,6 +66,24 @@ describe('Local Command Parser & Duration Extractor', () => {
     expect(parseLocalCommand('Make Mochi happy').action).toBe('pet_state');
     expect(parseLocalCommand('Go to sleep Mochi').action).toBe('pet_state');
     expect(parseLocalCommand('Celebrate!').action).toBe('pet_state');
+
+    // Emoticons :) and :(
+    const smile = parseLocalCommand(':)');
+    expect(smile.action).toBe('pet_state');
+    expect(smile.payload.state).toBe('smile');
+
+    const sad = parseLocalCommand(':(');
+    expect(sad.action).toBe('pet_state');
+    expect(sad.payload.state).toBe('sad');
+
+    // Drink log / hydration
+    const drink = parseLocalCommand('drink log');
+    expect(drink.action).toBe('pet_state');
+    expect(drink.payload.state).toBe('hydrated');
+
+    const drank = parseLocalCommand('drank water');
+    expect(drank.action).toBe('pet_state');
+    expect(drank.payload.state).toBe('hydrated');
   });
 
   it('handles help and unknown commands safely', () => {

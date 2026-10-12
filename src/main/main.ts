@@ -207,10 +207,10 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_COMPLETE, () => {
     reminderService.completeWater();
-    broadcast(IPC_CHANNELS.PET_SET_STATE, 'celebrating');
+    broadcast(IPC_CHANNELS.PET_SET_STATE, 'hydrated');
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
-    }, 2500);
+    }, 3500);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_DISMISS, () => {

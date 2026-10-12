@@ -212,12 +212,13 @@ export function useMochiStore() {
   }, []);
 
   const completeWater = useCallback(async () => {
-    setState((prev) => ({ ...prev, activeReminder: null }));
+    setState((prev) => ({ ...prev, activeReminder: null, petState: 'hydrated' }));
     if (state.settings.soundEnabled) {
       SoundEffects.waterDrop(state.settings.soundVolume);
     }
     if (window.mochiApi) {
       await window.mochiApi.completeWater();
+      await window.mochiApi.triggerPetReaction('hydrated');
     }
   }, [state.settings.soundEnabled, state.settings.soundVolume]);
 

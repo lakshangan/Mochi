@@ -152,7 +152,10 @@ export class TrayService {
         label: 'Drink Water 💧',
         click: () => {
           this.reminderService.completeWater();
-          this.broadcast(IPC_CHANNELS.PET_SET_STATE, 'happy');
+          this.broadcast(IPC_CHANNELS.PET_SET_STATE, 'hydrated');
+          setTimeout(() => {
+            this.broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+          }, 3500);
         },
       },
       {

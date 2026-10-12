@@ -137,6 +137,30 @@ export function parseLocalCommand(rawInput: string): ParsedCommandResult {
     };
   }
 
+  // Hydration / Drink Log action
+  if (
+    lower === 'drink log' ||
+    lower === 'log drink' ||
+    lower === 'log water' ||
+    lower === 'water log' ||
+    lower === 'drank water' ||
+    lower === 'drink water' ||
+    lower === 'i drank water' ||
+    lower === 'water drop' ||
+    lower === 'hydrated' ||
+    lower === 'drank' ||
+    lower.startsWith('log drink') ||
+    lower.startsWith('logged water') ||
+    lower.startsWith('i drank')
+  ) {
+    return {
+      action: 'pet_state',
+      payload: { state: 'hydrated' },
+      feedback: 'Logged hydration! 💧💖 Mochi is glowing with refreshing energy.',
+      confidence: 0.98,
+    };
+  }
+
   // Water Reminder commands
   if (lower.includes('water') || lower.includes('hydrate') || lower.includes('drink')) {
     const duration = parseDurationToSeconds(lower);
@@ -272,8 +296,51 @@ export function parseLocalCommand(rawInput: string): ParsedCommandResult {
     }
   }
 
+  // Emoticons & Face Expressions
+  if (
+    lower === ':)' ||
+    lower === ':-)' ||
+    lower === '=)' ||
+    lower.includes(':)') ||
+    lower.includes(':-)')
+  ) {
+    return {
+      action: 'pet_state',
+      payload: { state: 'smile' },
+      feedback: 'Mochi returns your cheerful smile! :) ✨',
+      confidence: 0.95,
+    };
+  }
+
+  if (
+    lower === ':(' ||
+    lower === ':-(' ||
+    lower === '=(' ||
+    lower.includes(':(') ||
+    lower.includes(':-(') ||
+    lower === 'sad' ||
+    lower === 'pout' ||
+    lower.includes('unhappy')
+  ) {
+    return {
+      action: 'pet_state',
+      payload: { state: 'sad' },
+      feedback: 'Mochi shares a sympathetic pout :(. Take a deep breath! 🫂',
+      confidence: 0.95,
+    };
+  }
+
+  if (lower === 'smile') {
+    return {
+      action: 'pet_state',
+      payload: { state: 'smile' },
+      feedback: 'Mochi smiles warmly at you! :) ✨',
+      confidence: 0.95,
+    };
+  }
+
   // Pet emotion / animation state trigger
-  if (lower.includes('happy') || lower.includes('smile') || lower.includes('cheer')) {
+  if (lower.includes('happy') || lower.includes('cheer')) {
     return {
       action: 'pet_state',
       payload: { state: 'happy' },

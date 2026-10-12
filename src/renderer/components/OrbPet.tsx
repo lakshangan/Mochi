@@ -190,6 +190,44 @@ export const OrbPet: React.FC = () => {
 
       unsubIpc = window.mochiApi.onPetStateChange((state) => {
         anim.setState(state);
+        const currentName = userNameRef.current;
+        if (state === 'hydrated') {
+          setReactionMessage({
+            title: 'Hydrated! 💧💖',
+            subtitle: currentName
+              ? `Great job staying refreshed, ${currentName}!`
+              : 'Water logged! Body & mind energized.',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+        } else if (state === 'smile') {
+          setReactionMessage({
+            title: 'Keep smiling :) ✨',
+            subtitle: currentName
+              ? `Your positivity shines bright, ${currentName}!`
+              : 'Positive energy unlocked!',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+        } else if (state === 'sad') {
+          setReactionMessage({
+            title: 'Feeling down? :(',
+            subtitle: currentName
+              ? `Take a breath, ${currentName}. I'm right here with you.`
+              : "Take a breath. I'm right here with you.",
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+        }
       });
 
       unsubActivity = window.mochiApi.onSystemActivity((event: SystemActivityEvent) => {
