@@ -70,12 +70,15 @@ export interface PomodoroSettings {
 export interface AiSettings {
   provider: 'offline-local' | 'openai' | 'anthropic' | 'custom';
   apiKey?: string;
+  encryptedApiKey?: string;
   apiEndpoint?: string;
   model?: string;
   temperature?: number;
 }
 
 export interface AppSettings {
+  userName?: string; // personalized user name (e.g. "Lakshan")
+  hasSeenWelcome?: boolean; // whether first-time cinematic welcome was completed
   petSize: number; // 70 - 240 px (default 115)
   opacity: number; // 0.3 - 1.0 (default 0.98)
   animationIntensity: 'subtle' | 'normal' | 'vibrant';
@@ -134,16 +137,33 @@ export interface ReminderNotificationEvent {
   dueAt: number;
 }
 
+export type ChatActionType =
+  | 'start_timer'
+  | 'start_pomodoro'
+  | 'pause_timer'
+  | 'resume_timer'
+  | 'reset_timer'
+  | 'set_water_reminder'
+  | 'set_break_reminder'
+  | 'create_task'
+  | 'clear_completed_tasks'
+  | 'add_note'
+  | 'pet_mood'
+  | 'view_tab';
+
+export interface ChatSuggestedAction {
+  type: ChatActionType;
+  label: string;
+  payload?: any;
+  autoExecuted?: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'mochi' | 'system';
   text: string;
   timestamp: number;
-  suggestedAction?: {
-    type: 'start_timer' | 'create_task' | 'add_note' | 'pet_mood';
-    label: string;
-    payload: any;
-  };
+  suggestedAction?: ChatSuggestedAction;
 }
 
 export interface ParsedCommandResult {

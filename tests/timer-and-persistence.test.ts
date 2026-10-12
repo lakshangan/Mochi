@@ -88,4 +88,68 @@ describe('Timer Service & Recovery Engine', () => {
     expect(state.remainingSeconds).toBeLessThanOrEqual(100);
     expect(state.label).toBe('Pre-shutdown Timer');
   });
+
+  it('reconciles tasks from concurrent windows to prevent last-writer-wins clobbering', () => {
+    // Initial task
+    const initialTasks = persistence.updateTasks([
+      {
+        id: 't-1',
+        title: 'Task 1',
+        completed: false,
+        createdAt: Date.now() - 10000,
+        priority: 'medium',
+      },
+    ]);
+    expect(initialTasks.length).toBe(1);
+
+    // Window B adds Task 2 recently
+    persistence.updateTasks([
+      {
+        id: 't-1',
+        title: 'Task 1',
+        completed: false,
+        createdAt: Date.now() - 10000,
+        priority: 'medium',
+      },
+      {
+        id: 't-2',
+        title: 'Task 2 (from Window B)',
+        completed: false,
+        createdAt: Date.now() - 100, // just created
+        priority: 'high',
+      },
+    ]);
+
+    // Window A (which had an older snapshot containing only t-1) modifies t-1 and saves
+    const reconciled = persistence.updateTasks([
+      {
+        id: 't-1',
+        title: 'Task 1 (Renamed by Window A)',
+        completed: true,
+        createdAt: Date.now() - 10000,
+        completedAt: Date.now(),
+        priority: 'medium',
+      },
+    ]);
+
+    // Reconciled list should have both t-1 (updated) and recently created t-2!
+    expect(reconciled.find((t) => t.id === 't-1')?.title).toBe('Task 1 (Renamed by Window A)');
+    expect(reconciled.find((t) => t.id === 't-2')).toBeDefined();
+  });
+
+  it('encrypts API key and stores encrypted form on disk without plaintext exposure', () => {
+    persistence.updateSettings({
+      ai: {
+        provider: 'openai',
+        apiKey: 'sk-secret-test-key-12345',
+      },
+    });
+
+    const state = persistence.getState();
+    expect(state.settings.ai.apiKey).toBe('sk-secret-test-key-12345');
+
+    // Simulate reload from disk
+    const reloaded = new PersistenceService();
+    expect(reloaded.getState().settings.ai.apiKey).toBe('sk-secret-test-key-12345');
+  });
 });

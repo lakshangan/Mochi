@@ -14,6 +14,8 @@ import { SoundEffects } from '../../shared/sound-effects';
 
 const DEFAULT_STATE: MochiFullState = {
   settings: {
+    userName: '',
+    hasSeenWelcome: false,
     petSize: 115,
     opacity: 0.98,
     animationIntensity: 'normal',

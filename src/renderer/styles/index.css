@@ -63,6 +63,78 @@ body {
   overflow: visible;
 }
 
+/* First-run interactive name onboarding capsule */
+.mochi-onboarding-capsule {
+  position: absolute;
+  top: 6px;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 15, 20, 0.94);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(0, 247, 255, 0.4);
+  box-shadow: 
+    0 8px 24px -4px rgba(0, 0, 0, 0.75),
+    0 0 16px rgba(0, 247, 255, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  padding: 3px 8px;
+  border-radius: 14px;
+  pointer-events: auto;
+  user-select: none;
+  animation: speechBubblePop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  white-space: nowrap;
+}
+
+.onboarding-sparkle {
+  font-size: 13px;
+  animation: sparkleTwinkle 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleTwinkle {
+  0% { transform: scale(0.9); opacity: 0.75; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.onboarding-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  width: 140px;
+}
+
+.onboarding-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 10.5px;
+}
+
+.onboarding-submit-btn {
+  background: linear-gradient(135deg, #00f7ff, #38bdf8);
+  border: none;
+  color: #0d0d14;
+  border-radius: 8px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 0 8px rgba(0, 247, 255, 0.5);
+}
+
+.onboarding-submit-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 12px rgba(0, 247, 255, 0.8);
+}
+
 /* Floating Apple Dynamic Island Context Capsule */
 .mochi-speech-bubble {
   position: absolute;
@@ -481,6 +553,35 @@ body {
   background: rgba(255, 59, 48, 0.2);
   border-color: rgba(255, 59, 48, 0.4);
   color: #ff6b6b;
+}
+
+.mac-deep-work-btn {
+  background: rgba(0, 247, 255, 0.08);
+  border: 1px solid rgba(0, 247, 255, 0.22);
+  color: #38bdf8;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.mac-deep-work-btn:hover {
+  background: rgba(0, 247, 255, 0.2);
+  border-color: rgba(0, 247, 255, 0.5);
+  color: #00f7ff;
+}
+
+.mac-title-spacer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ========================================================

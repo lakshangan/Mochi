@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AppSettings } from '../../shared/types';
-import { Settings, Sliders, Shield, Volume2, Sparkles, RefreshCw, Key } from 'lucide-react';
+import { Settings, Sliders, Shield, Volume2, Sparkles, RefreshCw, Key, EyeOff } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: AppSettings;
@@ -15,6 +15,37 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   return (
     <div className="panel-container settings-scroll">
+      {/* Personalization Section */}
+      <div className="settings-group">
+        <div className="group-title">
+          <Sparkles size={16} /> Personalization
+        </div>
+        <div className="setting-item">
+          <div className="setting-label-col">
+            <span className="setting-name">Your Name</span>
+            <span className="setting-desc">How Mochi addresses you in greetings and focus nudges</span>
+          </div>
+          <input
+            type="text"
+            placeholder="e.g. Lakshan"
+            value={settings.userName || ''}
+            onChange={(e) => onUpdateSettings({ userName: e.target.value })}
+            className="panel-input"
+            style={{
+              width: '130px',
+              textAlign: 'right',
+              padding: '6px 10px',
+              fontSize: '12px',
+              background: 'rgba(255, 255, 255, 0.06)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: '#fff',
+            }}
+            maxLength={25}
+          />
+        </div>
+      </div>
+
       {/* Visual & Pet Section */}
       <div className="settings-group">
         <div className="group-title">
@@ -96,6 +127,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             />
             <span className="slider" />
           </label>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-label-col">
+            <span className="setting-name">Deep Work (Hide Pet)</span>
+            <span className="setting-desc">Tuck Mochi away for full-screen focus (accessible from status bar at top)</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline"
+            onClick={async () => {
+              if (window.mochiApi) {
+                await window.mochiApi.setPetVisible(false);
+                await window.mochiApi.showNotification(
+                  'Deep Work Mode Active 🧘',
+                  'Mochi is hidden. Click the Mochi icon in the status bar at top near Wi-Fi/Battery to restore anytime!'
+                );
+              }
+            }}
+            style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <EyeOff size={12} />
+            <span>Hide Pet</span>
+          </button>
         </div>
 
         <div className="setting-item">
@@ -198,10 +253,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {settings.ai.provider === 'openai' && (
           <>
+            <div
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: 'rgba(234, 179, 8, 0.1)',
+                border: '1px solid rgba(234, 179, 8, 0.25)',
+                fontSize: '11px',
+                color: '#fef08a',
+                lineHeight: '1.4',
+                marginTop: '4px',
+              }}
+            >
+              <strong>Privacy Notice:</strong> When OpenAI is selected, user chat queries are sent off-device to OpenAI&apos;s servers. Your API key is encrypted on disk using OS safeStorage (macOS Keychain / Windows DPAPI / Linux Secret Service) and executed exclusively via the background main process.
+            </div>
+
             <div className="setting-item vertical">
               <div className="setting-label-col">
                 <span className="setting-name">API Key</span>
-                <span className="setting-desc">Stored strictly locally in encrypted user data</span>
+                <span className="setting-desc">Encrypted with OS safeStorage at rest</span>
               </div>
               <div className="input-with-button">
                 <input

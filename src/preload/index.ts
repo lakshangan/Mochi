@@ -30,6 +30,12 @@ const mochiApi: ElectronMochiAPI = {
   closeAssistant: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT);
   },
+  togglePetVisibility: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_TOGGLE_PET);
+  },
+  setPetVisible: (visible: boolean) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_SET_PET_VISIBLE, visible);
+  },
   setAlwaysOnTop: (alwaysOnTop: boolean) => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_SET_ALWAYS_ON_TOP, alwaysOnTop);
   },
@@ -139,6 +145,11 @@ const mochiApi: ElectronMochiAPI = {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.PET_GAZE_UPDATE, handler);
     };
+  },
+
+  // AI Main Process Proxy
+  queryAi: (prompt: string, history: any[]) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_QUERY, prompt, history);
   },
 
   // System

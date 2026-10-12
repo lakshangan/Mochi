@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage, AiSettings } from '../../shared/types';
+import { ChatMessage, AiSettings, ChatSuggestedAction } from '../../shared/types';
 import { AiCompanionService } from '../services/ai-service';
-import { Send, Bot, User, Sparkles, CornerDownLeft } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Shield, Cloud } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { OrbStatus } from '@/registry/lib/orb-status';
 
@@ -9,7 +9,7 @@ interface AiChatPanelProps {
   messages: ChatMessage[];
   aiSettings: AiSettings;
   onSendMessage: (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
-  onExecuteAction: (action: NonNullable<ChatMessage['suggestedAction']>) => void;
+  onExecuteAction: (action: ChatSuggestedAction, navigate?: boolean) => void;
 }
 
 export const AiChatPanel: React.FC<AiChatPanelProps> = ({
@@ -46,6 +46,12 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
         messages,
         aiSettings
       );
+
+      // Immediately execute parsed local action so "Reminder set" or "Started timer" actually takes effect!
+      if (response.suggestedAction && response.suggestedAction.autoExecuted) {
+        onExecuteAction(response.suggestedAction, false);
+      }
+
       onSendMessage({
         sender: 'mochi',
         text: response.text,
@@ -78,6 +84,41 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
 
   return (
     <div className="panel-container chat-layout">
+      {/* Privacy Mode Transparency Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          padding: '6px 12px',
+          fontSize: '11px',
+          borderRadius: '8px',
+          background:
+            aiSettings.provider === 'openai'
+              ? 'rgba(234, 179, 8, 0.12)'
+              : 'rgba(34, 197, 94, 0.12)',
+          border:
+            aiSettings.provider === 'openai'
+              ? '1px solid rgba(234, 179, 8, 0.3)'
+              : '1px solid rgba(34, 197, 94, 0.3)',
+          color: aiSettings.provider === 'openai' ? '#fde047' : '#86efac',
+          marginBottom: '10px',
+        }}
+      >
+        {aiSettings.provider === 'openai' ? (
+          <>
+            <Cloud size={13} />
+            <span>External LLM Active (Prompts processed via configured OpenAI endpoint)</span>
+          </>
+        ) : (
+          <>
+            <Shield size={13} />
+            <span>100% Offline Local Engine (Strictly on-device, zero data transmitted)</span>
+          </>
+        )}
+      </div>
+
       {/* Animated AI Assistant Particles Orb Hero */}
       <div className="chat-hero-orb-wrap">
         <ParticlesOrb
@@ -120,7 +161,8 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
               {msg.suggestedAction && (
                 <button
                   className="chat-action-btn"
-                  onClick={() => onExecuteAction(msg.suggestedAction!)}
+                  onClick={() => onExecuteAction(msg.suggestedAction!, true)}
+                  title="Click to view or execute this action"
                 >
                   <Sparkles size={13} /> {msg.suggestedAction.label}
                 </button>

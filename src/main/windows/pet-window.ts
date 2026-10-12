@@ -119,4 +119,30 @@ export class PetWindow {
       this.window.setAlwaysOnTop(val, val ? 'floating' : 'normal');
     }
   }
+
+  public isVisible(): boolean {
+    return !!(this.window && !this.window.isDestroyed() && this.window.isVisible());
+  }
+
+  public hide(): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.hide();
+    }
+  }
+
+  public show(): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.show();
+    }
+  }
+
+  public toggle(): boolean {
+    if (this.isVisible()) {
+      this.hide();
+      return false;
+    } else {
+      this.show();
+      return true;
+    }
+  }
 }

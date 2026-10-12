@@ -37,6 +37,15 @@ export const OrbPet: React.FC = () => {
   const [orbMode, setOrbMode] = useState<'glow-lava' | 'particles'>('glow-lava');
   const [petSize, setPetSize] = useState<number>(115);
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
+  const [userName, setUserName] = useState<string>('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const userNameRef = useRef(userName);
+
+  useEffect(() => {
+    userNameRef.current = userName;
+  }, [userName]);
+
   const [isHovered, setIsHovered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -44,7 +53,7 @@ export const OrbPet: React.FC = () => {
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const [activeTimer, setActiveTimer] = useState<ActiveTimerState | null>(null);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string }>({
-    title: 'Ready to ship',
+    title: 'Ready to build ✨',
     subtitle: 'Click me anytime to open assistant.',
   });
   const [reactionMessage, setReactionMessage] = useState<{
@@ -59,39 +68,55 @@ export const OrbPet: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getDynamicGreeting = () => {
-    const hour = new Date().getHours();
-    let timeGreeting = 'Evening focus';
-    if (hour >= 5 && hour < 12) {
-      timeGreeting = 'Morning rhythm';
-    } else if (hour >= 12 && hour < 17) {
-      timeGreeting = 'Afternoon drive';
-    } else if (hour >= 17 && hour < 22) {
-      timeGreeting = 'Prime hours';
-    } else {
-      timeGreeting = 'Night owl mode';
-    }
-
-    const tips = [
-      { title: 'Ready to build', subtitle: '' },
-      { title: 'Flow state on deck', subtitle: '' },
-      { title: 'Keyboard ready', subtitle: '' },
-      { title: 'Stay hydrated', subtitle: '' },
-      { title: 'System optimal', subtitle: '' },
-      { title: 'Pure momentum', subtitle: '' },
-    ];
+  const getDynamicGreeting = (name = userName) => {
+    const tips = name
+      ? [
+          { title: `Hey ${name}! What's up? ✨`, subtitle: 'Floating right beside you.' },
+          { title: `Ready to build, ${name}? 🚀`, subtitle: 'System optimal & ready.' },
+          { title: `Flow state on deck, ${name}!`, subtitle: 'Zero distractions.' },
+          { title: `Stay hydrated, ${name}! 💧`, subtitle: 'Keep that energy high.' },
+          { title: `Pure momentum, ${name}! ⚡`, subtitle: 'Crushing goals today.' },
+        ]
+      : [
+          { title: 'Ready to build 🚀', subtitle: 'System optimal & ready.' },
+          { title: 'Flow state on deck ✨', subtitle: 'Zero distractions.' },
+          { title: 'Stay hydrated 💧', subtitle: 'Grab some water.' },
+          { title: 'Pure momentum ⚡', subtitle: 'Click to open assistant.' },
+        ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
 
   const handleMouseEnter = () => {
     setIsHovered(true);
-    setGreeting(getDynamicGreeting());
+    setGreeting(getDynamicGreeting(userName));
     animControllerRef.current?.triggerReaction('happy', 2500);
     SoundEffects.chirp(0.2);
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+  };
+
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = nameInput.trim();
+    if (!trimmed) return;
+
+    setUserName(trimmed);
+    userNameRef.current = trimmed;
+    setShowOnboarding(false);
+    if (window.mochiApi) {
+      await window.mochiApi.saveSettings({ userName: trimmed, hasSeenWelcome: true });
+    }
+    SoundEffects.celebrate(0.35);
+    animControllerRef.current?.triggerReaction('celebrating', 3500);
+    setReactionMessage({
+      title: 'Awesome to meet you! ✨',
+      subtitle: `Hey ${trimmed}! What's up? I'm right here with you.`,
+    });
+    setTimeout(() => {
+      setReactionMessage(null);
+    }, 6000);
   };
 
   const handlePetAction = () => {
@@ -168,9 +193,17 @@ export const OrbPet: React.FC = () => {
       });
 
       unsubActivity = window.mochiApi.onSystemActivity((event: SystemActivityEvent) => {
+        const currentName = userNameRef.current;
+        let finalSubtitle = event.subtitle;
+        if (event.state === 'listening') {
+          finalSubtitle = currentName
+            ? `Vibing to the beat with you, ${currentName}! 🎧`
+            : 'Headphones on & vibing to the beat 🎧';
+        }
+
         setReactionMessage({
           title: event.title,
-          subtitle: event.subtitle,
+          subtitle: finalSubtitle,
           appName: event.appName,
         });
 
@@ -221,17 +254,39 @@ export const OrbPet: React.FC = () => {
         behavior.handleReminderTriggered();
       });
 
-      // Load initial petSize from saved settings
+      // Load initial petSize and userName from saved settings
       window.mochiApi.getInitialState().then((initial) => {
         if (initial?.settings?.petSize) {
           setPetSize(initial.settings.petSize);
         }
+        if (initial?.settings?.userName) {
+          const storedName = initial.settings.userName;
+          setUserName(storedName);
+          userNameRef.current = storedName;
+          // Cinematic friendly welcome sequence on startup!
+          SoundEffects.chime(0.35);
+          anim.triggerReaction('happy', 3500);
+          setReactionMessage({
+            title: `Welcome back! ✨`,
+            subtitle: `Hey ${storedName}! What's up? Ready to build ✨`,
+          });
+          reactionTimeout = setTimeout(() => {
+            setReactionMessage(null);
+          }, 6500);
+        } else {
+          // First-time friendly onboarding
+          setShowOnboarding(true);
+        }
       }).catch(console.error);
 
-      // Listen for settings changes (e.g. user moves size slider or picks preset)
+      // Listen for settings changes (e.g. user moves size slider or changes name in settings)
       const unsubSettings = window.mochiApi.onStateUpdated((state) => {
         if (state.settings?.petSize) {
           setPetSize(state.settings.petSize);
+        }
+        if (state.settings?.userName !== undefined) {
+          setUserName(state.settings.userName);
+          userNameRef.current = state.settings.userName;
         }
       });
 
@@ -273,8 +328,28 @@ export const OrbPet: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Apple Dynamic Island Floating Context Pill - Showing fun text alone */}
-      {(isHovered || reactionMessage) && (
+      {/* 1. First-Run Interactive Name Onboarding Capsule */}
+      {showOnboarding ? (
+        <form
+          className="mochi-onboarding-capsule"
+          onSubmit={handleSaveName}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="onboarding-sparkle">✨</span>
+          <input
+            type="text"
+            className="onboarding-input"
+            placeholder="Your name? (e.g. Lakshan)"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            autoFocus
+            maxLength={20}
+          />
+          <button type="submit" className="onboarding-submit-btn" title="Save name">
+            ✓
+          </button>
+        </form>
+      ) : (isHovered || reactionMessage) ? (
         <div
           className="mochi-speech-bubble"
           onClick={handlePetAction}
@@ -297,7 +372,7 @@ export const OrbPet: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */}
       {isTimerRunning && !(isHovered || reactionMessage) && (
@@ -317,7 +392,17 @@ export const OrbPet: React.FC = () => {
       <div
         ref={containerRef}
         className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
-        title="Mochi Companion (Click to open assistant, drag to move)"
+        title="Mochi Companion (Click to open, right-click to hide into status bar, drag to move)"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (window.mochiApi) {
+            window.mochiApi.setPetVisible(false);
+            window.mochiApi.showNotification(
+              'Deep Work Mode Active 🧘',
+              'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
+            );
+          }
+        }}
       >
         {orbMode === 'glow-lava' ? (
           <GlowLavaOrb

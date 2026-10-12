@@ -75,4 +75,56 @@ describe('Local Command Parser & Duration Extractor', () => {
     const unknown = parseLocalCommand('random unintelligible gibberish 123456');
     expect(unknown.action).toBe('unknown');
   });
+
+  it('AiCompanionService maps parsed commands to executable actions with autoExecuted', async () => {
+    const { AiCompanionService } = await import('../src/renderer/services/ai-service');
+    const defaultSettings = { provider: 'offline-local' as const };
+
+    // Water reminder
+    const waterRes = await AiCompanionService.generateResponse(
+      'Remind me to drink water in 30 minutes',
+      [],
+      defaultSettings
+    );
+    expect(waterRes.suggestedAction).toBeDefined();
+    expect(waterRes.suggestedAction?.type).toBe('set_water_reminder');
+    expect(waterRes.suggestedAction?.autoExecuted).toBe(true);
+    expect(waterRes.suggestedAction?.payload.intervalMinutes).toBe(30);
+
+    // Pomodoro
+    const pomoRes = await AiCompanionService.generateResponse(
+      'Start Pomodoro focus session',
+      [],
+      defaultSettings
+    );
+    expect(pomoRes.suggestedAction).toBeDefined();
+    expect(pomoRes.suggestedAction?.type).toBe('start_pomodoro');
+    expect(pomoRes.suggestedAction?.autoExecuted).toBe(true);
+
+    // Pause timer
+    const pauseRes = await AiCompanionService.generateResponse(
+      'Pause timer',
+      [],
+      defaultSettings
+    );
+    expect(pauseRes.suggestedAction?.type).toBe('pause_timer');
+    expect(pauseRes.suggestedAction?.autoExecuted).toBe(true);
+
+    // Word boundary check: "this is great" should NOT match "hi" greeting!
+    const thisRes = await AiCompanionService.generateResponse(
+      'this is a productive day',
+      [],
+      defaultSettings
+    );
+    expect(thisRes.text).not.toContain('Hello there!');
+    expect(thisRes.text).not.toContain('Hi! Mochi is awake');
+
+    // Genuine greeting: "hi" matches greeting
+    const hiRes = await AiCompanionService.generateResponse(
+      'hi',
+      [],
+      defaultSettings
+    );
+    expect(hiRes.suggestedAction?.type).toBe('start_timer');
+  });
 });

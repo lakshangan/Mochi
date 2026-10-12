@@ -4,6 +4,8 @@ import { app } from 'electron';
 import { AppSettings, MochiFullState, PetPosition, TaskItem, NoteItem, ActiveTimerState } from '../../shared/types';
 
 const DEFAULT_SETTINGS: AppSettings = {
+  userName: '',
+  hasSeenWelcome: false,
   petSize: 115,
   opacity: 0.98,
   animationIntensity: 'normal',
@@ -83,9 +85,19 @@ const DEFAULT_STATE: MochiFullState = {
   petState: 'idle',
 };
 
+let electronSafeStorage: typeof import('electron').safeStorage | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const electron = require('electron');
+  electronSafeStorage = electron.safeStorage || null;
+} catch {
+  // Non-electron test environments
+}
+
 export class PersistenceService {
   private filePath: string;
   private state: MochiFullState;
+  private saveTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     const dataDir = app ? app.getPath('userData') : process.cwd();
@@ -93,11 +105,52 @@ export class PersistenceService {
     this.state = this.loadState();
   }
 
+  private encryptApiKey(rawKey: string): string {
+    if (!rawKey) return '';
+    try {
+      if (electronSafeStorage && electronSafeStorage.isEncryptionAvailable()) {
+        const encrypted = electronSafeStorage.encryptString(rawKey);
+        return encrypted.toString('base64');
+      }
+    } catch (err) {
+      console.warn('[PersistenceService] safeStorage encryption error, using fallback:', err);
+    }
+    // Fallback reversible encoding when OS safeStorage is not available (e.g., test suites)
+    return Buffer.from(rawKey, 'utf-8').toString('base64');
+  }
+
+  private decryptApiKey(cipherText: string): string {
+    if (!cipherText) return '';
+    try {
+      if (electronSafeStorage && electronSafeStorage.isEncryptionAvailable()) {
+        const buf = Buffer.from(cipherText, 'base64');
+        return electronSafeStorage.decryptString(buf);
+      }
+    } catch {
+      // safeStorage failed or payload was encoded via fallback
+    }
+    try {
+      return Buffer.from(cipherText, 'base64').toString('utf-8');
+    } catch {
+      return '';
+    }
+  }
+
   private loadState(): MochiFullState {
     try {
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf-8');
         const parsed = JSON.parse(raw);
+
+        // Recover and decrypt API key if present
+        let recoveredApiKey = '';
+        if (parsed.settings?.ai?.encryptedApiKey) {
+          recoveredApiKey = this.decryptApiKey(parsed.settings.ai.encryptedApiKey);
+        } else if (parsed.settings?.ai?.apiKey) {
+          // If legacy plaintext key existed, adopt it and it will be encrypted on next save
+          recoveredApiKey = parsed.settings.ai.apiKey;
+        }
+
         // Deep merge with defaults to handle new fields or missing properties
         const merged: MochiFullState = {
           ...DEFAULT_STATE,
@@ -120,11 +173,15 @@ export class PersistenceService {
             ai: {
               ...DEFAULT_SETTINGS.ai,
               ...(parsed.settings?.ai || {}),
+              apiKey: recoveredApiKey,
             },
           },
           tasks: Array.isArray(parsed.tasks) ? parsed.tasks : DEFAULT_STATE.tasks,
           notes: Array.isArray(parsed.notes) ? parsed.notes : DEFAULT_STATE.notes,
-          position: parsed.position && typeof parsed.position.x === 'number' ? parsed.position : DEFAULT_STATE.position,
+          position:
+            parsed.position && typeof parsed.position.x === 'number'
+              ? parsed.position
+              : DEFAULT_STATE.position,
         };
 
         // Recover timer state if it was running before shutdown
@@ -147,15 +204,69 @@ export class PersistenceService {
     return JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
 
+  /**
+   * Performs a truly atomic write by writing to a unique temporary file
+   * on the same filesystem and atomically renaming it over the destination.
+   */
   public saveState(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+    this.saveStateSync();
+  }
+
+  private saveStateSync(): void {
     try {
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(this.filePath, JSON.stringify(this.state, null, 2), 'utf-8');
+
+      // Clone state for serialization without plaintext API keys
+      const stateToPersist = JSON.parse(JSON.stringify(this.state)) as MochiFullState;
+
+      // Encrypt API key using OS safeStorage (or fallback) and remove plaintext key from disk representation
+      if (this.state.settings.ai.apiKey) {
+        stateToPersist.settings.ai.encryptedApiKey = this.encryptApiKey(
+          this.state.settings.ai.apiKey
+        );
+        delete stateToPersist.settings.ai.apiKey;
+      } else {
+        delete stateToPersist.settings.ai.apiKey;
+        delete stateToPersist.settings.ai.encryptedApiKey;
+      }
+
+      const tempFile = path.join(
+        dir,
+        `.mochi-data.${Date.now()}.${Math.random().toString(36).slice(2, 7)}.tmp`
+      );
+
+      fs.writeFileSync(tempFile, JSON.stringify(stateToPersist, null, 2), 'utf-8');
+      fs.renameSync(tempFile, this.filePath);
     } catch (err) {
-      console.error('[PersistenceService] Error writing state to disk:', err);
+      console.error('[PersistenceService] Error performing atomic write to disk:', err);
+    }
+  }
+
+  /**
+   * Debounces saving to disk to prevent disk thrashing during rapid operations like window drag.
+   */
+  public scheduleDebouncedSave(delayMs = 400): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      this.saveTimeout = null;
+      this.saveStateSync();
+    }, delayMs);
+  }
+
+  public flushPendingSave(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+      this.saveStateSync();
     }
   }
 
@@ -167,24 +278,83 @@ export class PersistenceService {
     this.state.settings = {
       ...this.state.settings,
       ...partial,
+      ai: {
+        ...this.state.settings.ai,
+        ...(partial.ai || {}),
+      },
     };
     this.saveState();
     return this.state.settings;
   }
 
-  public updatePosition(pos: PetPosition): void {
+  public updatePosition(pos: PetPosition, immediate = false): void {
     this.state.position = pos;
-    this.saveState();
+    if (immediate) {
+      this.saveState();
+    } else {
+      this.scheduleDebouncedSave(400);
+    }
   }
 
-  public updateTasks(tasks: TaskItem[]): TaskItem[] {
-    this.state.tasks = tasks;
+  /**
+   * Reconciles tasks across multiple windows to prevent last-writer-wins clobbering.
+   */
+  public updateTasks(incoming: TaskItem[]): TaskItem[] {
+    const incomingIds = new Set(incoming.map((t) => t.id));
+    const currentMap = new Map(this.state.tasks.map((t) => [t.id, t]));
+
+    // 1. Process items in incoming list
+    const merged: TaskItem[] = incoming.map((item) => {
+      const existing = currentMap.get(item.id);
+      if (!existing) return item;
+      // Prefer whichever item has newer completion or modification
+      const existingTime = existing.completedAt || existing.createdAt;
+      const itemTime = item.completedAt || item.createdAt;
+      if (existingTime > itemTime) {
+        return existing;
+      }
+      return item;
+    });
+
+    // 2. Retain recently created items that incoming list didn't know about yet
+    const now = Date.now();
+    for (const existing of this.state.tasks) {
+      if (!incomingIds.has(existing.id) && now - existing.createdAt < 5000) {
+        merged.unshift(existing);
+      }
+    }
+
+    this.state.tasks = merged;
     this.saveState();
     return this.state.tasks;
   }
 
-  public updateNotes(notes: NoteItem[]): NoteItem[] {
-    this.state.notes = notes;
+  /**
+   * Reconciles notes across multiple windows to prevent last-writer-wins clobbering.
+   */
+  public updateNotes(incoming: NoteItem[]): NoteItem[] {
+    const incomingIds = new Set(incoming.map((n) => n.id));
+    const currentMap = new Map(this.state.notes.map((n) => [n.id, n]));
+
+    const merged: NoteItem[] = incoming.map((item) => {
+      const existing = currentMap.get(item.id);
+      if (!existing) return item;
+      const existingTime = existing.updatedAt || existing.createdAt;
+      const itemTime = item.updatedAt || item.createdAt;
+      if (existingTime > itemTime) {
+        return existing;
+      }
+      return item;
+    });
+
+    const now = Date.now();
+    for (const existing of this.state.notes) {
+      if (!incomingIds.has(existing.id) && now - existing.createdAt < 5000) {
+        merged.unshift(existing);
+      }
+    }
+
+    this.state.notes = merged;
     this.saveState();
     return this.state.notes;
   }

@@ -18,6 +18,8 @@ export const IPC_CHANNELS = {
   WINDOW_GET_POSITION: 'window:get-position',
   WINDOW_TOGGLE_ASSISTANT: 'window:toggle-assistant',
   WINDOW_CLOSE_ASSISTANT: 'window:close-assistant',
+  WINDOW_TOGGLE_PET: 'window:toggle-pet',
+  WINDOW_SET_PET_VISIBLE: 'window:set-pet-visible',
   WINDOW_MINIMIZE: 'window:minimize',
   WINDOW_SET_ALWAYS_ON_TOP: 'window:set-always-on-top',
   WINDOW_SET_IGNORE_MOUSE: 'window:set-ignore-mouse',
@@ -53,6 +55,9 @@ export const IPC_CHANNELS = {
   PET_REACT: 'pet:react',
   PET_GAZE_UPDATE: 'pet:gaze-update',
 
+  // AI & External Services
+  AI_QUERY: 'ai:query',
+
   // Platform & System
   SYSTEM_ACTIVITY_CHANGED: 'system:activity-changed',
   SYSTEM_SHOW_NOTIFICATION: 'system:show-notification',
@@ -67,6 +72,8 @@ export interface ElectronMochiAPI {
   getPosition: () => Promise<PetPosition>;
   toggleAssistant: () => Promise<boolean>;
   closeAssistant: () => Promise<void>;
+  togglePetVisibility: () => Promise<boolean>;
+  setPetVisible: (visible: boolean) => Promise<void>;
   setAlwaysOnTop: (alwaysOnTop: boolean) => Promise<void>;
   setIgnoreMouseEvents: (ignore: boolean, forward?: boolean) => Promise<void>;
 
@@ -101,6 +108,9 @@ export interface ElectronMochiAPI {
   triggerPetReaction: (reaction: PetAnimationState) => Promise<void>;
   onPetStateChange: (callback: (state: PetAnimationState) => void) => () => void;
   onGazeUpdate?: (callback: (gaze: { x: number; y: number }) => void) => () => void;
+
+  // AI Main Process Proxy
+  queryAi: (prompt: string, history: any[]) => Promise<{ text: string; error?: string }>;
 
   // System
   onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => () => void;

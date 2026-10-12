@@ -651,6 +651,31 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       style={{ width: size, height: size }}
       onClick={onClick}
     >
+      {/* 0. Cyberpunk Glowing Headphones (Active in Audio Listening / Vibing state) */}
+      {state === 'listening' && (
+        <div className="glow-orb-headphones" style={{ width: size, height: size }}>
+          <div className="headphone-band" />
+          <div className="headphone-earcup left">
+            <div className="earcup-cushion" />
+            <div className="earcup-light" />
+            <div className="earcup-soundwave">
+              <span className="wave-bar bar-1" />
+              <span className="wave-bar bar-2" />
+              <span className="wave-bar bar-3" />
+            </div>
+          </div>
+          <div className="headphone-earcup right">
+            <div className="earcup-cushion" />
+            <div className="earcup-light" />
+            <div className="earcup-soundwave">
+              <span className="wave-bar bar-1" />
+              <span className="wave-bar bar-2" />
+              <span className="wave-bar bar-3" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Outer Ambient Halo Bloom */}
       <div className="glow-orb-halo" />
 

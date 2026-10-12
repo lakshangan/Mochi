@@ -19,6 +19,7 @@ import {
   Play,
   Flame,
   Power,
+  EyeOff,
 } from 'lucide-react';
 
 export const AssistantPanel: React.FC = () => {
@@ -90,6 +91,22 @@ export const AssistantPanel: React.FC = () => {
         </div>
 
         <div className="mac-title-spacer">
+          <button
+            className="mac-deep-work-btn"
+            onClick={async () => {
+              if (window.mochiApi) {
+                await window.mochiApi.setPetVisible(false);
+                await window.mochiApi.showNotification(
+                  'Deep Work Mode Active 🧘',
+                  'Mochi is hidden for full-screen focus. Click the Mochi icon in the status bar at top anytime to restore!'
+                );
+              }
+            }}
+            title="Hide Mochi for full-screen Deep Work (accessible from status bar at top)"
+          >
+            <EyeOff size={11} />
+            <span>Deep Work</span>
+          </button>
           <button
             className="mac-turn-off-btn"
             onClick={handleQuit}
@@ -168,7 +185,7 @@ export const AssistantPanel: React.FC = () => {
             {/* Friendly Greeting Card */}
             <div className="greeting-card">
               <div className="greeting-text">
-                <h3>Hello, Human Friend</h3>
+                <h3>{state.settings.userName ? `Hello, ${state.settings.userName}! ✨` : 'Hello, Friend! ✨'}</h3>
                 <p>
                   Mochi is floating on your desktop. Here is your productivity pulse for today:
                 </p>
@@ -340,18 +357,55 @@ export const AssistantPanel: React.FC = () => {
             messages={messages}
             aiSettings={state.settings.ai}
             onSendMessage={addMessage}
-            onExecuteAction={(action) => {
+            onExecuteAction={(action, navigate = false) => {
               if (action.type === 'start_timer') {
                 startTimer(action.payload.seconds, action.payload.label);
-                setActiveTab('timer');
+                if (navigate) setActiveTab('timer');
+              } else if (action.type === 'start_pomodoro') {
+                startPomodoro(action.payload.phase);
+                if (navigate) setActiveTab('timer');
+              } else if (action.type === 'pause_timer') {
+                pauseTimer();
+                if (navigate) setActiveTab('timer');
+              } else if (action.type === 'resume_timer') {
+                resumeTimer();
+                if (navigate) setActiveTab('timer');
+              } else if (action.type === 'reset_timer') {
+                resetTimer();
+                if (navigate) setActiveTab('timer');
+              } else if (action.type === 'set_water_reminder') {
+                updateSettings({
+                  waterReminders: {
+                    ...state.settings.waterReminders,
+                    intervalMinutes: action.payload.intervalMinutes,
+                    enabled: true,
+                  },
+                });
+                if (navigate) setActiveTab('reminders');
+              } else if (action.type === 'set_break_reminder') {
+                updateSettings({
+                  breakReminders: {
+                    ...state.settings.breakReminders,
+                    intervalMinutes: action.payload.intervalMinutes,
+                    enabled: true,
+                  },
+                });
+                if (navigate) setActiveTab('reminders');
               } else if (action.type === 'create_task') {
                 addTask(action.payload.title, action.payload.priority);
-                setActiveTab('tasks');
+                if (navigate) setActiveTab('tasks');
+              } else if (action.type === 'clear_completed_tasks') {
+                clearCompletedTasks();
+                if (navigate) setActiveTab('tasks');
               } else if (action.type === 'add_note') {
                 addNote(action.payload.title, action.payload.content);
-                setActiveTab('notes');
+                if (navigate) setActiveTab('notes');
               } else if (action.type === 'pet_mood') {
                 setPetState(action.payload.state);
+              } else if (action.type === 'view_tab') {
+                if (action.payload?.tab) {
+                  setActiveTab(action.payload.tab);
+                }
               }
             }}
           />

@@ -4,6 +4,7 @@ import { PersistenceService } from './services/persistence-service';
 import { NotificationService } from './services/notification-service';
 import { TimerService } from './services/timer-service';
 import { ReminderService } from './services/reminder-service';
+import { TrayService } from './services/tray-service';
 import { PetWindow } from './windows/pet-window';
 import { AssistantWindow } from './windows/assistant-window';
 import { PlatformAdapter } from './platform/platform-adapter';
@@ -26,6 +27,7 @@ let notificationService: NotificationService;
 let timerService: TimerService;
 let reminderService: ReminderService;
 let activityMonitor: SystemActivityMonitor;
+let trayService: TrayService;
 let petWindow: PetWindow;
 let assistantWindow: AssistantWindow;
 let wanderInterval: NodeJS.Timeout | null = null;
@@ -79,7 +81,7 @@ function registerIpcHandlers(): void {
   // Window controls
   ipcMain.handle(IPC_CHANNELS.WINDOW_DRAG, (_event, deltaX: number, deltaY: number) => {
     petWindow.moveBy(deltaX, deltaY);
-    persistenceService.updatePosition(petWindow.getPosition());
+    persistenceService.updatePosition(petWindow.getPosition(), false); // debounced write!
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_GET_POSITION, () => {
@@ -88,7 +90,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_SET_POSITION, (_event, pos: PetPosition) => {
     petWindow.setPosition(pos);
-    persistenceService.updatePosition(pos);
+    persistenceService.updatePosition(pos, true);
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_ASSISTANT, () => {
@@ -98,6 +100,23 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT, () => {
     assistantWindow.hide();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_PET, () => {
+    if (!petWindow) return false;
+    const isNowVisible = petWindow.toggle();
+    trayService?.updateMenu();
+    return isNowVisible;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_SET_PET_VISIBLE, (_event, visible: boolean) => {
+    if (!petWindow) return;
+    if (visible) {
+      petWindow.show();
+    } else {
+      petWindow.hide();
+    }
+    trayService?.updateMenu();
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_SET_ALWAYS_ON_TOP, (_event, val: boolean) => {
@@ -126,6 +145,9 @@ function registerIpcHandlers(): void {
     }
     if (partial.launchAtLogin !== undefined) {
       PlatformAdapter.setLaunchAtLogin(partial.launchAtLogin);
+    }
+    if (partial.userName !== undefined) {
+      trayService?.updateMenu();
     }
     broadcast(IPC_CHANNELS.STATE_UPDATED, { settings: updated });
     return updated;
@@ -222,6 +244,59 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, reaction);
   });
 
+  // AI Proxy Handler
+  ipcMain.handle(
+    IPC_CHANNELS.AI_QUERY,
+    async (_event, prompt: string, history: any[]) => {
+      const settings = persistenceService.getState().settings.ai;
+      if (settings.provider !== 'openai' || !settings.apiKey) {
+        return { text: '', error: 'OpenAI provider not configured with API key' };
+      }
+
+      try {
+        const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
+        const model = settings.model || 'gpt-4o-mini';
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${settings.apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are Mochi, a friendly, calm, intelligent, and glowing digital orb companion on the desktop. Keep responses concise, uplifting, and productivity-focused (under 3 sentences). Offer helpful advice for study, breaks, hydration, and tasks.',
+              },
+              ...(history || []).slice(-4).map((m: any) => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text,
+              })),
+              { role: 'user', content: prompt },
+            ],
+            temperature: settings.temperature ?? 0.7,
+            max_tokens: 150,
+          }),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as any;
+          const content = data.choices?.[0]?.message?.content?.trim();
+          if (content) {
+            return { text: content };
+          }
+        }
+        return { text: '', error: `Provider returned HTTP status ${res.status}` };
+      } catch (err: any) {
+        console.warn('[Main] AI query proxy error:', err);
+        return { text: '', error: err.message || 'AI query failed' };
+      }
+    }
+  );
+
   // System
   ipcMain.handle(IPC_CHANNELS.SYSTEM_SHOW_NOTIFICATION, (_event, title: string, body: string) => {
     notificationService.showNotification(title, body);
@@ -260,7 +335,22 @@ app.whenReady().then(() => {
   registerIpcHandlers();
   petWindow.create(PRELOAD_PATH, isDev, DEV_URL);
 
-  // Link timer events to windows
+  // Initialize macOS Status Bar / System Tray Service
+  trayService = new TrayService({
+    petWindow,
+    assistantWindow,
+    timerService,
+    reminderService,
+    notificationService,
+    persistenceService,
+    broadcast,
+    preloadPath: PRELOAD_PATH,
+    isDev,
+    devUrl: DEV_URL,
+  });
+  trayService.init();
+
+  // Link timer events to windows & tray
   timerService.onTick((state) => {
     broadcast(IPC_CHANNELS.TIMER_TICK, state);
   });
@@ -268,6 +358,16 @@ app.whenReady().then(() => {
   timerService.onComplete((state) => {
     broadcast(IPC_CHANNELS.TIMER_COMPLETED, state);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'celebrating');
+    // If pet was hidden for full-screen Deep Work, restore it to celebrate!
+    if (petWindow && !petWindow.isVisible()) {
+      petWindow.show();
+      const userName = persistenceService.getState().settings.userName;
+      notificationService.showNotification(
+        'Deep Work Sprint Complete! 🎉',
+        `Incredible focus${userName ? `, ${userName}` : ''}! Mochi is back to celebrate your achievement.`
+      );
+    }
+    trayService?.updateMenu();
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
     }, 4000);
@@ -319,6 +419,13 @@ function setupGlobalGazeTracking(): void {
     }
   }, 60);
 }
+
+app.on('before-quit', () => {
+  trayService?.destroy();
+  if (persistenceService) {
+    persistenceService.flushPendingSave();
+  }
+});
 
 app.on('window-all-closed', () => {
   if (PlatformAdapter.isMac()) {

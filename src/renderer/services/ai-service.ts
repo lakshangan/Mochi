@@ -1,13 +1,10 @@
-import { AiSettings, ChatMessage } from '../../shared/types';
+import { AiSettings, ChatMessage, ChatSuggestedAction } from '../../shared/types';
 import { parseLocalCommand } from '../../shared/command-parser';
 
 export interface AiResponse {
   text: string;
-  suggestedAction?: {
-    type: 'start_timer' | 'create_task' | 'add_note' | 'pet_mood';
-    label: string;
-    payload: any;
-  };
+  suggestedAction?: ChatSuggestedAction;
+  isExternalAi?: boolean;
 }
 
 export class AiCompanionService {
@@ -19,25 +16,105 @@ export class AiCompanionService {
     // 1. First check deterministic local commands
     const parsed = parseLocalCommand(userText);
     if (parsed.action !== 'unknown' && parsed.action !== 'help') {
-      let suggestedAction: AiResponse['suggestedAction'];
-      if (parsed.action === 'timer_start') {
-        suggestedAction = {
-          type: 'start_timer',
-          label: `Start ${parsed.payload.seconds / 60}m Timer`,
-          payload: parsed.payload,
-        };
-      } else if (parsed.action === 'task_add') {
-        suggestedAction = {
-          type: 'create_task',
-          label: `Add Task: ${parsed.payload.title}`,
-          payload: parsed.payload,
-        };
-      } else if (parsed.action === 'note_add') {
-        suggestedAction = {
-          type: 'add_note',
-          label: `Save Note`,
-          payload: parsed.payload,
-        };
+      let suggestedAction: ChatSuggestedAction | undefined;
+
+      switch (parsed.action) {
+        case 'timer_start':
+          suggestedAction = {
+            type: 'start_timer',
+            label: `Timer: ${Math.round(parsed.payload.seconds / 60)}m`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'pomodoro_start':
+          suggestedAction = {
+            type: 'start_pomodoro',
+            label: `Pomodoro (${parsed.payload.phase})`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'timer_pause':
+          suggestedAction = {
+            type: 'pause_timer',
+            label: 'Pause Timer',
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'timer_resume':
+          suggestedAction = {
+            type: 'resume_timer',
+            label: 'Resume Timer',
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'timer_reset':
+          suggestedAction = {
+            type: 'reset_timer',
+            label: 'Reset Timer',
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'water_reminder_set':
+          suggestedAction = {
+            type: 'set_water_reminder',
+            label: `Hydration: ${parsed.payload.intervalMinutes}m`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'break_reminder_set':
+          suggestedAction = {
+            type: 'set_break_reminder',
+            label: `Break: ${parsed.payload.intervalMinutes}m`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'task_add':
+          suggestedAction = {
+            type: 'create_task',
+            label: `Task: ${parsed.payload.title}`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'task_list':
+          suggestedAction = {
+            type: 'view_tab',
+            label: 'Open Tasks List →',
+            payload: { tab: 'tasks' },
+            autoExecuted: false,
+          };
+          break;
+        case 'task_clear_completed':
+          suggestedAction = {
+            type: 'clear_completed_tasks',
+            label: 'Clear Completed',
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'note_add':
+          suggestedAction = {
+            type: 'add_note',
+            label: `Save Note`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
+        case 'pet_state':
+          suggestedAction = {
+            type: 'pet_mood',
+            label: `Mood: ${parsed.payload.state}`,
+            payload: parsed.payload,
+            autoExecuted: true,
+          };
+          break;
       }
 
       return {
@@ -46,45 +123,20 @@ export class AiCompanionService {
       };
     }
 
-    // 2. If an external AI provider is configured and key is present
-    if (settings.provider === 'openai' && settings.apiKey) {
+    // 2. If an external AI provider is configured and IPC bridge is available
+    if (settings.provider === 'openai') {
       try {
-        const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
-        const model = settings.model || 'gpt-4o-mini';
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${settings.apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are Mochi, a friendly, calm, intelligent, and glowing digital orb companion on the desktop. Keep responses concise, uplifting, and productivity-focused (under 3 sentences). Offer helpful advice for study, breaks, hydration, and tasks.',
-              },
-              ...history.slice(-4).map((m) => ({
-                role: m.sender === 'user' ? 'user' : 'assistant',
-                content: m.text,
-              })),
-              { role: 'user', content: userText },
-            ],
-            temperature: settings.temperature ?? 0.7,
-            max_tokens: 150,
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const content = data.choices?.[0]?.message?.content?.trim();
-          if (content) {
-            return { text: content };
+        if (window.mochiApi?.queryAi) {
+          const aiResult = await window.mochiApi.queryAi(userText, history);
+          if (aiResult.text) {
+            return {
+              text: aiResult.text,
+              isExternalAi: true,
+            };
           }
         }
       } catch (err) {
-        console.warn('[AiService] External provider request failed, falling back to local:', err);
+        console.warn('[AiService] Main process AI proxy request failed, falling back to local heuristic:', err);
       }
     }
 
@@ -93,9 +145,8 @@ export class AiCompanionService {
   }
 
   private static generateOfflineResponse(prompt: string): AiResponse {
-    const lower = prompt.toLowerCase();
-
-    if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+    // Word-boundary regexes to prevent false triggers (e.g., 'this' triggering 'hi')
+    if (/\b(hello|hi|hey|howdy|greetings|aloha)\b/i.test(prompt)) {
       const greetings = [
         'Hello there! I am floating right here beside you. How is your focus today?',
         'Hi! Mochi is awake and ready. Want to start a focus session or organize your to-do list?',
@@ -111,13 +162,13 @@ export class AiCompanionService {
       };
     }
 
-    if (lower.includes('how are you') || lower.includes('how do you feel')) {
+    if (/\b(how are you|how do you feel|how's it going|how are things)\b/i.test(prompt)) {
       return {
         text: 'I feel radiant and ready! My particles are swirling smoothly. How is your energy level right now?',
       };
     }
 
-    if (lower.includes('tired') || lower.includes('exhausted') || lower.includes('sleepy')) {
+    if (/\b(tired|exhausted|sleepy|fatigued|drained|burnout)\b/i.test(prompt)) {
       return {
         text: 'You have been working hard! Remember that resting is part of high performance. Would you like a 5-minute break with calming breathing?',
         suggestedAction: {
@@ -128,19 +179,24 @@ export class AiCompanionService {
       };
     }
 
-    if (lower.includes('stress') || lower.includes('anxious') || lower.includes('overwhelmed')) {
+    if (/\b(stress|stressed|anxious|anxiety|overwhelmed|panic)\b/i.test(prompt)) {
       return {
         text: 'Take a deep breath with me. Inhale for 4 seconds... exhale slowly for 4 seconds. Let us pick just ONE small task to start with.',
       };
     }
 
-    if (lower.includes('water') || lower.includes('thirsty') || lower.includes('drink')) {
+    if (/\b(water|thirsty|drink|hydrate|hydration)\b/i.test(prompt)) {
       return {
         text: 'Staying hydrated keeps your brain sharp! Grab a tall glass of water now. 💧',
+        suggestedAction: {
+          type: 'set_water_reminder',
+          label: 'Set 30m Water Reminder',
+          payload: { intervalMinutes: 30 },
+        },
       };
     }
 
-    if (lower.includes('joke') || lower.includes('make me laugh')) {
+    if (/\b(joke|jokes|funny|make me laugh)\b/i.test(prompt)) {
       const jokes = [
         'Why do programmers prefer dark mode? Because light attracts bugs! 💡',
         'Why was the JavaScript developer sad? Because they didn’t Node how to Express themselves!',

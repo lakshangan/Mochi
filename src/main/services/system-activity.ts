@@ -5,10 +5,12 @@ import { SystemActivityEvent, AppActivityCategory, PetAnimationState } from '../
 const execAsync = promisify(exec);
 
 let electronScreen: typeof import('electron').screen | null = null;
+let electronPowerMonitor: typeof import('electron').powerMonitor | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const electron = require('electron');
   electronScreen = electron.screen;
+  electronPowerMonitor = electron.powerMonitor;
 } catch {
   // Safe in non-electron test environments
 }
@@ -516,6 +518,8 @@ export class SystemActivityMonitor {
   private typingStreak = 0;
   private lastBubbleEmitTime = 0;
   private lastCursorPos = { x: 0, y: 0 };
+  private cachedRawApp = '';
+  private lastAppCheckTime = 0;
   private onActivityChange: (event: SystemActivityEvent) => void;
 
   constructor(onActivityChange: (event: SystemActivityEvent) => void) {
@@ -569,60 +573,140 @@ export class SystemActivityMonitor {
     try {
       const now = Date.now();
 
-      // 1. Check user idle time via IOHIDSystem (macOS)
+      // 1. Cross-platform user idle time detection
       let idleSeconds = 0;
       if (process.platform === 'darwin') {
         try {
-          const { stdout } = await execAsync(`ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print $NF; exit}'`);
+          const { stdout } = await execAsync(
+            `ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print $NF; exit}'`
+          );
           const idleNanos = parseInt(stdout.trim(), 10);
           if (!isNaN(idleNanos)) {
             idleSeconds = idleNanos / 1_000_000_000;
+          }
+        } catch {
+          if (electronPowerMonitor) {
+            idleSeconds = electronPowerMonitor.getSystemIdleTime();
+          }
+        }
+      } else if (process.platform === 'linux') {
+        try {
+          const { stdout } = await execAsync('xprintidle');
+          const idleMs = parseInt(stdout.trim(), 10);
+          if (!isNaN(idleMs)) {
+            idleSeconds = idleMs / 1000;
+          }
+        } catch {
+          if (electronPowerMonitor) {
+            idleSeconds = electronPowerMonitor.getSystemIdleTime();
+          }
+        }
+      } else {
+        // Windows and general fallback
+        if (electronPowerMonitor) {
+          idleSeconds = electronPowerMonitor.getSystemIdleTime();
+        }
+      }
+
+      // 2. Cross-platform frontmost application detection (throttled to 1200ms to minimize CPU load)
+      let rawApp = this.cachedRawApp;
+      if (now - this.lastAppCheckTime > 1200 || !this.cachedRawApp) {
+        this.lastAppCheckTime = now;
+        if (process.platform === 'darwin') {
+          try {
+            const { stdout } = await execAsync(`lsappinfo info -only name $(lsappinfo front)`);
+            const match = stdout.match(/^"([^"]+)"/);
+            if (match && match[1]) {
+              rawApp = match[1];
+            } else {
+              rawApp = stdout.split('\n')[0].replace(/"/g, '').trim();
+            }
+          } catch {
+            try {
+              const { stdout } = await execAsync(
+                `osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`
+              );
+              rawApp = stdout.trim();
+            } catch {
+              // ignore
+            }
+          }
+        } else if (process.platform === 'win32') {
+          try {
+            const { stdout } = await execAsync(
+              `powershell -NoProfile -NonInteractive -Command "$h = (Add-Type -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow(); public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int p);' -Name W -Namespace W -PassThru)::GetForegroundWindow(); $p = 0; [W.W]::GetWindowThreadProcessId($h, [ref]$p); (Get-Process -Id $p).ProcessName"`
+            );
+            rawApp = stdout.trim().split('\r\n')[0].trim();
+          } catch {
+            // ignore
+          }
+        } else if (process.platform === 'linux') {
+          try {
+            const { stdout } = await execAsync(`xdotool getactivewindow getwindowname`);
+            rawApp = stdout.trim();
+          } catch {
+            try {
+              const { stdout } = await execAsync(
+                `xprop -id $(xprop -root -notype _NET_ACTIVE_WINDOW | awk '{print $5}') WM_CLASS`
+              );
+              const match = stdout.match(/WM_CLASS.*= "(?:[^"]+)", "([^"]+)"/);
+              if (match && match[1]) {
+                rawApp = match[1];
+              }
+            } catch {
+              // ignore
+            }
+          }
+        }
+        this.cachedRawApp = rawApp;
+      }
+
+      // 3. Audio stream detection (Content-Blind Security Feature)
+      // Privacy Guarantee: NEVER captures audio data, microphone, song titles, or waveform.
+      // Strictly inspects binary OS power assertions for whether audio hardware is active.
+      let isAudioPlaying = false;
+      if (process.platform === 'darwin') {
+        try {
+          const { stdout } = await execAsync(`pmset -g assertions | grep -i "coreaudiod"`);
+          if (
+            stdout.includes('PreventUserIdleSystemSleep') ||
+            stdout.includes('NoIdleSleepAssertion')
+          ) {
+            isAudioPlaying = true;
+          }
+        } catch {
+          // grep exit code 1 if no match
+        }
+      } else if (process.platform === 'win32') {
+        try {
+          const { stdout } = await execAsync('powercfg -requests');
+          // Windows powercfg outputs active audio assertions when media plays without revealing content
+          if (stdout.includes('[AUDIO]') && !stdout.match(/\[AUDIO\]\s+None/i)) {
+            isAudioPlaying = true;
+          }
+        } catch {
+          // ignore
+        }
+      } else if (process.platform === 'linux') {
+        try {
+          const { stdout } = await execAsync(`pactl list sink-inputs | grep -i "state: RUNNING"`);
+          if (stdout.includes('RUNNING')) {
+            isAudioPlaying = true;
           }
         } catch {
           // ignore
         }
       }
 
-      // 2. Check frontmost application (lsappinfo is fast and permission-free)
-      let rawApp = '';
-      if (process.platform === 'darwin') {
-        try {
-          const { stdout } = await execAsync(`lsappinfo info -only name $(lsappinfo front)`);
-          const match = stdout.match(/^"([^"]+)"/);
-          if (match && match[1]) {
-            rawApp = match[1];
-          } else {
-            rawApp = stdout.split('\n')[0].replace(/"/g, '').trim();
-          }
-        } catch {
-          // Fallback to osascript if needed
-          try {
-            const { stdout } = await execAsync(
-              `osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`
-            );
-            rawApp = stdout.trim();
-          } catch {
-            // ignore
-          }
-        }
-      }
-
-      // 3. Audio assertions
-      let isAudioPlaying = false;
-      if (process.platform === 'darwin') {
-        try {
-          const { stdout } = await execAsync(`pmset -g assertions | grep -i "coreaudiod"`);
-          if (stdout.includes('PreventUserIdleSystemSleep') || stdout.includes('NoIdleSleepAssertion')) {
-            isAudioPlaying = true;
-          }
-        } catch {
-          // grep exit code 1 if no match
-        }
-      }
-
       const classification = classifyApplication(rawApp);
       const isDevApp = classification.category === 'development';
-      const isRawInputActive = idleSeconds < 0.75; // touched keyboard or mouse in the last 750ms
+
+      // On macOS we have high-resolution sub-second idle time (<0.75s).
+      // On Windows and Linux with second-level granularity, idleSeconds === 0 indicates recent activity.
+      const isRawInputActive =
+        process.platform === 'darwin'
+          ? idleSeconds < 0.75
+          : idleSeconds === 0;
 
       // Check cursor motion to distinguish mouse pointing/movement from keyboard typing
       let isMouseMoving = false;
@@ -642,16 +726,19 @@ export class SystemActivityMonitor {
         }
       }
 
-      // Keyboard typing is detected when input was active but mouse cursor was NOT moving
-      const isKeyboardTyping = isRawInputActive && !isMouseMoving;
+      // On non-macOS platforms, avoid false positive typing when the mouse is merely stationary:
+      // only classify as typing if user is in an editor/terminal or already in an active streak
+      const qualifiesForTyping =
+        process.platform === 'darwin' || isDevApp || this.typingStreak > 0;
+      const isKeyboardTyping = isRawInputActive && !isMouseMoving && qualifiesForTyping;
 
       if (isKeyboardTyping) {
         this.lastInputActiveTime = now;
         this.typingStreak++;
       } else if (isMouseMoving) {
-        // Pointing/moving mouse - cool down typing streak so we don't falsely claim keyboard smoking
+        // Pointing/moving mouse - cool down typing streak
         this.typingStreak = 0;
-      } else if (idleSeconds > 2.0) {
+      } else if (idleSeconds > 1.5) {
         this.typingStreak = 0;
       }
 
@@ -695,63 +782,50 @@ export class SystemActivityMonitor {
 
       let finalState: PetAnimationState = classification.state;
       let finalTitle = classification.title;
-      let finalSubtitle = this.lastSubtitle || classification.subtitles[0];
+      let finalSubtitle = classification.subtitles[0];
 
-      // Logic for typing vs coding vs focused vs music
-      if (isAudioPlaying && classification.category !== 'development' && idleSeconds > 5) {
+      // Logic for audio vibing vs coding vs focused vs general typing
+      if (isAudioPlaying && (idleSeconds > 3.5 || !isDevApp)) {
         finalState = 'listening';
-        finalTitle = 'Soundtrack Flow';
-        finalSubtitle = 'Vibing hard.';
+        finalTitle = 'Audio Playing 🎧';
+        finalSubtitle = 'Headphones on & vibing to the beat 🎧';
       } else if (isDevApp) {
-        // In VS Code / Coding Apps / Antigravity:
+        // Active in VS Code, Antigravity IDE, Cursor, Xcode, etc.
         if (isKeyboardTyping || (timeSinceLastInput < 1.4 && this.typingStreak >= 2)) {
-          // Genuinely typing on keyboard in code editor!
           finalState = 'typing';
-          finalTitle = classification.formattedName;
-          if (this.typingStreak > 6) {
-            finalSubtitle = 'Keyboard smoking!';
-          } else {
-            const devTypingSubtitles = [
-              'Writing logic.',
-              'Crafting code.',
-              'Clean syntax.',
-              'In the flow zone.',
-            ];
-            finalSubtitle = devTypingSubtitles[Math.floor(Math.random() * devTypingSubtitles.length)];
-          }
+          finalTitle = `Coding in ${classification.formattedName}`;
+          finalSubtitle = `Typing code in ${classification.formattedName} 💻`;
         } else if (isMouseMoving && idleSeconds < 1.2) {
-          // User pointed mouse or navigated in editor -> curious attentive eyes!
           finalState = 'curious';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Reviewing code.';
+          finalSubtitle = `Navigating code in ${classification.formattedName}`;
         } else if (idleSeconds < 30) {
-          // Paused typing in code editor: thinking / reviewing code
           finalState = 'focused';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Reviewing logic.';
+          finalSubtitle = `Deep focus in ${classification.formattedName}`;
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Ready to code.';
+          finalSubtitle = `Active workspace in ${classification.formattedName}`;
         }
       } else {
-        // Non-dev apps (Slack, Notion, Chrome, etc.):
+        // Non-developer apps (Slack, Notion, Chrome, Spotify, etc.)
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
-          finalTitle = classification.formattedName;
-          finalSubtitle = TYPING_SUBTITLES[Math.floor(Math.random() * TYPING_SUBTITLES.length)];
+          finalTitle = `Typing in ${classification.formattedName}`;
+          finalSubtitle = `Active typing in ${classification.formattedName}`;
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
           finalTitle = classification.formattedName;
-          finalSubtitle = classification.subtitles[0];
+          finalSubtitle = `Working in ${classification.formattedName}`;
         } else if (idleSeconds < 25) {
           finalState = classification.state;
           finalTitle = classification.title;
-          finalSubtitle = classification.subtitles[0];
+          finalSubtitle = `Active in ${classification.formattedName}`;
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
-          finalSubtitle = 'Standing by.';
+          finalSubtitle = `Standing by in ${classification.formattedName}`;
         }
       }
 
