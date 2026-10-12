@@ -5,8 +5,10 @@ export class BehaviorEngine {
   private animationController: AnimationController;
   private lastActivityTime = Date.now();
   private inactivityCheckInterval: NodeJS.Timeout | null = null;
+  private isSadWaiting = false;
   private isSleeping = false;
-  private sleepThresholdMs = 8 * 60 * 1000; // 8 minutes of inactivity -> sleeping
+  private sadThresholdMs = 60 * 1000; // 1 minute of inactivity -> sad waiting
+  private sleepThresholdMs = 3 * 60 * 1000; // 3 minutes of inactivity -> sleeping
 
   constructor(animationController: AnimationController) {
     this.animationController = animationController;
@@ -15,6 +17,14 @@ export class BehaviorEngine {
 
   public registerUserActivity(): void {
     this.lastActivityTime = Date.now();
+    if (this.isSadWaiting) {
+      this.isSadWaiting = false;
+      this.animationController.triggerReaction('happy', 2000);
+      setTimeout(() => {
+        this.animationController.setBaseline('idle');
+      }, 2000);
+      return;
+    }
     if (this.isSleeping) {
       this.isSleeping = false;
       this.animationController.triggerReaction('waking', 2000);
@@ -66,16 +76,24 @@ export class BehaviorEngine {
     this.inactivityCheckInterval = setInterval(() => {
       const now = Date.now();
       const current = this.animationController.getState();
-      // Don't fall asleep if working on pomodoro or timer is active
-      if (
-        !this.isSleeping &&
-        current === 'idle' &&
-        now - this.lastActivityTime > this.sleepThresholdMs
-      ) {
+      const idleTime = now - this.lastActivityTime;
+
+      // 3+ minutes: fall asleep
+      if (!this.isSleeping && idleTime > this.sleepThresholdMs) {
+        this.isSadWaiting = false;
         this.isSleeping = true;
         this.animationController.setBaseline('sleeping');
+      } else if (
+        !this.isSleeping &&
+        !this.isSadWaiting &&
+        current === 'idle' &&
+        idleTime > this.sadThresholdMs
+      ) {
+        // 1 minute: sad waiting face :(
+        this.isSadWaiting = true;
+        this.animationController.setBaseline('sad');
       }
-    }, 30000);
+    }, 10000);
   }
 
   public destroy(): void {

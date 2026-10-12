@@ -84,6 +84,24 @@ describe('Local Command Parser & Duration Extractor', () => {
     const drank = parseLocalCommand('drank water');
     expect(drank.action).toBe('pet_state');
     expect(drank.payload.state).toBe('hydrated');
+
+    // Fire flow mode 🔥
+    const fire = parseLocalCommand('fire');
+    expect(fire.action).toBe('pet_state');
+    expect(fire.payload.state).toBe('fire');
+
+    const onFire = parseLocalCommand('on fire');
+    expect(onFire.action).toBe('pet_state');
+    expect(onFire.payload.state).toBe('fire');
+
+    // Coding mode </>
+    const code = parseLocalCommand('coding');
+    expect(code.action).toBe('pet_state');
+    expect(code.payload.state).toBe('coding');
+
+    const brackets = parseLocalCommand('</>');
+    expect(brackets.action).toBe('pet_state');
+    expect(brackets.payload.state).toBe('coding');
   });
 
   it('handles help and unknown commands safely', () => {

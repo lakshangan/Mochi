@@ -230,28 +230,47 @@ npm run bench       # Full 1,000-cycle throughput and memory profile script
 
 ## Complete Reactions & Facial Expressions Catalog
 
-Mochi features **18 distinct facial states, emoticons, and procedural reactive animations**. Each expression dynamically adapts its glowing micro-LED matrix and speech capsules based on user interactions, desktop activity, or chat commands:
+Mochi features **19 distinct facial states, emoticons, and procedural reactive animations**. Each expression dynamically adapts its glowing micro-LED matrix and speech capsules based on privacy-first OS activity metrics, desktop context, or chat commands:
 
 | Expression / Reaction | State Key | Face Matrix / Visual Icon | Trigger Condition | Visual & Audio Dynamics |
 | :--- | :--- | :--- | :--- | :--- |
+| **Code Mode** | `coding` | **`</>` Code Tag Brackets** | Frontmost app is VS Code, Cursor, Antigravity IDE, Xcode, Terminal, or IntelliJ (or typing `</>` / `coding`) | High-contrast neon cyan (`#00f7ff`) `< / >` code tag matrix glowing on Mochi's face with electronic code flow chime. |
+| **On Fire (Flow Streak)** | `fire` | **`🔥` Flaming Flow Face** | Sustained high-velocity typing streak (inferred from continuous OS input deltas) or typing `fire` | Blazing amber flame contour with an internal pulsing crimson flame core (`#ff1e56` with `#ff3b30` glow). |
+| **Waiting Pout** | `sad` | **`:(` Comforting Emoticon Face** | **1 minute of inactivity on laptop** (no mouse/keyboard input for 60s), or typing `:('` / `sad` | Gentle downturned eyes with a curved pout mouth. Displays *"No activity for 1 min. Waiting for you to return :("* speech capsule. |
 | **Hydrated (Drink Log)** | `hydrated` | **`💧💖` Water Drop + Beating Heart** | Logging water via "+ Log Glass", Care card, Tray menu, or typing `drink log` / `drank water` | Glowing cyan teardrop contour with an internal pulsing magenta heart (`#ff3b88`). Accompanied by a refreshing water droplet synth chime. |
 | **Cheerful Smile** | `smile` | **`:)` Joyful Emoticon Face** | Typing `:)`, `:-)`, `=)`, or command `smile` | Curved smiling eyes with an upturned happy mouth matrix and a positive speech bubble. |
-| **Sympathetic Pout** | `sad` | **`:(` Comforting Emoticon Face** | Typing `:('`, `:-(`, `=('`, or command `sad` / `pout` | Gentle downturned eyes with a curved pout mouth and empathetic breathing pulse. |
 | **Headphones Vibing** | `listening` | **`🎧` Cyberpunk Over-Ear Headphones** | OS audio playback detected (Spotify, YouTube, Apple Music, podcasts) | Over-ear neon teal/pink earcups with glowing headband appear; Mochi bounces up and down to the beat (1.8 Hz groove oscillation). 100% private: uses sleep assertions, zero audio eavesdropping. |
-| **Coding Flow State** | `coding` | **`💻` Laser Pupils** | Frontmost app is VS Code, Cursor, Xcode, Terminal, or IntelliJ | Narrowed laser pupils with responsive typing burst tracking and electronic synthesizer chime. |
 | **Deep Focus** | `focused` | **`🧘` Zen Gaze** | Active Pomodoro 25m sprint or sustained deep work | Calm lavender/cyan breathing pulse with stable center gaze and minimized distraction alerts. |
 | **Celebrating** | `celebrating` | **`🎉` Star Eyes & Confetti** | Completing a Pomodoro sprint, finishing a task, or typing `celebrate` | Dynamic star pupil sparkles, rapid levitation bounce, and celebratory arpeggio chime. |
-| **Delighted Happy** | `happy` | **`✨` Sparkle Eyes** | Clicking on Mochi, praising in chat, or completing reminders | Golden-amber eye expansion with cheerful high-pitched chirp sound. |
-| **Curious Gaze** | `curious` | **`👀` Wide Pupils** | Hovering cursor near Mochi or typing `curious` / `look` | Enlarged micro-LED pupils that smoothly track mouse coordinates across your desktop. |
-| **Deep Sleep & Rest** | `sleeping` | **`💤` Peaceful Slits** | System idle > 5 minutes, 5m mindful break, or typing `sleep` | Horizontal slit eyes with slow, calming 0.3 Hz breathing luminosity. |
-| **Morning Awakening** | `waking` | **`🌅` Blinking Yawn** | Moving mouse or typing after sleep | Gradual eyelid opening transition with wake chime. |
+| **Delighted Happy** | `happy` | **`✨` Sparkle Eyes** | Returning to laptop from 1-min absence, clicking/patting Mochi, or completing reminders | Golden-amber eye expansion with cheerful high-pitched chirp sound: *"Yay, you're back! Let's get things done."* |
+| **Curious Gaze** | `curious` | **`👀` Wide Pupils** | Hovering cursor near Mochi, navigating files, or typing `curious` | Enlarged micro-LED pupils that smoothly track mouse coordinates across your desktop. |
+| **Deep Sleep & Rest** | `sleeping` | **`💤` Peaceful Slits** | Inactivity > 3 minutes (180s absence), 5m mindful break, or typing `sleep` | Horizontal slit eyes with slow, calming 0.3 Hz breathing luminosity. |
+| **Morning Awakening** | `waking` | **`🌅` Blinking Yawn** | Moving mouse or typing after 3+ minute sleep | Gradual eyelid opening transition with wake chime. |
 | **Thinking** | `thinking` | **`🤔` Shifting Matrix** | Querying AI assistant or processing natural language intent | Alternating left-to-right eye shifts with pulsing LED nodes. |
 | **Productivity Flow** | `working` | **`💼` Concentrated Eyes** | Active in Google Docs, Sheets, Notion, Linear, Slack | Alert rectangular pupils with adaptive blink rates. |
 | **Care Reminder** | `reminding` | **`🔔` Amber Pulse** | Water or ergonomic break timer due | High-visibility dual amber/cyan flashing matrix with chime alert. |
 | **Dragging Mascot** | `dragging` | **`🚀` Velocity Pupils** | Clicking and dragging Mochi across the screen | Surprised wide eyes following drag acceleration vectors. |
-| **Typing Burst** | `typing` | **`⚡` Flow Particles** | Sustained typing speed > 40 WPM inferred via OS deltas | Micro-LED pupil dilation synchronizing with keystroke cadence. |
+| **Typing Burst** | `typing` | **`⚡` Flow Particles** | Sustained typing speed inferred via OS deltas | Micro-LED pupil dilation synchronizing with keystroke cadence. |
 | **Natural Blink** | `blink` | **`👁️` Eyelid Flutter** | Autonomous idle behavior (every 3–8 seconds) | Biomorphic human-like vertical blink transition. |
 | **Ambient Resting** | `idle` | **`🔮` Lava Lamp Orb** | Default desktop state | Chromatic lava lamp shader with gentle physics hover and soft glow. |
+
+### Deterministic State Machine & Privacy-First Triggers
+
+Mochi **never inspects keystroke content or requires intrusive accessibility permissions**. Every state is triggered deterministically via low-level physical metrics:
+
+```
++-------------------------------------------------------------------------------------------------+
+|                                 PHYSICAL ACTIVITY STATE PIPELINE                                 |
++-------------------------------------------------------------------------------------------------+
+| User Active at Keyboard / IDE       --> Displays Code Brackets `</>` with typing particle pulse |
+| Sustained High-Speed Typing Streak  --> Ignites Fire Mode `🔥` with radiant crimson flame core  |
+| OS Audio Playback (Assertions)      --> Over-Ear Cyberpunk Headphones `🎧` + Groove Bounce      |
+| Inactive for 60 Seconds (1 Min)     --> Switches to Sad Pout `:(`: "Waiting for you to return"  |
+| Inactive for 180 Seconds (3+ Mins)  --> Gently falls asleep `💤` to conserve energy             |
+| Touch Keyboard / Mouse from Absence --> Wakes up with Delighted Sparkles `✨`: "Yay, you're back"|
+| Drink Water Logged                  --> Teardrop with Beating Heart `💧💖` + Water Droplet Chime |
++-------------------------------------------------------------------------------------------------+
+```
 
 ---
 

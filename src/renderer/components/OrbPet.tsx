@@ -226,6 +226,29 @@ export const OrbPet: React.FC = () => {
           if (reactionTimeout) clearTimeout(reactionTimeout);
           reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
           if (speakingTimeout) clearTimeout(speakingTimeout);
+        } else if (state === 'fire') {
+          setReactionMessage({
+            title: 'On Fire! 🔥',
+            subtitle: currentName
+              ? `Blazing typing streak, ${currentName}! You are unstoppable 🔥`
+              : 'Blazing typing streak! You are in the zone 🔥',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+        } else if (state === 'coding') {
+          setReactionMessage({
+            title: 'Code Flow </>',
+            subtitle: currentName
+              ? `Crafting software with you, ${currentName}! </>`
+              : 'Crafting clean software </>',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
           speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
         }
       });

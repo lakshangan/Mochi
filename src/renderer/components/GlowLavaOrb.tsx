@@ -218,6 +218,31 @@ const WATER_DROP_HEART: PixelGrid = [
   [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
 ];
 
+// 17. Code Tag Brackets `</>` for developer coding mode
+const CODE_TAGS_CENTERED: PixelGrid = [
+  [0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+  [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+  [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+  [0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+];
+
+// 18. Flaming Fire Face (`🔥`) for high-velocity typing/flow streak
+const FIRE_FACE: PixelGrid = [
+  [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0],
+  [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+  [0, 1, 1, 2, 2, 1, 2, 2, 1, 1, 0],
+  [1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0],
+  [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+];
+
 // Expression map for animation states
 const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst', Expression> = {
   idle: {
@@ -369,10 +394,18 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
   },
   coding: {
     centered: true,
-    eye: SHADES_CENTERED,
+    eye: CODE_TAGS_CENTERED,
     eyeColor: '#00f7ff',
     glowColor: '#00f7ff',
     intensity: 1.7,
+    eyeOffset: 0,
+  },
+  fire: {
+    centered: true,
+    eye: FIRE_FACE,
+    eyeColor: '#ff9900',
+    glowColor: '#ff2d55',
+    intensity: 1.8,
     eyeOffset: 0,
   },
   focused: {
@@ -530,10 +563,15 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
           for (let c = 0; c < row.length; c++) {
             const val = row[c] ?? 0;
             if (val > 0) {
-              const isHeartPixel = val >= 2;
-              ctx.shadowColor = isHeartPixel ? '#f43f5e' : glowColor;
-              ctx.fillStyle = isHeartPixel ? '#ff3b88' : color;
-              ctx.globalAlpha = Math.max(0, Math.min(1, alpha * (isHeartPixel ? 1 : val)));
+              const isAccentPixel = val >= 2;
+              const isFire = activeState === 'fire';
+              ctx.shadowColor = isAccentPixel
+                ? (isFire ? '#ff3b30' : '#f43f5e')
+                : glowColor;
+              ctx.fillStyle = isAccentPixel
+                ? (isFire ? '#ff1e56' : '#ff3b88')
+                : color;
+              ctx.globalAlpha = Math.max(0, Math.min(1, alpha * (isAccentPixel ? 1 : val)));
 
               const x = sx + c * CELL;
               const y = sy + r * CELL;

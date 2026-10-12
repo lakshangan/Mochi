@@ -339,6 +339,38 @@ export function parseLocalCommand(rawInput: string): ParsedCommandResult {
     };
   }
 
+  // Fire Flow State 🔥
+  if (
+    lower === 'fire' ||
+    lower === 'on fire' ||
+    lower.includes('fire') ||
+    lower.includes('streak') ||
+    lower.includes('blaze')
+  ) {
+    return {
+      action: 'pet_state',
+      payload: { state: 'fire' },
+      feedback: 'Mochi ignites into blazing fire mode! 🔥 Keep up the momentum!',
+      confidence: 0.95,
+    };
+  }
+
+  // Coding Tag Mode </>
+  if (
+    lower === 'coding' ||
+    lower === 'code' ||
+    lower === '</>' ||
+    lower === '<\\>' ||
+    lower.includes('code mode')
+  ) {
+    return {
+      action: 'pet_state',
+      payload: { state: 'coding' },
+      feedback: 'Mochi activates code brackets </> mode! Laser-focused on shipping.',
+      confidence: 0.95,
+    };
+  }
+
   // Pet emotion / animation state trigger
   if (lower.includes('happy') || lower.includes('cheer')) {
     return {

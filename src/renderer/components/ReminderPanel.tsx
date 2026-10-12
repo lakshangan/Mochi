@@ -115,24 +115,89 @@ export const ReminderPanel: React.FC<ReminderPanelProps> = ({
 
         {waterSettings.enabled && (
           <div className="card-body">
-            <div className="setting-sub-row">
-              <label>Reminder Interval:</label>
-              <select
-                value={waterSettings.intervalMinutes}
-                onChange={(e) =>
-                  onUpdateWater({
-                    intervalMinutes: parseInt(e.target.value, 10),
-                    nextDue: Date.now() + parseInt(e.target.value, 10) * 60000,
-                  })
-                }
-                className="select-dropdown"
-              >
-                <option value={20}>Every 20 mins</option>
-                <option value={30}>Every 30 mins</option>
-                <option value={45}>Every 45 mins (Recommended)</option>
-                <option value={60}>Every 60 mins</option>
-                <option value={90}>Every 90 mins</option>
-              </select>
+            <div className="setting-sub-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ fontWeight: 500, fontSize: '13px' }}>Reminder Interval:</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    style={{ padding: '2px 8px', fontSize: '12px' }}
+                    onClick={() => {
+                      const next = Math.max(5, (waterSettings.intervalMinutes || 30) - 5);
+                      onUpdateWater({ intervalMinutes: next, nextDue: Date.now() + next * 60000 });
+                    }}
+                  >
+                    -5m
+                  </button>
+                  <input
+                    type="number"
+                    min={5}
+                    max={240}
+                    value={waterSettings.intervalMinutes}
+                    onChange={(e) => {
+                      const val = Math.max(1, parseInt(e.target.value || '1', 10));
+                      onUpdateWater({ intervalMinutes: val, nextDue: Date.now() + val * 60000 });
+                    }}
+                    style={{
+                      width: '60px',
+                      padding: '4px 6px',
+                      borderRadius: '6px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#ffffff',
+                      textAlign: 'center',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>min</span>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    style={{ padding: '2px 8px', fontSize: '12px' }}
+                    onClick={() => {
+                      const next = Math.min(240, (waterSettings.intervalMinutes || 30) + 5);
+                      onUpdateWater({ intervalMinutes: next, nextDue: Date.now() + next * 60000 });
+                    }}
+                  >
+                    +5m
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Preset Badges */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {[15, 20, 30, 45, 60, 90].map((mins) => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() =>
+                      onUpdateWater({
+                        intervalMinutes: mins,
+                        nextDue: Date.now() + mins * 60000,
+                      })
+                    }
+                    style={{
+                      padding: '3px 8px',
+                      fontSize: '11px',
+                      borderRadius: '12px',
+                      border:
+                        waterSettings.intervalMinutes === mins
+                          ? '1px solid #38bdf8'
+                          : '1px solid rgba(255, 255, 255, 0.12)',
+                      background:
+                        waterSettings.intervalMinutes === mins
+                          ? 'rgba(56, 189, 248, 0.25)'
+                          : 'rgba(255, 255, 255, 0.05)',
+                      color: waterSettings.intervalMinutes === mins ? '#38bdf8' : 'rgba(255, 255, 255, 0.75)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {mins}m
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="tracker-row">

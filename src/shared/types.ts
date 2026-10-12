@@ -6,6 +6,7 @@ export type PetAnimationState =
   | 'smile'
   | 'sad'
   | 'hydrated'
+  | 'fire'
   | 'walking'
   | 'sleeping'
   | 'waking'

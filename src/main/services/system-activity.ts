@@ -744,8 +744,9 @@ export class SystemActivityMonitor {
 
       const timeSinceLastInput = (now - this.lastInputActiveTime) / 1000;
 
-      // Handle long periods of absence
-      if (idleSeconds > 90) {
+      // 1. Idle absence handling:
+      // If inactive for >= 180s (3m), go to sleep
+      if (idleSeconds >= 180) {
         if (this.lastState !== 'sleeping') {
           this.lastState = 'sleeping';
           this.lastAppName = 'System';
@@ -762,6 +763,42 @@ export class SystemActivityMonitor {
           return event;
         }
         return null;
+      }
+
+      // If inactive for >= 60s (1m), show sad waiting reaction :(
+      if (idleSeconds >= 60) {
+        if (this.lastState !== 'sad') {
+          this.lastState = 'sad';
+          this.lastAppName = 'System';
+          const event: SystemActivityEvent = {
+            appName: 'System',
+            category: 'idle',
+            state: 'sad',
+            title: 'Missing You :(',
+            subtitle: 'No activity for 1 min. Waiting for you to return :(',
+            timestamp: now,
+            isTyping: false,
+          };
+          this.onActivityChange(event);
+          return event;
+        }
+        return null;
+      }
+
+      // Returning from 1-min absence (sad)
+      if (this.lastState === 'sad' && (isKeyboardTyping || isMouseMoving)) {
+        this.lastState = 'happy';
+        const welcomeBackEvent: SystemActivityEvent = {
+          appName: classification.formattedName,
+          category: classification.category,
+          state: 'happy',
+          title: 'Welcome Back! ✨',
+          subtitle: `Yay, you're back! Let's get things done.`,
+          timestamp: now,
+          isTyping: false,
+        };
+        this.onActivityChange(welcomeBackEvent);
+        return welcomeBackEvent;
       }
 
       // Waking up from sleep
@@ -784,25 +821,32 @@ export class SystemActivityMonitor {
       let finalTitle = classification.title;
       let finalSubtitle = classification.subtitles[0];
 
-      // Logic for audio vibing vs coding vs focused vs general typing
-      if (isAudioPlaying && (idleSeconds > 3.5 || !isDevApp)) {
+      // Intense typing flow streak -> Fire face 🔥
+      const isSuperTypingStreak = this.typingStreak >= 7;
+
+      // Logic for audio vibing vs fire vs coding vs focused vs general typing
+      if (isSuperTypingStreak) {
+        finalState = 'fire';
+        finalTitle = 'On Fire! 🔥';
+        finalSubtitle = 'Blazing typing streak! You are in the zone 🔥';
+      } else if (isAudioPlaying && (idleSeconds > 3.5 || !isDevApp)) {
         finalState = 'listening';
         finalTitle = 'Audio Playing 🎧';
         finalSubtitle = 'Headphones on & vibing to the beat 🎧';
       } else if (isDevApp) {
         // Active in VS Code, Antigravity IDE, Cursor, Xcode, etc.
         if (isKeyboardTyping || (timeSinceLastInput < 1.4 && this.typingStreak >= 2)) {
-          finalState = 'typing';
-          finalTitle = `Coding in ${classification.formattedName}`;
-          finalSubtitle = `Typing code in ${classification.formattedName} 💻`;
+          finalState = 'coding';
+          finalTitle = `Coding in ${classification.formattedName} </>`;
+          finalSubtitle = `Crafting code in ${classification.formattedName} </>`;
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
           finalTitle = classification.formattedName;
           finalSubtitle = `Navigating code in ${classification.formattedName}`;
         } else if (idleSeconds < 30) {
-          finalState = 'focused';
+          finalState = 'coding';
           finalTitle = classification.formattedName;
-          finalSubtitle = `Deep focus in ${classification.formattedName}`;
+          finalSubtitle = `Active workspace in ${classification.formattedName} </>`;
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
