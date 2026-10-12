@@ -651,28 +651,102 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       style={{ width: size, height: size }}
       onClick={onClick}
     >
-      {/* 0. Cyberpunk Glowing Headphones (Active in Audio Listening / Vibing state) */}
+      {/* 0. Cyberpunk Over-Ear Headphones (Active in Audio Listening / Vibing state) */}
       {state === 'listening' && (
         <div className="glow-orb-headphones" style={{ width: size, height: size }}>
-          <div className="headphone-band" />
-          <div className="headphone-earcup left">
-            <div className="earcup-cushion" />
-            <div className="earcup-light" />
-            <div className="earcup-soundwave">
-              <span className="wave-bar bar-1" />
-              <span className="wave-bar bar-2" />
-              <span className="wave-bar bar-3" />
-            </div>
-          </div>
-          <div className="headphone-earcup right">
-            <div className="earcup-cushion" />
-            <div className="earcup-light" />
-            <div className="earcup-soundwave">
-              <span className="wave-bar bar-1" />
-              <span className="wave-bar bar-2" />
-              <span className="wave-bar bar-3" />
-            </div>
-          </div>
+          <svg
+            className="headphones-svg"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="bandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ec4899" />
+                <stop offset="50%" stopColor="#f472b6" />
+                <stop offset="100%" stopColor="#ec4899" />
+              </linearGradient>
+              <linearGradient id="cupShell" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#2d2b3b" />
+                <stop offset="100%" stopColor="#0f1017" />
+              </linearGradient>
+              <filter id="neonPinkGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Padded Headband Cushion (hugs the top contour of the orb snugly) */}
+            <path
+              d="M 18 42 Q 50 10 82 42"
+              stroke="#1a1a26"
+              strokeWidth="5.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Structural Outer Band with Cyberpunk Neon Glow */}
+            <path
+              d="M 16 41 Q 50 7 84 41"
+              stroke="url(#bandGrad)"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              fill="none"
+              filter="url(#neonPinkGlow)"
+            />
+            {/* Top Specular Sheen on Band */}
+            <path
+              d="M 38 12 Q 50 9 62 12"
+              stroke="#ffffff"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeOpacity="0.8"
+              fill="none"
+            />
+
+            {/* Left Hinge Joint */}
+            <rect x="14" y="38" width="4" height="6" rx="1.5" fill="#f472b6" />
+            {/* Right Hinge Joint */}
+            <rect x="82" y="38" width="4" height="6" rx="1.5" fill="#f472b6" />
+
+            {/* Left Over-Ear Cup */}
+            <g className="earcup-assembly left">
+              <rect
+                x="6"
+                y="34"
+                width="14"
+                height="32"
+                rx="7"
+                fill="url(#cupShell)"
+                stroke="#f472b6"
+                strokeWidth="1.8"
+                filter="url(#neonPinkGlow)"
+              />
+              <rect x="8.5" y="36.5" width="9" height="27" rx="4.5" fill="#0c0d14" />
+              <circle cx="13" cy="50" r="3.2" fill="#00f7ff" className="earcup-led-ring" />
+              <circle cx="13" cy="50" r="1.4" fill="#ffffff" />
+            </g>
+
+            {/* Right Over-Ear Cup */}
+            <g className="earcup-assembly right">
+              <rect
+                x="80"
+                y="34"
+                width="14"
+                height="32"
+                rx="7"
+                fill="url(#cupShell)"
+                stroke="#f472b6"
+                strokeWidth="1.8"
+                filter="url(#neonPinkGlow)"
+              />
+              <rect x="82.5" y="36.5" width="9" height="27" rx="4.5" fill="#0c0d14" />
+              <circle cx="87" cy="50" r="3.2" fill="#00f7ff" className="earcup-led-ring" />
+              <circle cx="87" cy="50" r="1.4" fill="#ffffff" />
+            </g>
+          </svg>
         </div>
       )}
 

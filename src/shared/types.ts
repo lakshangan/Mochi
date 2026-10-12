@@ -196,3 +196,14 @@ export interface MochiFullState {
   activeReminder: ReminderNotificationEvent | null;
   petState: PetAnimationState;
 }
+
+export interface SystemPerformanceMetrics {
+  totalRamMB: number;
+  mainProcessRamMB: number;
+  rendererRamMB: number;
+  gpuRamMB: number;
+  cpuPercent: number;
+  fps: number;
+  uptimeSeconds: number;
+  leakWatchdogStatus: 'clean' | 'nominal';
+}

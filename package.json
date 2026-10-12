@@ -13,6 +13,8 @@
     "build:main": "vite build --config vite.main.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:perf": "vitest run tests/benchmark.test.ts",
+    "bench": "node scripts/benchmark-ram.js",
     "package": "npm run build && electron-builder",
     "package:mac": "npm run build && electron-builder --mac",
     "package:win": "npm run build && electron-builder --win",

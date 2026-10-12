@@ -166,6 +166,9 @@ const mochiApi: ElectronMochiAPI = {
   getPlatform: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_GET_PLATFORM);
   },
+  getSystemMetrics: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_GET_METRICS);
+  },
   quitApp: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_QUIT);
   },

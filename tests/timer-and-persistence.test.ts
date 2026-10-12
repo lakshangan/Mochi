@@ -90,6 +90,7 @@ describe('Timer Service & Recovery Engine', () => {
   });
 
   it('reconciles tasks from concurrent windows to prevent last-writer-wins clobbering', () => {
+    persistence.getState().tasks = [];
     // Initial task
     const initialTasks = persistence.updateTasks([
       {

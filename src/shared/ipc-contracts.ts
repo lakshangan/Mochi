@@ -9,6 +9,7 @@ import {
   ReminderNotificationEvent,
   PomodoroPhase,
   SystemActivityEvent,
+  SystemPerformanceMetrics,
 } from './types';
 
 export const IPC_CHANNELS = {
@@ -62,6 +63,7 @@ export const IPC_CHANNELS = {
   SYSTEM_ACTIVITY_CHANGED: 'system:activity-changed',
   SYSTEM_SHOW_NOTIFICATION: 'system:show-notification',
   SYSTEM_GET_PLATFORM: 'system:get-platform',
+  SYSTEM_GET_METRICS: 'system:get-metrics',
   SYSTEM_QUIT: 'system:quit',
 } as const;
 
@@ -116,6 +118,7 @@ export interface ElectronMochiAPI {
   onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => () => void;
   showNotification: (title: string, body: string) => Promise<void>;
   getPlatform: () => Promise<'darwin' | 'win32' | 'linux'>;
+  getSystemMetrics: () => Promise<SystemPerformanceMetrics>;
   quitApp: () => Promise<void>;
 }
 
