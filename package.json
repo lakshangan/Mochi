@@ -10,7 +10,7 @@
     "dev:electron": "wait-on http://localhost:5173 dist/main/main.js && electron dist/main/main.js",
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
-    "build:main": "vite build --config vite.main.config.ts",
+    "build:main": "vite build --config vite.main.config.ts && node scripts/copy-assets.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:perf": "vitest run tests/benchmark.test.ts",

@@ -1,5 +1,6 @@
 import { app, Tray, Menu, nativeImage, MenuItemConstructorOptions } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { PetWindow } from '../windows/pet-window';
 import { AssistantWindow } from '../windows/assistant-window';
 import { TimerService } from './timer-service';
@@ -8,9 +9,12 @@ import { NotificationService } from './notification-service';
 import { PersistenceService } from './persistence-service';
 import { IPC_CHANNELS } from '../../shared/ipc-contracts';
 
-// High-fidelity self-contained macOS Template Icon fallback (16x16 8-bit RGBA PNG)
+// Genuine Apple macOS Template Icons (Monochrome alpha stencil for Dark/Light menu bar)
 const TRAY_ICON_1X_B64 =
-  'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANElEQVR4nGNgoDH4D8UkKSYWU6QZw5BhYACuUCfEp60B2JxLtAEk+51qBhBjCFGAIs30BQAOO3uFlUMB/QAAAABJRU5ErkJggg==';
+  'iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAqElEQVR4nGNgoCPQBmJ7KE2W5l1A/B8L3kWsoTVQDQ+BOB2IpaDiUlD+Q6h8DTGGNBCwrAGfYdpEGoJuGIY3QX5/SKQhMPAQqg8FgExPR+IfAeJ5aGrmQcVhIB2qDw5g3pJCEkNRgENMigHNe/ZYFP0nQcyekIsIGYThIpgi5DDqBuIcNINyoOIwgBFGIEC1WKNaOgIBqqRsdMMoymswQJXcj81QguURAKJcSvXWMGq9AAAAAElFTkSuQmCC';
+
+const TRAY_ICON_2X_B64 =
+  'iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAABh0lEQVR4nO1YMY7CQAzcNtWVNEg8IS1PoKKn5AGIMl/gAdciHnCfSJ0qTZp7AQ+IaO92JVuas+J4IYlkiRvJQsqO7cE43l1C+MebYB2tilZH66P9gPX0vCLeothH64QAyzrymxXpmzZKwjbaV7QbfbYKrwkzVewwEDwlLw2/knjS9zBFzEkESxUonoxRkB/GOb0iRlbm+EoQwDFMqNRaOO8mimHsRNzsnsIGnloZCaxUk+OwD397ZglgT5kjAefMsw2ciwJydGNE7J3bQmIYOBLUXqqANDRnPqLdaf1qJLwS705+EiXkqrQgNZCG8Anrj2grhbcC3jf5DYE5tSaIN8pWWecy8xjYKLwNiEm4KDzeZnpNkPV24e/+yBDEorR+xLdtVJAWQO5NOYJy440KyqnQHILMCuX20FyCzB6qDcVnkWgMyDsbnFoLYs0h5qRSbw1BW+JpMyZrDrmb1Amu9rIEd7t9gqvzUIK7E2OCqzM1w9Wtg+HqXsZwdXNFuLnbS7j59+P98AsIiSD3F0VT2QAAAABJRU5ErkJggg==';
 
 export class TrayService {
   private tray: Tray | null = null;
@@ -61,32 +65,42 @@ export class TrayService {
   }
 
   private loadTrayIcon(): Electron.NativeImage {
-    const filePaths = [
-      path.join(__dirname, 'assets/trayIcon.png'),
-      path.join(__dirname, '../assets/trayIcon.png'),
-      path.join(app.getAppPath(), 'src/main/assets/trayIcon.png'),
-      path.join(app.getAppPath(), 'build/trayIcon.png'),
-      path.join(process.cwd(), 'src/main/assets/trayIcon.png'),
-      path.join(process.cwd(), 'build/trayIcon.png'),
-      path.join(__dirname, 'assets/trayTemplate.png'),
-      path.join(__dirname, '../assets/trayTemplate.png'),
-      path.join(app.getAppPath(), 'build/trayTemplate.png'),
-      path.join(process.cwd(), 'build/trayTemplate.png'),
+    const candidateDirs = [
+      path.join(__dirname, 'assets'),
+      path.join(__dirname, '../assets'),
+      path.join(app.getAppPath(), 'dist/main/assets'),
+      path.join(app.getAppPath(), 'src/main/assets'),
+      path.join(app.getAppPath(), 'build'),
+      path.join(process.cwd(), 'dist/main/assets'),
+      path.join(process.cwd(), 'src/main/assets'),
+      path.join(process.cwd(), 'build'),
     ];
 
-    for (const p of filePaths) {
+    for (const dir of candidateDirs) {
+      const templatePath = path.join(dir, 'trayTemplate.png');
       try {
-        const img = nativeImage.createFromPath(p);
-        if (!img.isEmpty()) {
-          const isTemplate = p.includes('Template');
-          if (isTemplate) {
+        if (fs.existsSync(templatePath)) {
+          const img = nativeImage.createFromPath(templatePath);
+          if (!img.isEmpty()) {
             img.setTemplateImage(true);
+            return img;
           }
-          return img.resize({ width: 18, height: 18 });
         }
       } catch {
-        // Continue to fallback
+        // Continue searching
       }
+    }
+
+    // High-resolution Retina in-memory template image fallback
+    try {
+      const img2x = nativeImage.createFromDataURL(`data:image/png;base64,${TRAY_ICON_2X_B64}`);
+      if (!img2x.isEmpty()) {
+        const resized = img2x.resize({ width: 18, height: 18 });
+        resized.setTemplateImage(true);
+        return resized;
+      }
+    } catch {
+      // Fallback
     }
 
     const b64Img = nativeImage.createFromDataURL(`data:image/png;base64,${TRAY_ICON_1X_B64}`);
