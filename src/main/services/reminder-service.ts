@@ -33,19 +33,35 @@ export class ReminderService {
     const settings = this.persistenceService.getState().settings;
     const now = Date.now();
 
-    // Init Water
-    if (settings.waterReminders.enabled && !settings.waterReminders.nextDue) {
-      settings.waterReminders.nextDue = now + settings.waterReminders.intervalMinutes * 60 * 1000;
+    const waterInterval = Math.max(5, settings.waterReminders.intervalMinutes || 45);
+    const breakInterval = Math.max(10, settings.breakReminders.intervalMinutes || 60);
+
+    // If nextDue is missing or in the past, push it to a future time based on configured interval
+    let waterNextDue = settings.waterReminders.nextDue;
+    if (settings.waterReminders.enabled) {
+      if (!waterNextDue || waterNextDue <= now) {
+        waterNextDue = now + waterInterval * 60 * 1000;
+      }
     }
 
-    // Init Break
-    if (settings.breakReminders.enabled && !settings.breakReminders.nextDue) {
-      settings.breakReminders.nextDue = now + settings.breakReminders.intervalMinutes * 60 * 1000;
+    let breakNextDue = settings.breakReminders.nextDue;
+    if (settings.breakReminders.enabled) {
+      if (!breakNextDue || breakNextDue <= now) {
+        breakNextDue = now + breakInterval * 60 * 1000;
+      }
     }
 
     this.persistenceService.updateSettings({
-      waterReminders: settings.waterReminders,
-      breakReminders: settings.breakReminders,
+      waterReminders: {
+        ...settings.waterReminders,
+        intervalMinutes: waterInterval,
+        nextDue: waterNextDue,
+      },
+      breakReminders: {
+        ...settings.breakReminders,
+        intervalMinutes: breakInterval,
+        nextDue: breakNextDue,
+      },
     });
   }
 
@@ -53,10 +69,10 @@ export class ReminderService {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
     }
-    // Check every 10 seconds
+    // Check every 15 seconds
     this.checkInterval = setInterval(() => {
       this.checkReminders();
-    }, 10000);
+    }, 15000);
   }
 
   public checkReminders(): void {
@@ -88,12 +104,24 @@ export class ReminderService {
 
   private triggerWaterReminder(): void {
     const settings = this.persistenceService.getState().settings.waterReminders;
+    const intervalMins = Math.max(5, settings.intervalMinutes || 45);
+    const now = Date.now();
+
+    // Advance nextDue immediately into the future so it never spams again!
+    const nextDue = now + intervalMins * 60 * 1000;
+    this.persistenceService.updateSettings({
+      waterReminders: {
+        ...settings,
+        nextDue,
+      },
+    });
+
     const event: ReminderNotificationEvent = {
       type: 'water',
       title: 'Time to Hydrate! 💧',
-      message: 'Mochi reminds you: Grab a glass of fresh water to keep your mind energized.',
-      timestamp: Date.now(),
-      dueAt: Date.now(),
+      message: 'Mochi reminds you: Grab a fresh glass of water to keep your body & mind energized.',
+      timestamp: now,
+      dueAt: now,
       fullScreenAlert: Boolean(settings.fullScreenAlert),
     };
     this.activeEvent = event;
@@ -104,12 +132,24 @@ export class ReminderService {
 
   private triggerBreakReminder(): void {
     const settings = this.persistenceService.getState().settings.breakReminders;
+    const intervalMins = Math.max(10, settings.intervalMinutes || 60);
+    const now = Date.now();
+
+    // Advance nextDue immediately into the future
+    const nextDue = now + intervalMins * 60 * 1000;
+    this.persistenceService.updateSettings({
+      breakReminders: {
+        ...settings,
+        nextDue,
+      },
+    });
+
     const event: ReminderNotificationEvent = {
       type: 'break',
       title: 'Rest Your Eyes & Stretch! 🌿',
-      message: `You have been working hard. Take a ${settings.breakDurationMinutes}-minute break to refresh.`,
-      timestamp: Date.now(),
-      dueAt: Date.now(),
+      message: `You have been working hard. Take a ${settings.breakDurationMinutes || 5}-minute break to refresh.`,
+      timestamp: now,
+      dueAt: now,
       fullScreenAlert: Boolean(settings.fullScreenAlert),
     };
     this.activeEvent = event;
@@ -128,6 +168,8 @@ export class ReminderService {
     const newTodayCount = isNewDay ? 1 : (settings.todayCount || 0) + 1;
     const newLoggedCount = (settings.loggedCount || 0) + 1;
 
+    const intervalMins = Math.max(5, settings.intervalMinutes || 45);
+
     this.persistenceService.updateSettings({
       waterReminders: {
         ...settings,
@@ -135,7 +177,7 @@ export class ReminderService {
         todayCount: newTodayCount,
         lastLoggedDate: todayDateStr,
         lastCompleted: now,
-        nextDue: now + settings.intervalMinutes * 60 * 1000,
+        nextDue: now + intervalMins * 60 * 1000,
       },
     });
   }
@@ -144,11 +186,12 @@ export class ReminderService {
     const settings = this.persistenceService.getState().settings.waterReminders;
     const now = Date.now();
     this.activeEvent = null;
+    const snoozeMins = Math.max(2, minutes || 10);
 
     this.persistenceService.updateSettings({
       waterReminders: {
         ...settings,
-        nextDue: now + minutes * 60 * 1000,
+        nextDue: now + snoozeMins * 60 * 1000,
       },
     });
   }
@@ -157,11 +200,12 @@ export class ReminderService {
     const settings = this.persistenceService.getState().settings.waterReminders;
     const now = Date.now();
     this.activeEvent = null;
+    const intervalMins = Math.max(5, settings.intervalMinutes || 45);
 
     this.persistenceService.updateSettings({
       waterReminders: {
         ...settings,
-        nextDue: now + settings.intervalMinutes * 60 * 1000,
+        nextDue: now + intervalMins * 60 * 1000,
       },
     });
   }

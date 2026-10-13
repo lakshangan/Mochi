@@ -131,7 +131,6 @@ export const FullScreenAlertOverlay: React.FC = () => {
         {/* Glow halo & hero icon */}
         <div className="hero-icon-wrapper">
           <div className="hero-halo" />
-          <div className="hero-pulsing-ring" />
           <div className="hero-icon-bubble">
             {isWater ? (
               <span className="hero-emoji" role="img" aria-label="water">
@@ -162,19 +161,19 @@ export const FullScreenAlertOverlay: React.FC = () => {
         {isWater && (
           <div className="water-intake-badge">
             <div className="intake-header-row">
-              <span className="intake-label">Daily Hydration Target</span>
-              <span className="intake-percent">{progressPercent}%</span>
+              <span className="intake-label">Daily Goal (8 Glasses)</span>
+              <span className="intake-percent">{todayCount} / {targetGlasses} ({progressPercent}%)</span>
             </div>
 
             {/* Glowing progress bar */}
             <div className="intake-progress-bar-track">
               <div
                 className="intake-progress-bar-fill"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${Math.max(5, progressPercent)}%` }}
               />
             </div>
 
-            {/* Glass dots */}
+            {/* Glass dots with numbers */}
             <div className="intake-glasses-row">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                 <div
@@ -182,12 +181,15 @@ export const FullScreenAlertOverlay: React.FC = () => {
                   className={`glass-dot ${num <= todayCount ? 'filled' : 'empty'}`}
                   title={`Glass ${num} of 8`}
                 >
-                  <Droplet size={13} />
+                  <Droplet size={11} className="glass-droplet-icon" />
+                  <span className="glass-number">{num}</span>
                 </div>
               ))}
             </div>
             <div className="intake-text">
-              Today&apos;s Intake: <strong>{todayCount} / {targetGlasses} glasses</strong> logged
+              {todayCount >= 8
+                ? '🎉 Incredible! Daily hydration goal reached!'
+                : `${8 - todayCount} more glass${8 - todayCount === 1 ? '' : 'es'} to hit today\'s goal`}
             </div>
           </div>
         )}
