@@ -530,21 +530,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <span className="setting-name">Full-Screen Alert</span>
                 <span className="setting-desc">Show prominent unmissable full-screen reminder when it's time to drink water</span>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={Boolean(settings.waterReminders.fullScreenAlert)}
-                  onChange={(e) =>
-                    onUpdateSettings({
-                      waterReminders: {
-                        ...settings.waterReminders,
-                        fullScreenAlert: e.target.checked,
-                      },
-                    })
-                  }
-                />
-                <span className="slider" />
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => {
+                    window.mochiApi?.triggerFullScreenAlertPreview?.();
+                  }}
+                  title="Test the unmissable full-screen alert"
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 9px',
+                    border: '1px solid rgba(0, 247, 255, 0.4)',
+                    color: '#00f7ff',
+                    background: 'rgba(0, 247, 255, 0.1)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚡ Preview Alert
+                </button>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings.waterReminders.fullScreenAlert)}
+                    onChange={(e) =>
+                      onUpdateSettings({
+                        waterReminders: {
+                          ...settings.waterReminders,
+                          fullScreenAlert: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
             </div>
 
             {/* Water Logging Tracker & Accountability Nudge */}

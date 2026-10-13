@@ -7,10 +7,11 @@ import { ReminderService } from './services/reminder-service';
 import { TrayService } from './services/tray-service';
 import { PetWindow } from './windows/pet-window';
 import { AssistantWindow } from './windows/assistant-window';
+import { AlertWindow } from './windows/alert-window';
 import { PlatformAdapter } from './platform/platform-adapter';
 import { SystemActivityMonitor } from './services/system-activity';
 import { IPC_CHANNELS } from '../shared/ipc-contracts';
-import { AppSettings, PetAnimationState, PetPosition, TaskItem, NoteItem, PomodoroPhase } from '../shared/types';
+import { AppSettings, PetAnimationState, PetPosition, TaskItem, NoteItem, PomodoroPhase, ReminderNotificationEvent } from '../shared/types';
 
 // Enforce single instance
 const gotTheLock = app.requestSingleInstanceLock();
@@ -30,6 +31,7 @@ let activityMonitor: SystemActivityMonitor;
 let trayService: TrayService;
 let petWindow: PetWindow;
 let assistantWindow: AssistantWindow;
+let alertWindow: AlertWindow;
 let wanderInterval: NodeJS.Timeout | null = null;
 
 function broadcast(channel: string, ...args: any[]): void {
@@ -40,6 +42,10 @@ function broadcast(channel: string, ...args: any[]): void {
   const aWin = assistantWindow?.getWindow();
   if (aWin && !aWin.isDestroyed()) {
     aWin.webContents.send(channel, ...args);
+  }
+  const alertWin = alertWindow?.getWindow();
+  if (alertWin && !alertWin.isDestroyed()) {
+    alertWin.webContents.send(channel, ...args);
   }
 }
 
@@ -100,6 +106,23 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT, () => {
     assistantWindow.hide();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE_ALERT, () => {
+    alertWindow?.close();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ALERT_PREVIEW, () => {
+    const sampleEvent: ReminderNotificationEvent = {
+      type: 'water',
+      title: 'Time to Hydrate! 💧',
+      message: 'Mochi reminds you: Grab a fresh glass of water to keep your body & mind energized.',
+      timestamp: Date.now(),
+      dueAt: Date.now(),
+      fullScreenAlert: true,
+    };
+    alertWindow?.show(sampleEvent, PRELOAD_PATH, isDev, DEV_URL);
+    broadcast(IPC_CHANNELS.PET_SET_STATE, 'reminding');
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_PET, () => {
@@ -201,6 +224,7 @@ function registerIpcHandlers(): void {
 
   // Reminders
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_SNOOZE, (_event, minutes = 10) => {
+    alertWindow?.close();
     reminderService.snoozeWater(minutes);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
     setTimeout(() => {
@@ -209,6 +233,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_COMPLETE, () => {
+    alertWindow?.close();
     reminderService.completeWater();
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'hydrated');
     setTimeout(() => {
@@ -217,6 +242,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_DISMISS, () => {
+    alertWindow?.close();
     reminderService.dismissWater();
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
     setTimeout(() => {
@@ -225,11 +251,13 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_SNOOZE, (_event, minutes = 10) => {
+    alertWindow?.close();
     reminderService.snoozeBreak(minutes);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_START_TIMER, () => {
+    alertWindow?.close();
     const settings = persistenceService.getState().settings.breakReminders;
     reminderService.dismissBreak();
     timerService.startCountdown(settings.breakDurationMinutes * 60, 'Mindful Break');
@@ -237,6 +265,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_DISMISS, () => {
+    alertWindow?.close();
     reminderService.dismissBreak();
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
   });
@@ -390,6 +419,7 @@ app.whenReady().then(() => {
 
   petWindow = new PetWindow(initialPos, settings);
   assistantWindow = new AssistantWindow();
+  alertWindow = new AlertWindow();
 
   registerIpcHandlers();
   petWindow.create(PRELOAD_PATH, isDev, DEV_URL);
@@ -438,13 +468,7 @@ app.whenReady().then(() => {
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'reminding');
 
     if (event.fullScreenAlert) {
-      const aWin = assistantWindow.getWindow();
-      if (aWin && !aWin.isDestroyed()) {
-        assistantWindow.show();
-      } else if (petWindow) {
-        const petPos = petWindow.getPosition();
-        assistantWindow.createOrToggle(petPos, PRELOAD_PATH, isDev, DEV_URL);
-      }
+      alertWindow.show(event, PRELOAD_PATH, isDev, DEV_URL);
     }
   });
 

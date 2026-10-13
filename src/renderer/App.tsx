@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { OrbPet } from './components/OrbPet';
 import { AssistantPanel } from './components/AssistantPanel';
+import { FullScreenAlertOverlay } from './components/FullScreenAlertOverlay';
 
 export const App: React.FC = () => {
-  const [route, setRoute] = useState<'pet' | 'assistant' | 'dev-preview'>('pet');
+  const [route, setRoute] = useState<'pet' | 'assistant' | 'fullscreen-alert' | 'dev-preview'>('pet');
 
   useEffect(() => {
     const updateRoute = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'assistant') {
+      if (hash === 'fullscreen-alert' || hash === 'alert') {
+        setRoute('fullscreen-alert');
+      } else if (hash === 'assistant') {
         setRoute('assistant');
       } else if (hash === 'pet') {
         setRoute('pet');
@@ -22,6 +25,10 @@ export const App: React.FC = () => {
     window.addEventListener('hashchange', updateRoute);
     return () => window.removeEventListener('hashchange', updateRoute);
   }, []);
+
+  if (route === 'fullscreen-alert') {
+    return <FullScreenAlertOverlay />;
+  }
 
   if (route === 'pet') {
     return <OrbPet />;

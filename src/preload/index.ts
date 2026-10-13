@@ -30,6 +30,12 @@ const mochiApi: ElectronMochiAPI = {
   closeAssistant: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT);
   },
+  closeAlertWindow: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ALERT);
+  },
+  triggerFullScreenAlertPreview: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.ALERT_PREVIEW);
+  },
   togglePetVisibility: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_TOGGLE_PET);
   },
@@ -122,6 +128,13 @@ const mochiApi: ElectronMochiAPI = {
     ipcRenderer.on(IPC_CHANNELS.REMINDER_TRIGGERED, handler);
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.REMINDER_TRIGGERED, handler);
+    };
+  },
+  onAlertEvent: (callback: (event: ReminderNotificationEvent) => void) => {
+    const handler = (_event: any, ev: ReminderNotificationEvent) => callback(ev);
+    ipcRenderer.on('alert:event', handler);
+    return () => {
+      ipcRenderer.removeListener('alert:event', handler);
     };
   },
 

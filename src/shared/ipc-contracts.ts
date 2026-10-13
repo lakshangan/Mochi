@@ -19,6 +19,8 @@ export const IPC_CHANNELS = {
   WINDOW_GET_POSITION: 'window:get-position',
   WINDOW_TOGGLE_ASSISTANT: 'window:toggle-assistant',
   WINDOW_CLOSE_ASSISTANT: 'window:close-assistant',
+  WINDOW_CLOSE_ALERT: 'window:close-alert',
+  ALERT_PREVIEW: 'alert:preview',
   WINDOW_TOGGLE_PET: 'window:toggle-pet',
   WINDOW_SET_PET_VISIBLE: 'window:set-pet-visible',
   WINDOW_MINIMIZE: 'window:minimize',
@@ -74,6 +76,8 @@ export interface ElectronMochiAPI {
   getPosition: () => Promise<PetPosition>;
   toggleAssistant: () => Promise<boolean>;
   closeAssistant: () => Promise<void>;
+  closeAlertWindow?: () => Promise<void>;
+  triggerFullScreenAlertPreview?: () => Promise<void>;
   togglePetVisibility: () => Promise<boolean>;
   setPetVisible: (visible: boolean) => Promise<void>;
   setAlwaysOnTop: (alwaysOnTop: boolean) => Promise<void>;
@@ -104,6 +108,7 @@ export interface ElectronMochiAPI {
   startBreakTimer: () => Promise<void>;
   dismissBreak: () => Promise<void>;
   onReminderTriggered: (callback: (event: ReminderNotificationEvent) => void) => () => void;
+  onAlertEvent?: (callback: (event: ReminderNotificationEvent) => void) => () => void;
 
   // Pet
   setPetState: (state: PetAnimationState) => Promise<void>;
