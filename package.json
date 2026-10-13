@@ -43,17 +43,22 @@
       "darkModeSupport": true,
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "icon": "build/icon.icns",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
     },
+    "dmg": {
+      "title": "${productName}",
+      "icon": "build/icon.icns"
+    },
     "win": {
-      "target": ["nsis", "portable"],
-      "nsis": {
-        "oneClick": false,
-        "allowToChangeInstallationDirectory": true,
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true
-      }
+      "target": ["nsis", "portable"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "linux": {
       "target": ["AppImage", "deb"],

@@ -4,6 +4,8 @@ export type StateChangeCallback = (state: PetAnimationState) => void;
 
 const STATE_PRIORITIES: Record<PetAnimationState, number> = {
   dragging: 10,
+  party: 9,
+  beaten: 9,
   angry: 9,
   reminding: 9,
   fire: 9,

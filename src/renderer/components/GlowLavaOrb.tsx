@@ -255,6 +255,18 @@ const ANGRY_EYE_LEFT: PixelGrid = [
   [0, 1, 1, 0, 0],
 ];
 
+// 20. Knocked-out / Beaten & Sad Dizzy Face (`>_<` with bruised marks and pout)
+const BEATEN_SAD_FACE: PixelGrid = [
+  [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+  [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+  [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+  [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+];
+
 // Expression map for animation states
 const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst', Expression> = {
   idle: {
@@ -263,6 +275,22 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     glowColor: '#00d2ff',
     intensity: 1.0,
     eyeOffset: 26,
+  },
+  beaten: {
+    centered: true,
+    eye: BEATEN_SAD_FACE,
+    eyeColor: '#93c5fd',
+    glowColor: '#3b82f6',
+    intensity: 1.6,
+    eyeOffset: 0,
+  },
+  party: {
+    centered: true,
+    eye: SHADES_CENTERED,
+    eyeColor: '#00f7ff',
+    glowColor: '#ec4899',
+    intensity: 1.95,
+    eyeOffset: 0,
   },
   blink: {
     eye: BLINK_EYE,

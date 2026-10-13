@@ -19,7 +19,9 @@ export type PetAnimationState =
   | 'typing'
   | 'listening'
   | 'coding'
-  | 'focused';
+  | 'focused'
+  | 'beaten'
+  | 'party';
 
 export type PomodoroPhase = 'focus' | 'short-break' | 'long-break' | 'idle';
 

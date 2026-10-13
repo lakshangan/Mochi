@@ -87,11 +87,14 @@ export const OrbPet: React.FC = () => {
     return tips[Math.floor(Math.random() * tips.length)];
   };
 
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleMouseEnter = () => {
     setIsHovered(true);
     setGreeting(getDynamicGreeting(userName));
     animControllerRef.current?.triggerReaction('happy', 2500);
-    SoundEffects.chirp(0.2);
+    // Silent on hover so simply moving mouse does not cause audio interruption
   };
 
   const handleMouseLeave = () => {
@@ -109,8 +112,8 @@ export const OrbPet: React.FC = () => {
     if (window.mochiApi) {
       await window.mochiApi.saveSettings({ userName: trimmed, hasSeenWelcome: true });
     }
-    SoundEffects.celebrate(0.35);
-    animControllerRef.current?.triggerReaction('celebrating', 3500);
+    SoundEffects.celebrate(0.3);
+    animControllerRef.current?.triggerReaction('celebrating', 4000);
     setReactionMessage({
       title: 'Awesome to meet you! ✨',
       subtitle: `Hey ${trimmed}! What's up? I'm right here with you.`,
@@ -121,10 +124,55 @@ export const OrbPet: React.FC = () => {
   };
 
   const handlePetAction = () => {
-    behaviorEngineRef.current?.handlePetClick();
-    SoundEffects.chirp(0.35);
-    if (window.mochiApi) {
-      window.mochiApi.toggleAssistant();
+    tapCountRef.current += 1;
+
+    if (tapTimerRef.current) {
+      clearTimeout(tapTimerRef.current);
+      tapTimerRef.current = null;
+    }
+
+    if (tapCountRef.current === 1) {
+      // 1 Tap: Wait briefly to see if user double-taps
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+        behaviorEngineRef.current?.handlePetClick();
+        SoundEffects.chirp(0.25);
+        if (window.mochiApi) {
+          window.mochiApi.toggleAssistant();
+        }
+      }, 280);
+    } else if (tapCountRef.current === 2) {
+      // 2 Taps: Wait briefly to see if user triple-taps
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+        SoundEffects.bonk(0.28);
+        animControllerRef.current?.triggerReaction('beaten', 6500);
+        if (window.mochiApi) {
+          window.mochiApi.triggerPetReaction('beaten');
+        }
+        setReactionMessage({
+          title: 'Ouch! >_<',
+          subtitle: 'Why tap so hard? Mochi feels dizzy & bruised! 🤕',
+        });
+        setTimeout(() => {
+          setReactionMessage(null);
+        }, 6500);
+      }, 260);
+    } else if (tapCountRef.current >= 3) {
+      // 3 Taps: Cool cyber party / sunglasses / hyper-drive!
+      tapCountRef.current = 0;
+      SoundEffects.party(0.35);
+      animControllerRef.current?.triggerReaction('party', 7500);
+      if (window.mochiApi) {
+        window.mochiApi.triggerPetReaction('party');
+      }
+      setReactionMessage({
+        title: '🕶️ HYPER-DRIVE ACTIVATED! ✨',
+        subtitle: 'Maximum energy! Ultra-chill cyber mode online 🚀⚡',
+      });
+      setTimeout(() => {
+        setReactionMessage(null);
+      }, 7500);
     }
   };
 
@@ -201,9 +249,9 @@ export const OrbPet: React.FC = () => {
           });
           setIsSpeaking(true);
           if (reactionTimeout) clearTimeout(reactionTimeout);
-          reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 8500);
           if (speakingTimeout) clearTimeout(speakingTimeout);
-          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 4500);
         } else if (state === 'angry') {
           setReactionMessage({
             title: 'Drink your water! 😠💧',
@@ -213,9 +261,29 @@ export const OrbPet: React.FC = () => {
           });
           setIsSpeaking(true);
           if (reactionTimeout) clearTimeout(reactionTimeout);
-          reactionTimeout = setTimeout(() => setReactionMessage(null), 4500);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 8500);
           if (speakingTimeout) clearTimeout(speakingTimeout);
-          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 4500);
+        } else if (state === 'beaten') {
+          setReactionMessage({
+            title: 'Ouch! >_<',
+            subtitle: 'Why tap so hard? Mochi feels dizzy & bruised! 🤕',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 7000);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 4000);
+        } else if (state === 'party') {
+          setReactionMessage({
+            title: '🕶️ HYPER-DRIVE ACTIVATED! ✨',
+            subtitle: 'Maximum energy! Ultra-chill cyber mode online 🚀⚡',
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 7500);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 4000);
         } else if (state === 'smile') {
           setReactionMessage({
             title: 'Keep smiling :) ✨',
@@ -281,14 +349,11 @@ export const OrbPet: React.FC = () => {
           appName: event.appName,
         });
 
-        // Typing reactivity
+        // Typing reactivity (visual only, completely silent without keyboard audio)
         if (event.isTyping) {
           setIsTyping(true);
           if (event.typingBurst) {
             setTypingBurst(true);
-            SoundEffects.keyboardTap(0.2);
-          } else {
-            SoundEffects.keyboardTap(0.12);
           }
 
           if (typingTimeout) clearTimeout(typingTimeout);
@@ -296,11 +361,6 @@ export const OrbPet: React.FC = () => {
             setIsTyping(false);
             setTypingBurst(false);
           }, 1800);
-        }
-
-        // Entering coding mode chime
-        if (event.category === 'development' && event.state === 'coding') {
-          SoundEffects.codeFlow(0.3);
         }
 
         setIsSpeaking(true);

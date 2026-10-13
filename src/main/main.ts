@@ -229,7 +229,7 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
-    }, 4000);
+    }, 8500);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_COMPLETE, () => {
@@ -238,7 +238,7 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'hydrated');
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
-    }, 3500);
+    }, 8500);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_DISMISS, () => {
@@ -247,7 +247,7 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
-    }, 4000);
+    }, 8500);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_SNOOZE, (_event, minutes = 10) => {

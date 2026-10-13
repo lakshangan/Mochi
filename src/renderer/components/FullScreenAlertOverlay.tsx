@@ -94,21 +94,44 @@ export const FullScreenAlertOverlay: React.FC = () => {
   }, [event]);
 
   const todayCount = settings?.waterReminders?.todayCount ?? 0;
+  const targetGlasses = 8;
+  const progressPercent = Math.min(100, Math.round((todayCount / targetGlasses) * 100));
   const isWater = event.type === 'water';
 
   return (
-    <div className="fullscreen-alert-root">
+    <div
+      className="fullscreen-alert-root"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleDismiss();
+        }
+      }}
+    >
       {/* Background Ripple Waves */}
       <div className="water-ripple-container">
         <div className="ripple-wave wave-1" />
         <div className="ripple-wave wave-2" />
         <div className="ripple-wave wave-3" />
+        <div className="ripple-wave wave-4" />
       </div>
 
-      <div className="alert-content-card">
+      {/* Floating Ambient Aqua Bubbles */}
+      <div className="ambient-bubbles-layer">
+        <div className="ambient-bubble b1" />
+        <div className="ambient-bubble b2" />
+        <div className="ambient-bubble b3" />
+        <div className="ambient-bubble b4" />
+        <div className="ambient-bubble b5" />
+        <div className="ambient-bubble b6" />
+        <div className="ambient-bubble b7" />
+        <div className="ambient-bubble b8" />
+      </div>
+
+      <div className="alert-content-card" onClick={(e) => e.stopPropagation()}>
         {/* Glow halo & hero icon */}
         <div className="hero-icon-wrapper">
           <div className="hero-halo" />
+          <div className="hero-pulsing-ring" />
           <div className="hero-icon-bubble">
             {isWater ? (
               <span className="hero-emoji" role="img" aria-label="water">
@@ -123,6 +146,11 @@ export const FullScreenAlertOverlay: React.FC = () => {
         </div>
 
         {/* Big attention-grabbing typography */}
+        <div className="alert-badge-pill">
+          <Sparkles size={13} className="sparkle-icon" />
+          <span>{isWater ? 'HYDRATION CHECK-IN' : 'MINDFUL MOMENT'}</span>
+        </div>
+
         <h1 className="alert-hero-title">{event.title}</h1>
         <p className="alert-hero-subtitle">
           {settings?.userName
@@ -130,22 +158,36 @@ export const FullScreenAlertOverlay: React.FC = () => {
             : event.message}
         </p>
 
-        {/* Water Intake Tracker Row */}
+        {/* Water Intake Tracker Row & Progress Bar */}
         {isWater && (
           <div className="water-intake-badge">
+            <div className="intake-header-row">
+              <span className="intake-label">Daily Hydration Target</span>
+              <span className="intake-percent">{progressPercent}%</span>
+            </div>
+
+            {/* Glowing progress bar */}
+            <div className="intake-progress-bar-track">
+              <div
+                className="intake-progress-bar-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            {/* Glass dots */}
             <div className="intake-glasses-row">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                 <div
                   key={num}
                   className={`glass-dot ${num <= todayCount ? 'filled' : 'empty'}`}
-                  title={`Glass ${num}`}
+                  title={`Glass ${num} of 8`}
                 >
                   <Droplet size={13} />
                 </div>
               ))}
             </div>
             <div className="intake-text">
-              Today&apos;s Intake: <strong>{todayCount} / 8 glasses</strong> logged
+              Today&apos;s Intake: <strong>{todayCount} / {targetGlasses} glasses</strong> logged
             </div>
           </div>
         )}
@@ -158,35 +200,39 @@ export const FullScreenAlertOverlay: React.FC = () => {
             onClick={handleComplete}
             autoFocus
           >
-            <Check size={20} />
-            <span>{isWater ? 'I Drank Water! 🥤' : 'Take Break Now 🌿'}</span>
+            <Check size={22} className="btn-icon" />
+            <span className="btn-main-label">
+              {isWater ? 'I Drank Water! 🥤' : 'Take Break Now 🌿'}
+            </span>
             <span className="btn-key-hint">↵ Enter</span>
           </button>
 
-          <button
-            type="button"
-            className="alert-btn btn-snooze"
-            onClick={handleSnooze}
-          >
-            <Clock size={16} />
-            <span>Snooze 5m</span>
-            <span className="btn-key-hint">S</span>
-          </button>
+          <div className="alert-secondary-actions-row">
+            <button
+              type="button"
+              className="alert-btn btn-snooze"
+              onClick={handleSnooze}
+            >
+              <Clock size={16} />
+              <span>Snooze 5m</span>
+              <span className="btn-key-hint">S</span>
+            </button>
 
-          <button
-            type="button"
-            className="alert-btn btn-dismiss"
-            onClick={handleDismiss}
-          >
-            <X size={16} />
-            <span>Dismiss</span>
-            <span className="btn-key-hint">Esc</span>
-          </button>
+            <button
+              type="button"
+              className="alert-btn btn-dismiss"
+              onClick={handleDismiss}
+            >
+              <X size={16} />
+              <span>Dismiss</span>
+              <span className="btn-key-hint">Esc</span>
+            </button>
+          </div>
         </div>
 
         {isWater && (
           <div className="accountability-hint">
-            💡 <em>Mochi Notice:</em> If you snooze or dismiss without logging, Mochi will make an angry face 😠 for a few seconds!
+            💡 <em>Mochi Notice:</em> Snoozing or skipping makes Mochi show an angry face 😠 for a few moments!
           </div>
         )}
       </div>

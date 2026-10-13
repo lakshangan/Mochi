@@ -610,7 +610,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     });
                     if (window.mochiApi) {
                       await window.mochiApi.setPetState('hydrated');
-                      setTimeout(() => window.mochiApi?.setPetState('idle'), 3500);
+                      setTimeout(() => window.mochiApi?.setPetState('idle'), 8500);
                     }
                   }}
                   style={{ fontSize: '11px', padding: '4px 10px' }}
