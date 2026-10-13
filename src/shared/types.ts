@@ -5,6 +5,7 @@ export type PetAnimationState =
   | 'happy'
   | 'smile'
   | 'sad'
+  | 'angry'
   | 'hydrated'
   | 'fire'
   | 'walking'
@@ -53,6 +54,10 @@ export interface WaterReminderSettings {
   intervalMinutes: number; // default 45 min
   lastCompleted?: number;
   nextDue?: number;
+  fullScreenAlert?: boolean; // prominent full-screen alert if user turns it on
+  loggedCount?: number; // total times logged drinking water
+  todayCount?: number; // times logged today
+  lastLoggedDate?: string; // YYYY-MM-DD for daily intake tracking
 }
 
 export interface BreakReminderSettings {
@@ -61,6 +66,7 @@ export interface BreakReminderSettings {
   breakDurationMinutes: number; // default 5 min
   lastCompleted?: number;
   nextDue?: number;
+  fullScreenAlert?: boolean; // prominent full-screen alert if user turns it on
 }
 
 export interface PomodoroSettings {
@@ -100,6 +106,8 @@ export interface AppSettings {
   pomodoro: PomodoroSettings;
   ai: AiSettings;
   theme: 'neon-dark' | 'glass-midnight' | 'deep-space';
+  customOrbMatrix?: number[][]; // 11x11 custom dot matrix face (RAM-efficient, purely offline)
+  useCustomOrbMatrix?: boolean;
 }
 
 export interface TaskItem {
@@ -139,6 +147,7 @@ export interface ReminderNotificationEvent {
   message: string;
   timestamp: number;
   dueAt: number;
+  fullScreenAlert?: boolean;
 }
 
 export type ChatActionType =

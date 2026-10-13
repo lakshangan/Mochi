@@ -28,6 +28,8 @@ export class AssistantWindow {
 
     const { x, y } = this.calculatePositionNearPet(petPosition);
 
+    const iconPath = path.join(__dirname, '../assets/mochi-logo.png');
+
     this.window = new BrowserWindow({
       width: this.width,
       height: this.height,
@@ -41,6 +43,7 @@ export class AssistantWindow {
       minHeight: 520,
       alwaysOnTop: true,
       hasShadow: true,
+      icon: iconPath,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,

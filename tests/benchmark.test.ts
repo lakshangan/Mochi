@@ -27,7 +27,7 @@ describe('System Performance, RAM Footprint & Leak Watchdog', () => {
     for (let i = 0; i < 500; i++) {
       persistence.updateSettings({ petSize: 115 + (i % 5) });
       persistence.updateTasks([
-        { id: `task-${i % 10}`, title: `Bench task ${i}`, completed: i % 2 === 0, createdAt: Date.now() },
+        { id: `task-${i % 10}`, title: `Bench task ${i}`, completed: i % 2 === 0, createdAt: Date.now(), priority: 'medium' },
       ]);
     }
 

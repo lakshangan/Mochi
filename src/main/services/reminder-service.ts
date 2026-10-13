@@ -87,12 +87,14 @@ export class ReminderService {
   }
 
   private triggerWaterReminder(): void {
+    const settings = this.persistenceService.getState().settings.waterReminders;
     const event: ReminderNotificationEvent = {
       type: 'water',
       title: 'Time to Hydrate! 💧',
       message: 'Mochi reminds you: Grab a glass of fresh water to keep your mind energized.',
       timestamp: Date.now(),
       dueAt: Date.now(),
+      fullScreenAlert: Boolean(settings.fullScreenAlert),
     };
     this.activeEvent = event;
 
@@ -108,6 +110,7 @@ export class ReminderService {
       message: `You have been working hard. Take a ${settings.breakDurationMinutes}-minute break to refresh.`,
       timestamp: Date.now(),
       dueAt: Date.now(),
+      fullScreenAlert: Boolean(settings.fullScreenAlert),
     };
     this.activeEvent = event;
 
@@ -120,9 +123,17 @@ export class ReminderService {
     const now = Date.now();
     this.activeEvent = null;
 
+    const todayDateStr = new Date().toISOString().slice(0, 10);
+    const isNewDay = settings.lastLoggedDate !== todayDateStr;
+    const newTodayCount = isNewDay ? 1 : (settings.todayCount || 0) + 1;
+    const newLoggedCount = (settings.loggedCount || 0) + 1;
+
     this.persistenceService.updateSettings({
       waterReminders: {
         ...settings,
+        loggedCount: newLoggedCount,
+        todayCount: newTodayCount,
+        lastLoggedDate: todayDateStr,
         lastCompleted: now,
         nextDue: now + settings.intervalMinutes * 60 * 1000,
       },

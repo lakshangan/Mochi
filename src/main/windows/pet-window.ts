@@ -30,8 +30,10 @@ export class PetWindow {
     }
     this.currentPosition = { x, y };
 
-    const windowW = Math.max(260, this.petSize + 100);
-    const windowH = Math.max(160, this.petSize + 85);
+    const windowW = Math.max(300, this.petSize + 130);
+    const windowH = Math.max(170, this.petSize + 90);
+
+    const iconPath = path.join(__dirname, '../assets/trayIcon.png');
 
     this.window = new BrowserWindow({
       width: windowW,
@@ -44,6 +46,7 @@ export class PetWindow {
       alwaysOnTop: true,
       skipTaskbar: true,
       hasShadow: false,
+      icon: iconPath,
       backgroundColor: '#00000000',
       webPreferences: {
         preload: preloadPath,

@@ -202,7 +202,10 @@ function registerIpcHandlers(): void {
   // Reminders
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_SNOOZE, (_event, minutes = 10) => {
     reminderService.snoozeWater(minutes);
-    broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+    broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
+    setTimeout(() => {
+      broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+    }, 4000);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_COMPLETE, () => {
@@ -215,7 +218,10 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_DISMISS, () => {
     reminderService.dismissWater();
-    broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+    broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
+    setTimeout(() => {
+      broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+    }, 4000);
   });
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_SNOOZE, (_event, minutes = 10) => {
@@ -430,6 +436,16 @@ app.whenReady().then(() => {
   reminderService.onTrigger((event) => {
     broadcast(IPC_CHANNELS.REMINDER_TRIGGERED, event);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'reminding');
+
+    if (event.fullScreenAlert) {
+      const aWin = assistantWindow.getWindow();
+      if (aWin && !aWin.isDestroyed()) {
+        assistantWindow.show();
+      } else if (petWindow) {
+        const petPos = petWindow.getPosition();
+        assistantWindow.createOrToggle(petPos, PRELOAD_PATH, isDev, DEV_URL);
+      }
+    }
   });
 
   setupAutoWander();

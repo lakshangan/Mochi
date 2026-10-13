@@ -157,6 +157,9 @@ body {
   user-select: none;
   animation: speechBubblePop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   white-space: nowrap;
+  max-width: 275px;
+  color: #ffffff;
+  transform: translateZ(0);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -200,6 +203,17 @@ body {
   opacity: 0.6;
 }
 
+.bubble-status-dot[data-state='coding'],
+.bubble-status-dot[data-state='fire'] {
+  background: #00f7ff;
+  box-shadow: 0 0 8px #00f7ff;
+}
+
+.bubble-status-dot[data-state='angry'] {
+  background: #ff4d4f;
+  box-shadow: 0 0 10px #ff4d4f;
+}
+
 /* Integrated Timer Pill inside speech bubble */
 .bubble-timer-chip {
   display: flex;
@@ -233,7 +247,7 @@ body {
   display: flex;
   align-items: center;
   min-width: 0;
-  max-width: 200px;
+  max-width: 220px;
 }
 
 .bubble-text {
@@ -663,6 +677,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.brand-logo-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.45);
+  flex-shrink: 0;
 }
 
 .brand-dot {
@@ -2110,4 +2133,93 @@ input:checked + .slider:before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Full-Screen Reminder Modal for Drink Water & Mindful Care */
+.fullscreen-reminder-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.fullscreen-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.fullscreen-modal-content {
+  position: relative;
+  z-index: 2;
+  width: 90%;
+  max-width: 440px;
+  background: rgba(22, 24, 34, 0.96);
+  border: 1px solid rgba(0, 247, 255, 0.3);
+  box-shadow: 
+    0 24px 64px -12px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(0, 247, 255, 0.25);
+  border-radius: 24px;
+  padding: 32px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modalScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleUp {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.fullscreen-modal-icon {
+  font-size: 54px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 16px rgba(0, 247, 255, 0.6));
+  animation: bounceSlow 2s ease-in-out infinite;
+}
+
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.fullscreen-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
+}
+
+.fullscreen-modal-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0 0 24px 0;
+  max-width: 360px;
+}
+
+.fullscreen-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-lg {
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }

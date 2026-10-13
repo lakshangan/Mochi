@@ -62,6 +62,12 @@ export class TrayService {
 
   private loadTrayIcon(): Electron.NativeImage {
     const filePaths = [
+      path.join(__dirname, 'assets/trayIcon.png'),
+      path.join(__dirname, '../assets/trayIcon.png'),
+      path.join(app.getAppPath(), 'src/main/assets/trayIcon.png'),
+      path.join(app.getAppPath(), 'build/trayIcon.png'),
+      path.join(process.cwd(), 'src/main/assets/trayIcon.png'),
+      path.join(process.cwd(), 'build/trayIcon.png'),
       path.join(__dirname, 'assets/trayTemplate.png'),
       path.join(__dirname, '../assets/trayTemplate.png'),
       path.join(app.getAppPath(), 'build/trayTemplate.png'),
@@ -72,8 +78,11 @@ export class TrayService {
       try {
         const img = nativeImage.createFromPath(p);
         if (!img.isEmpty()) {
-          img.setTemplateImage(true);
-          return img;
+          const isTemplate = p.includes('Template');
+          if (isTemplate) {
+            img.setTemplateImage(true);
+          }
+          return img.resize({ width: 18, height: 18 });
         }
       } catch {
         // Continue to fallback

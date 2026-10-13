@@ -38,6 +38,7 @@ export const OrbPet: React.FC = () => {
   const [petSize, setPetSize] = useState<number>(115);
   const [currentState, setCurrentState] = useState<PetAnimationState>('idle');
   const [userName, setUserName] = useState<string>('');
+  const [customMatrix, setCustomMatrix] = useState<number[][] | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const userNameRef = useRef(userName);
@@ -203,6 +204,18 @@ export const OrbPet: React.FC = () => {
           reactionTimeout = setTimeout(() => setReactionMessage(null), 5000);
           if (speakingTimeout) clearTimeout(speakingTimeout);
           speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
+        } else if (state === 'angry') {
+          setReactionMessage({
+            title: 'Drink your water! 😠💧',
+            subtitle: currentName
+              ? `Stay hydrated, ${currentName}! Skipping water isn't good for you.`
+              : "Drink your water! Skipping hydration isn't healthy.",
+          });
+          setIsSpeaking(true);
+          if (reactionTimeout) clearTimeout(reactionTimeout);
+          reactionTimeout = setTimeout(() => setReactionMessage(null), 4500);
+          if (speakingTimeout) clearTimeout(speakingTimeout);
+          speakingTimeout = setTimeout(() => setIsSpeaking(false), 2500);
         } else if (state === 'smile') {
           setReactionMessage({
             title: 'Keep smiling :) ✨',
@@ -256,7 +269,7 @@ export const OrbPet: React.FC = () => {
       unsubActivity = window.mochiApi.onSystemActivity((event: SystemActivityEvent) => {
         const currentName = userNameRef.current;
         let finalSubtitle = event.subtitle;
-        if (event.state === 'listening') {
+        if (event.state === 'listening' && !event.subtitle) {
           finalSubtitle = currentName
             ? `Vibing to the beat with you, ${currentName}! 🎧`
             : 'Headphones on & vibing to the beat 🎧';
@@ -315,10 +328,15 @@ export const OrbPet: React.FC = () => {
         behavior.handleReminderTriggered();
       });
 
-      // Load initial petSize and userName from saved settings
+      // Load initial petSize, userName, and customOrbMatrix from saved settings
       window.mochiApi.getInitialState().then((initial) => {
         if (initial?.settings?.petSize) {
           setPetSize(initial.settings.petSize);
+        }
+        if (initial?.settings?.useCustomOrbMatrix && initial?.settings?.customOrbMatrix) {
+          setCustomMatrix(initial.settings.customOrbMatrix);
+        } else {
+          setCustomMatrix(undefined);
         }
         if (initial?.settings?.userName) {
           const storedName = initial.settings.userName;
@@ -340,10 +358,15 @@ export const OrbPet: React.FC = () => {
         }
       }).catch(console.error);
 
-      // Listen for settings changes (e.g. user moves size slider or changes name in settings)
+      // Listen for settings changes (e.g. user moves size slider, changes name, or toggles custom orb face)
       const unsubSettings = window.mochiApi.onStateUpdated((state) => {
         if (state.settings?.petSize) {
           setPetSize(state.settings.petSize);
+        }
+        if (state.settings?.useCustomOrbMatrix && state.settings?.customOrbMatrix) {
+          setCustomMatrix(state.settings.customOrbMatrix);
+        } else if (state.settings?.useCustomOrbMatrix === false) {
+          setCustomMatrix(undefined);
         }
         if (state.settings?.userName !== undefined) {
           setUserName(state.settings.userName);
@@ -418,7 +441,7 @@ export const OrbPet: React.FC = () => {
         >
           <div className="bubble-status-dot" data-state={currentState} />
 
-          {/* Integrated Live Timer Chip inside speech bubble (prevents ANY overlap) */}
+          {/* Integrated Live Timer Chip inside capsule */}
           {isTimerRunning && (
             <div className="bubble-timer-chip">
               <TimerIcon size={11} className="timer-chip-icon" />
@@ -428,9 +451,9 @@ export const OrbPet: React.FC = () => {
           )}
 
           <div className="bubble-body">
-            <div className="bubble-text">
+            <span className="bubble-text">
               {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
-            </div>
+            </span>
           </div>
         </div>
       ) : null}
@@ -475,6 +498,7 @@ export const OrbPet: React.FC = () => {
             isTimerActive={Boolean(isTimerRunning)}
             timerProgress={timerProgress}
             size={petSize}
+            customMatrix={customMatrix}
           />
         ) : (
           <ParticlesOrb

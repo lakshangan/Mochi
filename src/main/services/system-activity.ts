@@ -409,84 +409,750 @@ const APP_DATABASE: Record<string, AppClassification> = {
     subtitles: ['Browsing with Microsoft Edge.', 'Exploring documentation.'],
   },
 
-  // Communication
+  // Communication & Messaging
   slack: {
     formattedName: 'Slack',
     category: 'communication',
     state: 'happy',
-    title: 'Slack Workspace',
-    subtitles: ['Syncing with team channels.', 'Quick check-in with colleagues.'],
+    title: 'Slack Workspace 💬',
+    subtitles: ['Syncing with team channels 💬', 'Collaborating in Slack ✨', 'Catching up on workspace chats 💬'],
   },
   discord: {
     formattedName: 'Discord',
     category: 'communication',
     state: 'happy',
-    title: 'Discord Community',
-    subtitles: ['Catching up with community chats.', 'Hanging out on Discord.'],
+    title: 'Discord Community 💬',
+    subtitles: ['Hanging out on Discord 💬', 'Catching up with community chats ✨', 'Chatting with friends 💬'],
   },
   teams: {
     formattedName: 'Microsoft Teams',
     category: 'communication',
     state: 'happy',
-    title: 'Teams Meeting & Chat',
-    subtitles: ['Collaborating with team members.', 'Checking meetings and chats.'],
+    title: 'Teams Meeting & Chat 💬',
+    subtitles: ['Collaborating with team members 💬', 'Checking meetings and chats ✨'],
   },
   messages: {
+    formattedName: 'Messages',
+    category: 'communication',
+    state: 'happy',
+    title: 'iMessage Chat 💬',
+    subtitles: ['Exchanging messages with friends 💬', 'Catching up on chats ✨', 'Keeping conversations flowing 💬'],
+  },
+  imessage: {
     formattedName: 'iMessage',
     category: 'communication',
     state: 'happy',
-    title: 'iMessage',
-    subtitles: ['Chatting with friends & contacts.'],
+    title: 'iMessage Chat 💬',
+    subtitles: ['Exchanging messages with friends 💬', 'Catching up on chats ✨'],
+  },
+  whatsapp: {
+    formattedName: 'WhatsApp',
+    category: 'communication',
+    state: 'happy',
+    title: 'WhatsApp Chat 💬',
+    subtitles: ['Catching up on WhatsApp messages 💬', 'Chatting with friends & family ✨', 'Sending quick notes 💬'],
+  },
+  telegram: {
+    formattedName: 'Telegram',
+    category: 'communication',
+    state: 'happy',
+    title: 'Telegram Chats 💬',
+    subtitles: ['Messaging in Telegram 💬', 'Checking channels and groups ✨'],
+  },
+  signal: {
+    formattedName: 'Signal',
+    category: 'communication',
+    state: 'happy',
+    title: 'Signal Private Chat 💬',
+    subtitles: ['Secure chatting on Signal 💬', 'Catching up with close contacts ✨'],
+  },
+  wechat: {
+    formattedName: 'WeChat',
+    category: 'communication',
+    state: 'happy',
+    title: 'WeChat Chat 💬',
+    subtitles: ['Messaging on WeChat 💬', 'Connecting with friends ✨'],
+  },
+  messenger: {
+    formattedName: 'Messenger',
+    category: 'communication',
+    state: 'happy',
+    title: 'Messenger Chat 💬',
+    subtitles: ['Chatting on Messenger 💬', 'Exchanging notes with friends ✨'],
+  },
+  zoom: {
+    formattedName: 'Zoom',
+    category: 'communication',
+    state: 'happy',
+    title: 'Zoom Call 📹',
+    subtitles: ['In a Zoom video call 📹', 'Meeting in progress ✨'],
+  },
+  skype: {
+    formattedName: 'Skype',
+    category: 'communication',
+    state: 'happy',
+    title: 'Skype Chat 💬',
+    subtitles: ['Connecting on Skype 💬'],
   },
 
-  // Productivity
+  // Social Media
+  twitter: {
+    formattedName: 'X (Twitter)',
+    category: 'communication',
+    state: 'curious',
+    title: 'Browsing X (Twitter) 📱',
+    subtitles: ['Scrolling through the timeline 📱', 'Catching up on trending posts ✨', 'Checking what the world is saying 🐦'],
+  },
+  x: {
+    formattedName: 'X (Twitter)',
+    category: 'communication',
+    state: 'curious',
+    title: 'Browsing X 📱',
+    subtitles: ['Scrolling through the timeline 📱', 'Catching up on trending posts ✨'],
+  },
+  instagram: {
+    formattedName: 'Instagram',
+    category: 'communication',
+    state: 'curious',
+    title: 'Scrolling Instagram 📱',
+    subtitles: ['Enjoying visual stories & reels 📸', 'Browsing posts on Instagram ✨', 'Taking a social scroll break 💫'],
+  },
+  reddit: {
+    formattedName: 'Reddit',
+    category: 'communication',
+    state: 'curious',
+    title: 'Reading Reddit 📱',
+    subtitles: ['Exploring community discussions 📱', 'Reading the front page of the internet 🌟', 'Diving into interesting threads ✨'],
+  },
+  tiktok: {
+    formattedName: 'TikTok',
+    category: 'entertainment',
+    state: 'curious',
+    title: 'Watching TikTok 📱',
+    subtitles: ['Scrolling through short clips 📱', 'Enjoying fun video highlights ✨'],
+  },
+  pinterest: {
+    formattedName: 'Pinterest',
+    category: 'design',
+    state: 'curious',
+    title: 'Browsing Pinterest 📌',
+    subtitles: ['Finding aesthetic inspiration 📌', 'Pinning visual creative ideas ✨'],
+  },
+  threads: {
+    formattedName: 'Threads',
+    category: 'communication',
+    state: 'curious',
+    title: 'Browsing Threads 📱',
+    subtitles: ['Catching conversations on Threads 📱'],
+  },
+  linkedin: {
+    formattedName: 'LinkedIn',
+    category: 'productivity',
+    state: 'working',
+    title: 'Browsing LinkedIn 💼',
+    subtitles: ['Professional networking on LinkedIn 💼', 'Checking career updates & industry news ✨'],
+  },
+  facebook: {
+    formattedName: 'Facebook',
+    category: 'communication',
+    state: 'curious',
+    title: 'Browsing Facebook 📱',
+    subtitles: ['Checking feed and updates 📱', 'Catching up with groups ✨'],
+  },
+
+  // Productivity & Office
   notion: {
     formattedName: 'Notion',
     category: 'productivity',
     state: 'focused',
-    title: 'Notion Workspace',
-    subtitles: ['Organizing thoughts & project docs.', 'Structuring knowledge base.'],
+    title: 'Notion Workspace 📝',
+    subtitles: ['Organizing thoughts & project docs 📝', 'Structuring knowledge hub ⚡'],
   },
   obsidian: {
     formattedName: 'Obsidian',
     category: 'productivity',
     state: 'focused',
-    title: 'Obsidian Vault',
-    subtitles: ['Connecting ideas & second brain.', 'Deep note-taking session.'],
+    title: 'Obsidian Vault 📝',
+    subtitles: ['Connecting ideas & second brain 📝', 'Deep note-taking session ⚡'],
   },
   linear: {
     formattedName: 'Linear',
     category: 'productivity',
     state: 'focused',
-    title: 'Linear Issue Tracking',
-    subtitles: ['Tracking sprint cycles and issues.', 'Planning the next release.'],
+    title: 'Linear Issue Tracking ⚡',
+    subtitles: ['Tracking sprint cycles and issues ⚡', 'Planning the next release ✨'],
   },
   notes: {
     formattedName: 'Notes',
     category: 'productivity',
     state: 'focused',
-    title: 'Quick Notes',
-    subtitles: ['Jotting down quick ideas.', 'Writing thoughts.'],
+    title: 'Quick Notes 📝',
+    subtitles: ['Jotting down quick ideas 📝', 'Writing thoughts & plans ✨'],
+  },
+  reminders: {
+    formattedName: 'Reminders',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Reminders & Tasks 📋',
+    subtitles: ['Organizing your checklist 📋', 'Checking off daily goals ✨'],
+  },
+  calendar: {
+    formattedName: 'Calendar',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Calendar Schedule 📅',
+    subtitles: ['Reviewing meetings and schedule 📅', 'Planning out your day 🌟'],
+  },
+  mail: {
+    formattedName: 'Mail',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Inbox Review ✉️',
+    subtitles: ['Catching up on emails ✉️', 'Keeping your inbox tidy ✨'],
+  },
+  outlook: {
+    formattedName: 'Outlook',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Outlook Email ✉️',
+    subtitles: ['Managing messages and meetings ✉️'],
+  },
+  word: {
+    formattedName: 'Microsoft Word',
+    category: 'productivity',
+    state: 'working',
+    title: 'Word Document 📄',
+    subtitles: ['Drafting and writing in Word 📄', 'Document authoring in flow ✨'],
+  },
+  excel: {
+    formattedName: 'Microsoft Excel',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Excel Spreadsheet 📊',
+    subtitles: ['Working with spreadsheets & models 📊', 'Crunching numbers in Excel ⚡'],
+  },
+  powerpoint: {
+    formattedName: 'PowerPoint',
+    category: 'productivity',
+    state: 'working',
+    title: 'PowerPoint Presentation 📽️',
+    subtitles: ['Designing presentation slides 📽️'],
+  },
+  pages: {
+    formattedName: 'Pages',
+    category: 'productivity',
+    state: 'working',
+    title: 'Pages Document 📄',
+    subtitles: ['Writing documents with Apple Pages 📄'],
+  },
+  keynote: {
+    formattedName: 'Keynote',
+    category: 'productivity',
+    state: 'working',
+    title: 'Keynote Presentation 📽️',
+    subtitles: ['Crafting sleek keynote slides 📽️'],
+  },
+  numbers: {
+    formattedName: 'Numbers',
+    category: 'productivity',
+    state: 'focused',
+    title: 'Numbers Spreadsheet 📊',
+    subtitles: ['Working in Apple Numbers 📊'],
   },
 
-  // Entertainment / Audio
+  // Creative & Media
+  premiere: {
+    formattedName: 'Premiere Pro',
+    category: 'design',
+    state: 'curious',
+    title: 'Video Editing 🎬',
+    subtitles: ['Editing video cuts & timeline 🎬', 'Crafting cinematic content ✨'],
+  },
+  'final cut': {
+    formattedName: 'Final Cut Pro',
+    category: 'design',
+    state: 'curious',
+    title: 'Final Cut Pro 🎬',
+    subtitles: ['Editing video timeline 🎬', 'Video post-production in progress ✨'],
+  },
+  davinci: {
+    formattedName: 'DaVinci Resolve',
+    category: 'design',
+    state: 'curious',
+    title: 'DaVinci Resolve 🎬',
+    subtitles: ['Color grading & video editing 🎬'],
+  },
+  capcut: {
+    formattedName: 'CapCut',
+    category: 'design',
+    state: 'curious',
+    title: 'CapCut Video 🎬',
+    subtitles: ['Editing video clips in CapCut 🎬'],
+  },
+  lightroom: {
+    formattedName: 'Lightroom',
+    category: 'design',
+    state: 'curious',
+    title: 'Lightroom Photography 📸',
+    subtitles: ['Color grading and photo editing 📸'],
+  },
+  garageband: {
+    formattedName: 'GarageBand',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'GarageBand Studio 🎵',
+    subtitles: ['Composing tracks & music 🎵'],
+  },
+  'logic pro': {
+    formattedName: 'Logic Pro',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Logic Pro Studio 🎵',
+    subtitles: ['Music production in Logic Pro 🎵'],
+  },
+
+  // Entertainment / Audio / Video
   spotify: {
     formattedName: 'Spotify',
     category: 'entertainment',
     state: 'listening',
-    title: 'Spotify Audio',
-    subtitles: ['Vibing to tunes.', 'Focus beats powering your flow.'],
+    title: 'Spotify Audio 🎧',
+    subtitles: ['Vibing to tunes 🎧', 'Soundtrack powering your flow 🎵'],
   },
   music: {
     formattedName: 'Apple Music',
     category: 'entertainment',
     state: 'listening',
-    title: 'Music Session',
-    subtitles: ['Jamming to Apple Music.', 'Great soundtrack for productivity!'],
+    title: 'Apple Music 🎧',
+    subtitles: ['Jamming to Apple Music 🎧', 'Great soundtrack for productivity 🎵'],
+  },
+  podcasts: {
+    formattedName: 'Apple Podcasts',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Podcasts 🎙️',
+    subtitles: ['Listening to an insightful podcast 🎙️'],
+  },
+  tv: {
+    formattedName: 'Apple TV',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Apple TV 🎬',
+    subtitles: ['Watching movies and shows 🎬'],
+  },
+  netflix: {
+    formattedName: 'Netflix',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Watching Netflix 🎬',
+    subtitles: ['Movie time! Relaxing on Netflix 🍿', 'Streaming shows & unwinding 🎬'],
+  },
+  youtube: {
+    formattedName: 'YouTube',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Watching YouTube 🍿',
+    subtitles: ['Watching videos and relaxing 🍿', 'Enjoying content on YouTube ✨'],
+  },
+  vlc: {
+    formattedName: 'VLC Media Player',
+    category: 'entertainment',
+    state: 'listening',
+    title: 'Media Playback 🎬',
+    subtitles: ['Watching media in VLC 🎬'],
+  },
+  photos: {
+    formattedName: 'Photos',
+    category: 'design',
+    state: 'curious',
+    title: 'Photo Library 📸',
+    subtitles: ['Browsing photo memories 📸'],
+  },
+
+  // Gaming
+  steam: {
+    formattedName: 'Steam',
+    category: 'entertainment',
+    state: 'happy',
+    title: 'Steam Gaming 🎮',
+    subtitles: ['Game time! Leveling up 🎮', 'Having fun gaming 🏆'],
+  },
+  minecraft: {
+    formattedName: 'Minecraft',
+    category: 'entertainment',
+    state: 'happy',
+    title: 'Minecraft ⛏️',
+    subtitles: ['Building worlds in Minecraft ⛏️', 'Crafting and exploring ✨'],
+  },
+  roblox: {
+    formattedName: 'Roblox',
+    category: 'entertainment',
+    state: 'happy',
+    title: 'Roblox 🎮',
+    subtitles: ['Playing on Roblox 🎮'],
+  },
+
+  // System & Utilities
+  finder: {
+    formattedName: 'Finder',
+    category: 'system',
+    state: 'curious',
+    title: 'macOS Finder 📁',
+    subtitles: ['Organizing files & folders 📁', 'Browsing desktop directory ✨'],
+  },
+  'system settings': {
+    formattedName: 'System Settings',
+    category: 'system',
+    state: 'focused',
+    title: 'System Settings ⚙️',
+    subtitles: ['Customizing macOS preferences ⚙️'],
+  },
+  preview: {
+    formattedName: 'Preview',
+    category: 'productivity',
+    state: 'curious',
+    title: 'Document Preview 📄',
+    subtitles: ['Reading PDF or viewing images 📄'],
+  },
+  textedit: {
+    formattedName: 'TextEdit',
+    category: 'productivity',
+    state: 'working',
+    title: 'TextEdit Document 📝',
+    subtitles: ['Editing plain text documents 📝'],
   },
 };
 
-export function classifyApplication(rawAppName: string): AppClassification {
+/**
+ * Classifies active web content based on URL and page title
+ */
+function classifyWebContent(url: string, title: string): AppClassification | null {
+  const normUrl = (url || '').toLowerCase();
+  const normTitle = (title || '').toLowerCase();
+
+  // 1. Streaming & Video Entertainment
+  if (normUrl.includes('youtube.com') || normUrl.includes('youtu.be') || normTitle.includes('youtube')) {
+    return {
+      formattedName: 'YouTube',
+      category: 'entertainment',
+      state: 'listening',
+      title: 'Watching YouTube 🍿',
+      subtitles: ['Watching videos and relaxing 🍿', 'Enjoying content on YouTube ✨', 'Vibing with video & music 🍿'],
+    };
+  }
+  if (normUrl.includes('netflix.com') || normTitle.includes('netflix')) {
+    return {
+      formattedName: 'Netflix',
+      category: 'entertainment',
+      state: 'listening',
+      title: 'Watching Netflix 🎬',
+      subtitles: ['Movie time! Chilling on Netflix 🎬', 'Streaming shows and relaxing 🍿'],
+    };
+  }
+  if (normUrl.includes('twitch.tv') || normTitle.includes('twitch')) {
+    return {
+      formattedName: 'Twitch',
+      category: 'entertainment',
+      state: 'listening',
+      title: 'Watching Twitch 🎮',
+      subtitles: ['Tuned in to the live stream 🎮', 'Watching live on Twitch ✨'],
+    };
+  }
+  if (normUrl.includes('spotify.com') || normTitle.includes('spotify')) {
+    return {
+      formattedName: 'Spotify',
+      category: 'entertainment',
+      state: 'listening',
+      title: 'Listening to Spotify 🎧',
+      subtitles: ['Vibing to tunes on Spotify 🎧', 'Soundtrack powering your flow 🎵'],
+    };
+  }
+  if (normUrl.includes('soundcloud.com') || normTitle.includes('soundcloud')) {
+    return {
+      formattedName: 'SoundCloud',
+      category: 'entertainment',
+      state: 'listening',
+      title: 'SoundCloud Music 🎧',
+      subtitles: ['Discovering music on SoundCloud 🎧'],
+    };
+  }
+
+  // 2. Messaging & Communication
+  if (normUrl.includes('whatsapp.com') || normTitle.includes('whatsapp')) {
+    return {
+      formattedName: 'WhatsApp',
+      category: 'communication',
+      state: 'happy',
+      title: 'Chatting on WhatsApp 💬',
+      subtitles: ['Catching up on WhatsApp messages 💬', 'Chatting with friends & family ✨', 'Staying in touch 💬'],
+    };
+  }
+  if (normUrl.includes('telegram.org') || normTitle.includes('telegram')) {
+    return {
+      formattedName: 'Telegram',
+      category: 'communication',
+      state: 'happy',
+      title: 'Telegram Chats 💬',
+      subtitles: ['Messaging on Telegram 💬', 'Checking channels and chats ✨'],
+    };
+  }
+  if (normUrl.includes('discord.com') || normTitle.includes('discord')) {
+    return {
+      formattedName: 'Discord',
+      category: 'communication',
+      state: 'happy',
+      title: 'Discord Community 💬',
+      subtitles: ['Hanging out on Discord 💬', 'Chatting in community servers ✨'],
+    };
+  }
+  if (normUrl.includes('slack.com') || normTitle.includes('slack')) {
+    return {
+      formattedName: 'Slack',
+      category: 'communication',
+      state: 'happy',
+      title: 'Slack Workspace 💬',
+      subtitles: ['Syncing with team channels 💬', 'Collaborating in Slack ✨'],
+    };
+  }
+  if (normUrl.includes('messenger.com') || normTitle.includes('messenger')) {
+    return {
+      formattedName: 'Messenger',
+      category: 'communication',
+      state: 'happy',
+      title: 'Messenger Chat 💬',
+      subtitles: ['Chatting with friends on Messenger 💬'],
+    };
+  }
+
+  // 3. Social Media
+  if (normUrl.includes('x.com') || normUrl.includes('twitter.com') || normTitle.includes('x /') || normTitle.includes('twitter')) {
+    return {
+      formattedName: 'X (Twitter)',
+      category: 'communication',
+      state: 'curious',
+      title: 'Browsing X (Twitter) 📱',
+      subtitles: ['Scrolling through the timeline 📱', 'Catching up on trending posts ✨', 'Checking what the world is saying 🐦'],
+    };
+  }
+  if (normUrl.includes('instagram.com') || normTitle.includes('instagram')) {
+    return {
+      formattedName: 'Instagram',
+      category: 'communication',
+      state: 'curious',
+      title: 'Scrolling Instagram 📱',
+      subtitles: ['Enjoying visual stories & reels 📸', 'Browsing posts on Instagram ✨', 'Taking a social scroll break 💫'],
+    };
+  }
+  if (normUrl.includes('reddit.com') || normTitle.includes('reddit')) {
+    return {
+      formattedName: 'Reddit',
+      category: 'communication',
+      state: 'curious',
+      title: 'Reading Reddit 📱',
+      subtitles: ['Exploring community discussions 📱', 'Reading the front page of the internet 🌟', 'Diving into interesting threads ✨'],
+    };
+  }
+  if (normUrl.includes('tiktok.com') || normTitle.includes('tiktok')) {
+    return {
+      formattedName: 'TikTok',
+      category: 'entertainment',
+      state: 'curious',
+      title: 'Watching TikTok 📱',
+      subtitles: ['Scrolling through short clips 📱', 'Enjoying fun video highlights ✨'],
+    };
+  }
+  if (normUrl.includes('pinterest.com') || normTitle.includes('pinterest')) {
+    return {
+      formattedName: 'Pinterest',
+      category: 'design',
+      state: 'curious',
+      title: 'Browsing Pinterest 📌',
+      subtitles: ['Finding aesthetic inspiration 📌', 'Pinning visual creative ideas ✨'],
+    };
+  }
+  if (normUrl.includes('threads.net') || normTitle.includes('threads')) {
+    return {
+      formattedName: 'Threads',
+      category: 'communication',
+      state: 'curious',
+      title: 'Browsing Threads 📱',
+      subtitles: ['Catching conversations on Threads 📱'],
+    };
+  }
+  if (normUrl.includes('linkedin.com') || normTitle.includes('linkedin')) {
+    return {
+      formattedName: 'LinkedIn',
+      category: 'productivity',
+      state: 'working',
+      title: 'Browsing LinkedIn 💼',
+      subtitles: ['Professional networking on LinkedIn 💼', 'Checking career updates & news ✨'],
+    };
+  }
+  if (normUrl.includes('facebook.com') || normTitle.includes('facebook')) {
+    return {
+      formattedName: 'Facebook',
+      category: 'communication',
+      state: 'curious',
+      title: 'Browsing Facebook 📱',
+      subtitles: ['Catching up on feed and groups 📱'],
+    };
+  }
+
+  // 4. AI Assistants & Brainstorming
+  if (normUrl.includes('chatgpt.com') || normUrl.includes('chat.openai.com') || normTitle.includes('chatgpt')) {
+    return {
+      formattedName: 'ChatGPT',
+      category: 'productivity',
+      state: 'thinking',
+      title: 'Chatting with ChatGPT 🤖',
+      subtitles: ['Brainstorming with ChatGPT 💡', 'Exploring answers and prompts 🤖', 'Collaborating with AI ✨'],
+    };
+  }
+  if (normUrl.includes('claude.ai') || normTitle.includes('claude')) {
+    return {
+      formattedName: 'Claude AI',
+      category: 'productivity',
+      state: 'thinking',
+      title: 'Thinking with Claude 🤖',
+      subtitles: ['Reasoning through ideas with Claude 💡', 'Deep AI brainstorming session 🤖'],
+    };
+  }
+  if (normUrl.includes('perplexity.ai') || normTitle.includes('perplexity')) {
+    return {
+      formattedName: 'Perplexity',
+      category: 'productivity',
+      state: 'thinking',
+      title: 'Researching on Perplexity 🔍',
+      subtitles: ['Finding fast AI-backed answers 🔍', 'Synthesizing knowledge on Perplexity ✨'],
+    };
+  }
+  if (normUrl.includes('gemini.google.com') || normTitle.includes('gemini')) {
+    return {
+      formattedName: 'Google Gemini',
+      category: 'productivity',
+      state: 'thinking',
+      title: 'Exploring with Gemini 🤖',
+      subtitles: ['Prompting Google Gemini 🤖', 'Brainstorming creative solutions ✨'],
+    };
+  }
+
+  // 5. Productivity & Creative Cloud
+  if (normUrl.includes('notion.so') || normTitle.includes('notion')) {
+    return {
+      formattedName: 'Notion',
+      category: 'productivity',
+      state: 'focused',
+      title: 'Notion Workspace 📝',
+      subtitles: ['Organizing docs & project notes 📝', 'Building your knowledge hub ⚡'],
+    };
+  }
+  if (normUrl.includes('figma.com') || normTitle.includes('figma')) {
+    return {
+      formattedName: 'Figma',
+      category: 'design',
+      state: 'curious',
+      title: 'Designing in Figma 🎨',
+      subtitles: ['Crafting components & layouts 🎨', 'Pixel-perfect UI design flow ✨'],
+    };
+  }
+  if (normUrl.includes('canva.com') || normTitle.includes('canva')) {
+    return {
+      formattedName: 'Canva',
+      category: 'design',
+      state: 'curious',
+      title: 'Designing in Canva 🎨',
+      subtitles: ['Creating graphic designs 🎨', 'Visual layout in flow ✨'],
+    };
+  }
+  if (normUrl.includes('docs.google.com/document') || normTitle.includes('google docs')) {
+    return {
+      formattedName: 'Google Docs',
+      category: 'productivity',
+      state: 'working',
+      title: 'Google Docs 📄',
+      subtitles: ['Writing and editing documents 📄', 'Productive drafting in Docs ⚡'],
+    };
+  }
+  if (normUrl.includes('docs.google.com/spreadsheets') || normTitle.includes('google sheets')) {
+    return {
+      formattedName: 'Google Sheets',
+      category: 'productivity',
+      state: 'focused',
+      title: 'Google Sheets 📊',
+      subtitles: ['Crunching numbers & spreadsheets 📊', 'Organizing data in Sheets ⚡'],
+    };
+  }
+  if (normUrl.includes('docs.google.com/presentation') || normTitle.includes('google slides')) {
+    return {
+      formattedName: 'Google Slides',
+      category: 'productivity',
+      state: 'working',
+      title: 'Google Slides 📽️',
+      subtitles: ['Designing presentation slides 📽️'],
+    };
+  }
+
+  // 6. Developer & Learning
+  if (normUrl.includes('github.com') || normUrl.includes('gitlab.com')) {
+    return {
+      formattedName: 'GitHub',
+      category: 'development',
+      state: 'coding',
+      title: 'Reviewing Code on GitHub </>',
+      subtitles: ['Checking pull requests & commits </>', 'Exploring repositories & code 💻'],
+    };
+  }
+  if (normUrl.includes('stackoverflow.com')) {
+    return {
+      formattedName: 'Stack Overflow',
+      category: 'development',
+      state: 'thinking',
+      title: 'Stack Overflow Research </>',
+      subtitles: ['Finding programming solutions 💡', 'Resolving technical bugs 🔍'],
+    };
+  }
+  if (normUrl.includes('leetcode.com')) {
+    return {
+      formattedName: 'LeetCode',
+      category: 'development',
+      state: 'coding',
+      title: 'Practicing on LeetCode </>',
+      subtitles: ['Solving algorithmic challenges 🧠', 'Sharpening coding skills </>'],
+    };
+  }
+
+  // 7. Shopping
+  if (normUrl.includes('amazon.com') || normUrl.includes('ebay.com') || normUrl.includes('etsy.com')) {
+    return {
+      formattedName: 'Online Shopping',
+      category: 'productivity',
+      state: 'curious',
+      title: 'Shopping Online 🛍️',
+      subtitles: ['Browsing products & wishlist 🛍️', 'Finding great items online 🎁'],
+    };
+  }
+
+  // 8. Knowledge & Reading
+  if (normUrl.includes('wikipedia.org')) {
+    return {
+      formattedName: 'Wikipedia',
+      category: 'productivity',
+      state: 'thinking',
+      title: 'Reading Wikipedia 📚',
+      subtitles: ['Exploring fascinating articles 📚', 'Learning interesting facts 🌟'],
+    };
+  }
+
+  return null;
+}
+
+export function classifyApplication(rawAppName: string, windowTitle = '', browserUrl = ''): AppClassification {
+  // First check if browser active tab or window title reveals a specific web app/site
+  const webClassification = classifyWebContent(browserUrl, windowTitle);
+  if (webClassification) {
+    return webClassification;
+  }
+
   const normalized = rawAppName.trim().toLowerCase();
 
   for (const [key, config] of Object.entries(APP_DATABASE)) {
@@ -519,6 +1185,8 @@ export class SystemActivityMonitor {
   private lastBubbleEmitTime = 0;
   private lastCursorPos = { x: 0, y: 0 };
   private cachedRawApp = '';
+  private cachedBrowserUrl = '';
+  private cachedBrowserTitle = '';
   private lastAppCheckTime = 0;
   private onActivityChange: (event: SystemActivityEvent) => void;
 
@@ -608,8 +1276,11 @@ export class SystemActivityMonitor {
         }
       }
 
-      // 2. Cross-platform frontmost application detection (throttled to 1200ms to minimize CPU load)
+      // 2. Cross-platform frontmost application & browser active tab detection (throttled to 1200ms to minimize CPU load)
       let rawApp = this.cachedRawApp;
+      let browserUrl = this.cachedBrowserUrl;
+      let browserTitle = this.cachedBrowserTitle;
+
       if (now - this.lastAppCheckTime > 1200 || !this.cachedRawApp) {
         this.lastAppCheckTime = now;
         if (process.platform === 'darwin') {
@@ -631,57 +1302,124 @@ export class SystemActivityMonitor {
               // ignore
             }
           }
+
+          // Check if front app is a web browser to inspect active tab
+          const normApp = rawApp.toLowerCase();
+          const isBrowser = [
+            'arc',
+            'google chrome',
+            'chrome',
+            'safari',
+            'brave browser',
+            'brave',
+            'microsoft edge',
+            'edge',
+            'opera',
+            'vivaldi',
+            'chromium',
+          ].some((b) => normApp.includes(b));
+
+          if (isBrowser) {
+            try {
+              const jxa = `(() => {
+                try {
+                  const se = Application("System Events");
+                  const front = se.applicationProcesses.whose({ frontmost: true })[0].name();
+                  let u = "", t = "";
+                  if (front === "Arc") {
+                    const a = Application("Arc");
+                    u = a.windows[0].activeTab.url();
+                    t = a.windows[0].activeTab.title();
+                  } else if (front === "Google Chrome" || front === "Chromium") {
+                    const a = Application(front);
+                    u = a.windows[0].activeTab.url();
+                    t = a.windows[0].activeTab.title();
+                  } else if (front === "Safari") {
+                    const a = Application("Safari");
+                    u = a.windows[0].currentTab.url();
+                    t = a.windows[0].currentTab.name();
+                  } else if (front === "Brave Browser") {
+                    const a = Application("Brave Browser");
+                    u = a.windows[0].activeTab.url();
+                    t = a.windows[0].activeTab.title();
+                  } else if (front === "Microsoft Edge") {
+                    const a = Application("Microsoft Edge");
+                    u = a.windows[0].activeTab.url();
+                    t = a.windows[0].activeTab.title();
+                  }
+                  return JSON.stringify({ u, t });
+                } catch(e) {
+                  return JSON.stringify({ u: "", t: "" });
+                }
+              })()`;
+              const { stdout } = await execAsync(`osascript -l JavaScript -e '${jxa.replace(/'/g, "'\\''")}'`);
+              const parsed = JSON.parse(stdout.trim());
+              browserUrl = parsed.u || '';
+              browserTitle = parsed.t || '';
+            } catch {
+              browserUrl = '';
+              browserTitle = '';
+            }
+          } else {
+            browserUrl = '';
+            browserTitle = '';
+          }
         } else if (process.platform === 'win32') {
           try {
             const { stdout } = await execAsync(
-              `powershell -NoProfile -NonInteractive -Command "$h = (Add-Type -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow(); public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int p);' -Name W -Namespace W -PassThru)::GetForegroundWindow(); $p = 0; [W.W]::GetWindowThreadProcessId($h, [ref]$p); (Get-Process -Id $p).ProcessName"`
+              `powershell -NoProfile -NonInteractive -Command "$h = (Add-Type -MemberDefinition '[DllImport(\\"user32.dll\\")] public static extern IntPtr GetForegroundWindow(); public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int p);' -Name W -Namespace W -PassThru)::GetForegroundWindow(); $p = 0; [W.W]::GetWindowThreadProcessId($h, [ref]$p); $proc = Get-Process -Id $p; Write-Output ($proc.ProcessName + '|||' + $proc.MainWindowTitle)"`
             );
-            rawApp = stdout.trim().split('\r\n')[0].trim();
+            const parts = stdout.trim().split('|||');
+            rawApp = parts[0]?.trim() || '';
+            browserTitle = parts[1]?.trim() || '';
+            browserUrl = '';
           } catch {
             // ignore
           }
         } else if (process.platform === 'linux') {
           try {
             const { stdout } = await execAsync(`xdotool getactivewindow getwindowname`);
-            rawApp = stdout.trim();
+            browserTitle = stdout.trim();
           } catch {
-            try {
-              const { stdout } = await execAsync(
-                `xprop -id $(xprop -root -notype _NET_ACTIVE_WINDOW | awk '{print $5}') WM_CLASS`
-              );
-              const match = stdout.match(/WM_CLASS.*= "(?:[^"]+)", "([^"]+)"/);
-              if (match && match[1]) {
-                rawApp = match[1];
-              }
-            } catch {
-              // ignore
+            browserTitle = '';
+          }
+          try {
+            const { stdout } = await execAsync(
+              `xprop -id $(xprop -root -notype _NET_ACTIVE_WINDOW | awk '{print $5}') WM_CLASS`
+            );
+            const match = stdout.match(/WM_CLASS.*= "(?:[^"]+)", "([^"]+)"/);
+            if (match && match[1]) {
+              rawApp = match[1];
             }
+          } catch {
+            // ignore
           }
         }
         this.cachedRawApp = rawApp;
+        this.cachedBrowserUrl = browserUrl;
+        this.cachedBrowserTitle = browserTitle;
       }
 
       // 3. Audio stream detection (Content-Blind Security Feature)
       // Privacy Guarantee: NEVER captures audio data, microphone, song titles, or waveform.
-      // Strictly inspects binary OS power assertions for whether audio hardware is active.
+      // Strictly inspects active media playback assertions, ignoring standby device sleep & Mochi Electron sounds!
       let isAudioPlaying = false;
       if (process.platform === 'darwin') {
         try {
-          const { stdout } = await execAsync(`pmset -g assertions | grep -i "coreaudiod"`);
-          if (
-            stdout.includes('PreventUserIdleSystemSleep') ||
-            stdout.includes('NoIdleSleepAssertion')
-          ) {
+          const { stdout } = await execAsync(
+            `pmset -g assertions | grep -E '(named: "Playing audio"|named: "com.apple.Music"|named: "Spotify")' | grep -v "Electron"`
+          );
+          if (stdout.trim().length > 0) {
             isAudioPlaying = true;
           }
         } catch {
-          // grep exit code 1 if no match
+          // grep exit code 1 if no match -> audio is not playing
         }
       } else if (process.platform === 'win32') {
         try {
           const { stdout } = await execAsync('powercfg -requests');
           // Windows powercfg outputs active audio assertions when media plays without revealing content
-          if (stdout.includes('[AUDIO]') && !stdout.match(/\[AUDIO\]\s+None/i)) {
+          if (stdout.includes('[AUDIO]') && !stdout.match(/\[AUDIO\]\s+None/i) && !stdout.toLowerCase().includes('electron')) {
             isAudioPlaying = true;
           }
         } catch {
@@ -698,7 +1436,7 @@ export class SystemActivityMonitor {
         }
       }
 
-      const classification = classifyApplication(rawApp);
+      const classification = classifyApplication(rawApp, browserTitle, browserUrl);
       const isDevApp = classification.category === 'development';
 
       // On macOS we have high-resolution sub-second idle time (<0.75s).
@@ -819,19 +1557,23 @@ export class SystemActivityMonitor {
 
       let finalState: PetAnimationState = classification.state;
       let finalTitle = classification.title;
-      let finalSubtitle = classification.subtitles[0];
+      let finalSubtitle = classification.subtitles[Math.floor(Math.random() * classification.subtitles.length)] || classification.subtitles[0];
 
       // Intense typing flow streak -> Fire face 🔥
       const isSuperTypingStreak = this.typingStreak >= 7;
 
-      // Logic for audio vibing vs fire vs coding vs focused vs general typing
       if (isSuperTypingStreak) {
         finalState = 'fire';
         finalTitle = 'On Fire! 🔥';
-        finalSubtitle = 'Blazing typing streak! You are in the zone 🔥';
-      } else if (isAudioPlaying && (idleSeconds > 3.5 || !isDevApp)) {
+        finalSubtitle = 'Blazing typing streak! You are unstoppable 🔥';
+      } else if (
+        // Media/Music listening: only trigger when audio is genuinely playing AND either
+        // it's an entertainment app/site or user has been idle from input for > 4.5 seconds
+        isAudioPlaying &&
+        (classification.category === 'entertainment' || idleSeconds > 4.5)
+      ) {
         finalState = 'listening';
-        finalTitle = 'Audio Playing 🎧';
+        finalTitle = classification.category === 'entertainment' ? classification.title : 'Listening to Music 🎧';
         finalSubtitle = 'Headphones on & vibing to the beat 🎧';
       } else if (isDevApp) {
         // Active in VS Code, Antigravity IDE, Cursor, Xcode, etc.
@@ -850,10 +1592,72 @@ export class SystemActivityMonitor {
         } else {
           finalState = 'idle';
           finalTitle = classification.formattedName;
-          finalSubtitle = `Active workspace in ${classification.formattedName}`;
+          finalSubtitle = `Standing by in ${classification.formattedName}`;
+        }
+      } else if (classification.category === 'communication') {
+        // Messaging & Communication (WhatsApp, Slack, Discord, Telegram, Messages, iMessage)
+        if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
+          finalState = 'typing';
+          finalTitle = `Chatting in ${classification.formattedName} 💬`;
+          finalSubtitle = `Typing up a friendly reply! 💬`;
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          finalState = 'curious';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Reading messages in ${classification.formattedName} 💬`;
+        } else if (idleSeconds < 25) {
+          finalState = 'happy';
+          finalTitle = classification.title;
+          finalSubtitle = `Catching up on messages in ${classification.formattedName} ✨`;
+        } else {
+          finalState = 'idle';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Standing by in ${classification.formattedName}`;
+        }
+      } else if (classification.category === 'entertainment') {
+        // Video & Media (YouTube, Netflix, Twitch, Spotify)
+        finalState = 'listening';
+        finalTitle = classification.title;
+        finalSubtitle = classification.subtitles[0] || `Enjoying entertainment on ${classification.formattedName} 🎬`;
+      } else if (classification.category === 'design') {
+        // Design & Creative (Figma, Canva, Photoshop, Blender)
+        if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
+          finalState = 'typing';
+          finalTitle = `Designing in ${classification.formattedName} 🎨`;
+          finalSubtitle = `Crafting visual elements 🎨`;
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          finalState = 'curious';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Pixel-perfect craft in ${classification.formattedName} ✨`;
+        } else if (idleSeconds < 25) {
+          finalState = 'curious';
+          finalTitle = classification.title;
+          finalSubtitle = `Creative flow in ${classification.formattedName} 🎨`;
+        } else {
+          finalState = 'idle';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Standing by in ${classification.formattedName}`;
+        }
+      } else if (classification.category === 'productivity') {
+        // Productivity (Notion, Google Docs, Sheets, Word, Excel, Notes)
+        if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
+          finalState = 'typing';
+          finalTitle = `Writing in ${classification.formattedName} 📝`;
+          finalSubtitle = `Documenting thoughts & ideas 📝`;
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          finalState = 'focused';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Organizing in ${classification.formattedName} ⚡`;
+        } else if (idleSeconds < 25) {
+          finalState = classification.state;
+          finalTitle = classification.title;
+          finalSubtitle = `Focus session in ${classification.formattedName} ⚡`;
+        } else {
+          finalState = 'idle';
+          finalTitle = classification.formattedName;
+          finalSubtitle = `Standing by in ${classification.formattedName}`;
         }
       } else {
-        // Non-developer apps (Slack, Notion, Chrome, Spotify, etc.)
+        // General Applications & Web
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
           finalTitle = `Typing in ${classification.formattedName}`;
@@ -861,7 +1665,7 @@ export class SystemActivityMonitor {
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
           finalTitle = classification.formattedName;
-          finalSubtitle = `Working in ${classification.formattedName}`;
+          finalSubtitle = `Exploring in ${classification.formattedName}`;
         } else if (idleSeconds < 25) {
           finalState = classification.state;
           finalTitle = classification.title;

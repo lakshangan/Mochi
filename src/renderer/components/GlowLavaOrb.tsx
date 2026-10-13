@@ -13,6 +13,7 @@ export interface GlowLavaOrbProps {
   size?: number;
   className?: string;
   onClick?: () => void;
+  customMatrix?: number[][];
 }
 
 type PixelGrid = number[][];
@@ -243,6 +244,17 @@ const FIRE_FACE: PixelGrid = [
   [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
 ];
 
+// 19. Fierce Slanted Angry Eyebrows & Eyes (`>:( `) with glaring crimson glow
+const ANGRY_EYE_LEFT: PixelGrid = [
+  [1, 1, 1, 0, 0],
+  [0, 1, 1, 1, 0],
+  [0, 0, 1, 1, 1],
+  [0, 0, 1, 1, 1],
+  [0, 1, 1, 1, 1],
+  [1, 1, 1, 1, 0],
+  [0, 1, 1, 0, 0],
+];
+
 // Expression map for animation states
 const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_curious' | 'typing_burst', Expression> = {
   idle: {
@@ -310,6 +322,14 @@ const EXPR_MAP: Record<PetAnimationState | 'wink' | 'curious_glance' | 'typing_c
     glowColor: '#3b82f6',
     intensity: 1.3,
     eyeOffset: 0,
+  },
+  angry: {
+    eye: ANGRY_EYE_LEFT,
+    rightEye: mirrorGrid(ANGRY_EYE_LEFT),
+    eyeColor: '#ff4d4f',
+    glowColor: '#ff1a1a',
+    intensity: 1.85,
+    eyeOffset: 26,
   },
   hydrated: {
     centered: true,
@@ -435,6 +455,7 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
   size = 115,
   className = '',
   onClick,
+  customMatrix,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -443,12 +464,14 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
   const typingBurstRef = useRef(typingBurst);
   const gazeRef = useRef(gaze);
   const sizeRef = useRef(size);
+  const customMatrixRef = useRef(customMatrix);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
   useEffect(() => { typingBurstRef.current = typingBurst; }, [typingBurst]);
   useEffect(() => { gazeRef.current = gaze; }, [gaze]);
   useEffect(() => { sizeRef.current = size; }, [size]);
+  useEffect(() => { customMatrixRef.current = customMatrix; }, [customMatrix]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -666,7 +689,23 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       // ── State Transition cross-fade ──────────────────────────────────────
       if (effectiveState !== prevState) {
         fromExpr = toExpr;
-        toExpr = EXPR_MAP[effectiveState] || EXPR_MAP.idle;
+        const customM = customMatrixRef.current;
+        if (
+          customM &&
+          customM.length > 0 &&
+          (effectiveState === 'idle' || effectiveState === 'working' || effectiveState === 'focused')
+        ) {
+          toExpr = {
+            centered: true,
+            eye: customM,
+            eyeColor: '#00f7ff',
+            glowColor: '#00d2ff',
+            intensity: 1.5,
+            eyeOffset: 0,
+          };
+        } else {
+          toExpr = EXPR_MAP[effectiveState] || EXPR_MAP.idle;
+        }
         transAlpha = 0;
         prevState = effectiveState;
       }

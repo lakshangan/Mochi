@@ -111,6 +111,10 @@ export const SoundEffects = {
     });
   },
 
+  chime(volume = 0.5) {
+    this.breakChime(volume);
+  },
+
   celebrate(volume = 0.7) {
     const ctx = getAudioContext();
     if (!ctx) return;

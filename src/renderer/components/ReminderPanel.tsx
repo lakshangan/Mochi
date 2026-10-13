@@ -200,15 +200,29 @@ export const ReminderPanel: React.FC<ReminderPanelProps> = ({
               </div>
             </div>
 
+            <div className="setting-sub-row">
+              <label>Full-Screen Alert:</label>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(waterSettings.fullScreenAlert)}
+                  onChange={(e) => onUpdateWater({ fullScreenAlert: e.target.checked })}
+                />
+                <span className="slider" />
+              </label>
+            </div>
+
             <div className="tracker-row">
               <div className="tracker-count">
                 <span>Glasses today:</span>
-                <strong>{glassesToday} 🥤</strong>
+                <strong>{waterSettings.todayCount ?? 0} 🥤</strong>
+                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)', marginLeft: '6px' }}>
+                  ({waterSettings.loggedCount ?? 0} total)
+                </span>
               </div>
               <button
                 className="btn btn-sm btn-outline"
                 onClick={() => {
-                  setGlassesToday((g) => g + 1);
                   onCompleteWater();
                 }}
               >

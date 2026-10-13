@@ -66,4 +66,36 @@ describe('Reminder Service & Behavior Controller', () => {
 
     anim.destroy();
   });
+
+  it('increments water loggedCount and todayCount on completeWater', () => {
+    persistence.updateSettings({
+      waterReminders: {
+        enabled: true,
+        intervalMinutes: 30,
+        loggedCount: 2,
+        todayCount: 2,
+        lastLoggedDate: new Date().toISOString().slice(0, 10),
+      },
+    });
+
+    reminderService.completeWater();
+    const updated = persistence.getState().settings.waterReminders;
+    expect(updated.loggedCount).toBe(3);
+    expect(updated.todayCount).toBe(3);
+    expect(updated.lastLoggedDate).toBe(new Date().toISOString().slice(0, 10));
+  });
+
+  it('triggers angry animation state properly with high priority', () => {
+    const anim = new AnimationController();
+    expect(anim.getState()).toBe('idle');
+
+    anim.triggerReaction('angry', 200);
+    expect(anim.getState()).toBe('angry');
+
+    // Dragging (10) can interrupt angry (9)
+    anim.transitionTo('dragging');
+    expect(anim.getState()).toBe('dragging');
+
+    anim.destroy();
+  });
 });

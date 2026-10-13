@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import mochiLogo from '../assets/mochi-logo.png';
 import { useMochiStore } from '../hooks/useMochiStore';
 import { TimerPanel } from './TimerPanel';
 import { ReminderPanel } from './ReminderPanel';
@@ -11,6 +12,7 @@ import {
   LayoutDashboard,
   Clock,
   Droplet,
+  Check,
   CheckSquare,
   FileText,
   MessageSquare,
@@ -108,7 +110,7 @@ export const AssistantPanel: React.FC = () => {
         </div>
 
         <div className="mac-title-center">
-          <div className="brand-dot" />
+          <img src={mochiLogo} alt="Mochi" className="brand-logo-img" />
           <span className="brand-title">Mochi Companion</span>
           <span className="mac-status-pill">{state.petState}</span>
         </div>
@@ -491,6 +493,69 @@ export const AssistantPanel: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Full-Screen Alert Modal for Drink Water & Mindful Care */}
+      {state.activeReminder && state.activeReminder.fullScreenAlert && (
+        <div className="fullscreen-reminder-modal">
+          <div className="fullscreen-modal-backdrop" />
+          <div className="fullscreen-modal-content">
+            <div className="fullscreen-modal-glow" />
+            <div className="fullscreen-modal-icon">
+              {state.activeReminder.type === 'water' ? '💧' : '🌿'}
+            </div>
+            <h2 className="fullscreen-modal-title">{state.activeReminder.title}</h2>
+            <p className="fullscreen-modal-text">{state.activeReminder.message}</p>
+
+            <div className="fullscreen-modal-actions">
+              {state.activeReminder.type === 'water' ? (
+                <>
+                  <button
+                    className="btn btn-lg btn-primary"
+                    onClick={() => {
+                      completeWater();
+                    }}
+                  >
+                    <Check size={18} /> I Drank Water! 🥤
+                  </button>
+                  <button
+                    className="btn btn-lg btn-secondary"
+                    onClick={() => snoozeWater(10)}
+                  >
+                    <Clock size={16} /> Snooze 10m
+                  </button>
+                  <button
+                    className="btn btn-lg btn-outline"
+                    onClick={() => dismissWater()}
+                  >
+                    Dismiss
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-lg btn-primary"
+                    onClick={() => startBreakTimer()}
+                  >
+                    <Sparkles size={18} /> Start Break Now 🌿
+                  </button>
+                  <button
+                    className="btn btn-lg btn-secondary"
+                    onClick={() => snoozeBreak(10)}
+                  >
+                    <Clock size={16} /> Snooze 10m
+                  </button>
+                  <button
+                    className="btn btn-lg btn-outline"
+                    onClick={() => dismissBreak()}
+                  >
+                    Dismiss
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
