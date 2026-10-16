@@ -376,36 +376,51 @@ npm run build
 
 ---
 
-## Packaging & Releases
+## Packaging & Cross-Platform Releases
 
-Mochi uses `electron-builder` with production configurations for code signing, hardened runtime, and auto-updating:
+Mochi uses `electron-builder` with production configurations optimized for cross-platform distribution across macOS, Windows, and Linux.
+
+> 📖 **Deep Technical Architecture & Packaging Guide:**  
+> For in-depth architectural details, OS compositors (Cocoa vs DWM vs Wayland), Gatekeeper rules, and memory optimization benchmarks, consult [docs/CROSS_PLATFORM_ARCHITECTURE_AND_PACKAGING_GUIDE.md](docs/CROSS_PLATFORM_ARCHITECTURE_AND_PACKAGING_GUIDE.md).
+
+### Build Commands
 
 ```bash
-# Package for your current operating system:
+# Package for your current host operating system:
 npm run package
 
-# macOS (DMG & ZIP with Hardened Runtime):
+# macOS Universal (Dual-Architecture: runs on both Apple Silicon & Intel Macs):
+npm run package:mac:universal
+
+# macOS Host Architecture (arm64 or x64 DMG):
 npm run package:mac
 
-# Windows (NSIS Installer & Portable EXE):
+# Windows (NSIS Installer & Portable standalone EXE):
 npm run package:win
 
-# Linux (AppImage & DEB package):
+# Linux (Universal AppImage & Standalone Tarball):
 npm run package:linux
 ```
 
-All compiled binaries are generated inside the `release/` directory.
+All compiled binaries are generated in the `release/` directory:
+- **macOS:** `Mochi Desktop Companion-1.0.0-universal.dmg` (Intel + Apple Silicon), `.zip`
+- **Windows:** `Mochi Desktop Companion Setup 1.0.0.exe` (NSIS Wizard) and `Mochi Desktop Companion 1.0.0.exe` (Portable)
+- **Linux:** `Mochi Desktop Companion-1.0.0.AppImage` and `mochi-desktop-companion-1.0.0.tar.gz`
+
+### Running on Another Mac (Gatekeeper Note)
+When transferring an unsigned test DMG to another Mac, macOS Gatekeeper may place it in quarantine. To run it immediately on the test machine:
+```bash
+xattr -cr "/Applications/Mochi Desktop Companion.app"
+```
+*(Or Right-Click / Control-Click the app in Finder and select "Open" -> "Open Anyway".)*
 
 ---
 
-## Continuous Integration (CI)
+## Continuous Integration & Release Pipelines
 
-Every commit and pull request is validated across a 3-platform matrix using GitHub Actions (`.github/workflows/ci.yml`):
-- **Ubuntu Latest** (Linux)
-- **macOS Latest** (Apple Silicon / Darwin)
-- **Windows Latest** (win32)
-
-Steps include dependency validation, automated unit testing, TypeScript compilation, and production bundle assembly.
+Mochi features automated workflows via GitHub Actions:
+1. **CI Test Matrix (`.github/workflows/ci.yml`):** Runs the 32-test unit and memory benchmark suite on every push and PR across `ubuntu-latest`, `macos-latest`, and `windows-latest`.
+2. **Multi-Platform Build Pipeline (`.github/workflows/build-all-platforms.yml`):** Automatically cross-compiles native installers and binaries for macOS Universal, Windows, and Linux simultaneously in the cloud upon tag creation or manual dispatch.
 
 ---
 

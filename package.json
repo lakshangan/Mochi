@@ -17,6 +17,8 @@
     "bench": "node scripts/benchmark-ram.js",
     "package": "npm run build && electron-builder",
     "package:mac": "npm run build && electron-builder --mac",
+    "package:mac:universal": "npm run build && electron-builder --mac --universal",
+    "package:mac:all": "npm run build && electron-builder --mac --arm64 --x64 --universal",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "start": "cross-env NODE_ENV=production electron dist/main/main.js"
@@ -41,18 +43,18 @@
       "target": ["dmg", "zip"],
       "category": "public.app-category.productivity",
       "darkModeSupport": true,
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "icon": "build/icon.icns",
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "identity": null,
+      "icon": "build/icon.icns"
     },
     "dmg": {
       "title": "${productName}",
       "icon": "build/icon.icns"
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": ["nsis", "portable"],
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -61,7 +63,8 @@
       "createStartMenuShortcut": true
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": ["AppImage", "tar.gz"],
+      "icon": "build/icon.png",
       "category": "Utility",
       "synopsis": "Ambient desktop companion and personal productivity assistant"
     }
@@ -74,7 +77,7 @@
     "pomodoro",
     "threejs"
   ],
-  "author": "Mochi Companion Team",
+  "author": "Mochi Companion Team <team@mochicompanion.com>",
   "license": "MIT",
   "dependencies": {
     "canvas-confetti": "^1.9.4",
