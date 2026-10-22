@@ -31,6 +31,7 @@ export class AssistantWindow {
     const iconPath = path.join(__dirname, '../assets/mochi-logo.png');
 
     this.window = new BrowserWindow({
+      title: '',
       width: this.width,
       height: this.height,
       x,
@@ -43,6 +44,8 @@ export class AssistantWindow {
       minHeight: 520,
       alwaysOnTop: true,
       hasShadow: true,
+      thickFrame: false,
+      roundedCorners: false,
       icon: iconPath,
       webPreferences: {
         preload: preloadPath,

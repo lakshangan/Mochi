@@ -26,6 +26,7 @@ export class AlertWindow {
     const { width, height, x, y } = primaryDisplay.bounds;
 
     this.window = new BrowserWindow({
+      title: '',
       width,
       height,
       x,
@@ -38,6 +39,8 @@ export class AlertWindow {
       skipTaskbar: true,
       resizable: false,
       movable: false,
+      thickFrame: false,
+      roundedCorners: false,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,

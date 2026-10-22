@@ -18,13 +18,19 @@ export class PlatformAdapter {
   }
 
   public static configureWindowForPlatform(win: BrowserWindow, isTransparent = true): void {
+    // Prevent any native OS window title or DWM title bar caption from displaying
+    win.setTitle('');
+    win.webContents.on('page-title-updated', (e) => {
+      e.preventDefault();
+    });
+
     if (this.isMac()) {
       // macOS specific window behavior
       if (isTransparent) {
         win.setHasShadow(false);
       }
     } else if (this.isWindows()) {
-      // Windows specific
+      // Windows specific: prevent DWM from rendering white title/caption borders on blur
       if (isTransparent) {
         win.setBackgroundColor('#00000000');
       }

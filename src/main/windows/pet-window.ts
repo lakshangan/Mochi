@@ -31,11 +31,12 @@ export class PetWindow {
     this.currentPosition = { x, y };
 
     const windowW = Math.max(300, this.petSize + 130);
-    const windowH = Math.max(170, this.petSize + 90);
+    const windowH = Math.max(160, this.petSize + 65);
 
     const iconPath = path.join(__dirname, '../assets/trayIcon.png');
 
     this.window = new BrowserWindow({
+      title: '',
       width: windowW,
       height: windowH,
       x,
@@ -46,6 +47,8 @@ export class PetWindow {
       alwaysOnTop: true,
       skipTaskbar: true,
       hasShadow: false,
+      thickFrame: false,
+      roundedCorners: false,
       icon: iconPath,
       backgroundColor: '#00000000',
       webPreferences: {
@@ -111,9 +114,22 @@ export class PetWindow {
   public resize(size: number): void {
     this.petSize = size;
     if (this.window && !this.window.isDestroyed()) {
-      const windowW = Math.max(260, size + 100);
-      const windowH = Math.max(160, size + 85);
-      this.window.setSize(windowW, windowH);
+      const windowW = Math.max(300, size + 130);
+      const windowH = Math.max(160, size + 65);
+      const [currentX, currentY] = this.window.getPosition();
+      const [currentW, currentH] = this.window.getSize();
+
+      // Anchor to bottom center so the mascot remains stable on desktop when adjusting size
+      const newX = Math.round(currentX + (currentW - windowW) / 2);
+      const newY = Math.round(currentY + (currentH - windowH));
+
+      this.window.setBounds({
+        x: newX,
+        y: newY,
+        width: windowW,
+        height: windowH,
+      });
+      this.currentPosition = { x: newX, y: newY };
     }
   }
 

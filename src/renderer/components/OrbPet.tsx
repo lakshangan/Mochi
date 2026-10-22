@@ -466,109 +466,129 @@ export const OrbPet: React.FC = () => {
       ? 1 - activeTimer.remainingSeconds / activeTimer.totalDurationSeconds
       : 0;
 
+  const bubbleScale = Math.min(1, Math.max(0.85, petSize / 115));
+
   return (
     <div
       className="mochi-pet-window"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* 1. First-Run Interactive Name Onboarding Capsule */}
-      {showOnboarding ? (
-        <form
-          className="mochi-onboarding-capsule"
-          onSubmit={handleSaveName}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="onboarding-sparkle">✨</span>
-          <input
-            type="text"
-            className="onboarding-input"
-            placeholder="Your name? (e.g. Lakshan)"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            autoFocus
-            maxLength={20}
-          />
-          <button type="submit" className="onboarding-submit-btn" title="Save name">
-            ✓
-          </button>
-        </form>
-      ) : (isHovered || reactionMessage) ? (
-        <div
-          className="mochi-speech-bubble"
-          onClick={handlePetAction}
-          title="Click to open Mochi Assistant"
-        >
-          <div className="bubble-status-dot" data-state={currentState} />
-
-          {/* Integrated Live Timer Chip inside capsule */}
-          {isTimerRunning && (
-            <div className="bubble-timer-chip">
-              <TimerIcon size={11} className="timer-chip-icon" />
-              <span>{formatTime(activeTimer.remainingSeconds)}</span>
-              <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
-            </div>
-          )}
-
-          <div className="bubble-body">
-            <span className="bubble-text">
-              {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
-            </span>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */}
-      {isTimerRunning && !(isHovered || reactionMessage) && (
-        <div
-          className="mochi-timer-hologram-pill"
-          onClick={handlePetAction}
-          title="Click to open timer controls"
-        >
-          <span className="timer-hologram-dot" />
-          <TimerIcon size={12} className="timer-hologram-icon" />
-          <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
-          <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
-        </div>
-      )}
-
-      {/* Living Mascot Canvas Container */}
       <div
-        ref={containerRef}
-        className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
-        title="Mochi Companion (Click to open, right-click to hide into status bar, drag to move)"
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (window.mochiApi) {
-            window.mochiApi.setPetVisible(false);
-            window.mochiApi.showNotification(
-              'Deep Work Mode Active 🧘',
-              'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
-            );
-          }
+        className="mochi-pet-stage"
+        style={{
+          width: petSize,
+          height: petSize,
         }}
       >
-        {orbMode === 'glow-lava' ? (
-          <GlowLavaOrb
-            state={currentState}
-            isSpeaking={isSpeaking}
-            isTyping={isTyping}
-            typingBurst={typingBurst}
-            gaze={gaze}
-            isTimerActive={Boolean(isTimerRunning)}
-            timerProgress={timerProgress}
-            size={petSize}
-            customMatrix={customMatrix}
-          />
-        ) : (
-          <ParticlesOrb
-            state={mapPetStateToOrbState(currentState)}
-            size={Math.round(petSize * 0.98)}
-            speed={1}
-            colorFrom="#f0abfc"
-            colorTo="#818cf8"
-          />
-        )}
+        {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
+        <div
+          className="mochi-bubble-anchor"
+          style={{
+            transform: `translateX(-50%) scale(${bubbleScale})`,
+            transformOrigin: 'bottom center',
+          }}
+        >
+          {showOnboarding ? (
+            <form
+              className="mochi-onboarding-capsule"
+              onSubmit={handleSaveName}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <span className="onboarding-sparkle">✨</span>
+              <input
+                type="text"
+                className="onboarding-input"
+                placeholder="Your name? (e.g. Lakshan)"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                autoFocus
+                maxLength={20}
+              />
+              <button type="submit" className="onboarding-submit-btn" title="Save name">
+                ✓
+              </button>
+            </form>
+          ) : (isHovered || reactionMessage) ? (
+            <div
+              className="mochi-speech-bubble"
+              onClick={handlePetAction}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Click to open Mochi Assistant"
+            >
+              <div className="bubble-status-dot" data-state={currentState} />
+
+              {/* Integrated Live Timer Chip inside capsule */}
+              {isTimerRunning && (
+                <div className="bubble-timer-chip">
+                  <TimerIcon size={11} className="timer-chip-icon" />
+                  <span>{formatTime(activeTimer.remainingSeconds)}</span>
+                  <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
+                </div>
+              )}
+
+              <div className="bubble-body">
+                <span className="bubble-text">
+                  {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
+                </span>
+              </div>
+            </div>
+          ) : isTimerRunning ? (
+            /* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */
+            <div
+              className="mochi-timer-hologram-pill"
+              onClick={handlePetAction}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Click to open timer controls"
+            >
+              <span className="timer-hologram-dot" />
+              <TimerIcon size={12} className="timer-hologram-icon" />
+              <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
+              <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Living Mascot Canvas Container */}
+        <div
+          ref={containerRef}
+          className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
+          style={{ width: petSize, height: petSize }}
+          title="Mochi Companion (Click to open, right-click to hide into status bar, drag to move)"
+          onContextMenu={(e) => {
+            e.preventDefault();
+            if (window.mochiApi) {
+              window.mochiApi.setPetVisible(false);
+              window.mochiApi.showNotification(
+                'Deep Work Mode Active 🧘',
+                'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
+              );
+            }
+          }}
+        >
+          {orbMode === 'glow-lava' ? (
+            <GlowLavaOrb
+              state={currentState}
+              isSpeaking={isSpeaking}
+              isTyping={isTyping}
+              typingBurst={typingBurst}
+              gaze={gaze}
+              isTimerActive={Boolean(isTimerRunning)}
+              timerProgress={timerProgress}
+              size={petSize}
+              customMatrix={customMatrix}
+            />
+          ) : (
+            <ParticlesOrb
+              state={mapPetStateToOrbState(currentState)}
+              size={Math.round(petSize * 0.98)}
+              speed={1}
+              colorFrom="#f0abfc"
+              colorTo="#818cf8"
+            />
+          )}
+        </div>
       </div>
     </div>
   );

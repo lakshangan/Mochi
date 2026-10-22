@@ -57,16 +57,43 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   background: transparent;
   position: relative;
   overflow: visible;
 }
 
+/* Stage container sized exactly to the mascot orb */
+.mochi-pet-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Floating anchor positioned snugly right above the orb */
+.mochi-bubble-anchor {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  transition: bottom 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mochi-bubble-anchor > * {
+  pointer-events: auto;
+}
+
 /* First-run interactive name onboarding capsule */
 .mochi-onboarding-capsule {
-  position: absolute;
-  top: 6px;
+  position: relative;
   z-index: 110;
   display: flex;
   align-items: center;
@@ -137,8 +164,7 @@ body {
 
 /* Floating Apple Dynamic Island Context Capsule */
 .mochi-speech-bubble {
-  position: absolute;
-  top: 6px;
+  position: relative;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -336,7 +362,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 10px;
+  position: relative;
 }
 
 .mochi-orb-canvas-container:active {
@@ -467,8 +493,7 @@ body {
 
 /* Siri & Gemini Digital Hologram Timer Badge on Mascot */
 .mochi-timer-hologram-pill {
-  position: absolute;
-  top: 8px;
+  position: relative;
   z-index: 100;
   display: flex;
   align-items: center;
