@@ -500,7 +500,7 @@ export const OrbPet: React.FC = () => {
               <input
                 type="text"
                 className="onboarding-input"
-                placeholder="Your name? (e.g. Lakshan)"
+                placeholder="Your name? (e.g. Alex)"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
                 autoFocus

@@ -89,7 +89,7 @@ export interface AiSettings {
 }
 
 export interface AppSettings {
-  userName?: string; // personalized user name (e.g. "Lakshan")
+  userName?: string; // personalized user name (e.g. "Alex")
   hasSeenWelcome?: boolean; // whether first-time cinematic welcome was completed
   petSize: number; // 70 - 240 px (default 115)
   opacity: number; // 0.3 - 1.0 (default 0.98)

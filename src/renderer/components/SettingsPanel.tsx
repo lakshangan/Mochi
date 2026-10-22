@@ -98,7 +98,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
           <input
             type="text"
-            placeholder="e.g. Lakshan"
+            placeholder="e.g. Alex"
             value={settings.userName || ''}
             onChange={(e) => onUpdateSettings({ userName: e.target.value })}
             className="panel-input"

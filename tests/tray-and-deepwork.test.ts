@@ -70,7 +70,7 @@ describe('TrayService & Deep Work Mode', () => {
   beforeEach(() => {
     broadcastCalls = [];
     persistence = new PersistenceService();
-    persistence.updateSettings({ userName: 'Lakshan' });
+    persistence.updateSettings({ userName: 'Alex' });
 
     notifService = new NotificationService();
     timerService = new TimerService(persistence, notifService);
