@@ -185,6 +185,21 @@ const mochiApi: ElectronMochiAPI = {
   quitApp: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_QUIT);
   },
+
+  // Git Companion
+  getGitStatus: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_STATUS);
+  },
+  simulateGitEvent: (type: 'commit' | 'push' | 'fatigue_warning') => {
+    return ipcRenderer.invoke(IPC_CHANNELS.GIT_SIMULATE, type);
+  },
+  onGitEvent: (callback: (event: any) => void) => {
+    const handler = (_event: any, ev: any) => callback(ev);
+    ipcRenderer.on(IPC_CHANNELS.GIT_EVENT, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.GIT_EVENT, handler);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('mochiApi', mochiApi);

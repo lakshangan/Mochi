@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import mochiLogo from '../assets/mochi-logo.png';
-import { useMochiStore } from '../hooks/useMochiStore';
+import { useMochiStore, calculateLevelInfo } from '../hooks/useMochiStore';
 import { TimerPanel } from './TimerPanel';
 import { ReminderPanel } from './ReminderPanel';
 import { TaskPanel } from './TaskPanel';
 import { NotesPanel } from './NotesPanel';
 import { AiChatPanel } from './AiChatPanel';
 import { SettingsPanel } from './SettingsPanel';
+import { GitCompanionPanel } from './GitCompanionPanel';
+import { DeskStretchesModal } from './DeskStretchesModal';
+import { SoundscapePlayer } from './SoundscapePlayer';
 import { SystemPerformanceMetrics } from '../../shared/types';
 import {
   LayoutDashboard,
@@ -27,6 +30,7 @@ import {
   Cpu,
   HardDrive,
   ShieldCheck,
+  GitBranch,
 } from 'lucide-react';
 
 export const AssistantPanel: React.FC = () => {
@@ -55,11 +59,17 @@ export const AssistantPanel: React.FC = () => {
     addNote,
     updateNote,
     deleteNote,
+    addXp,
+    feedTreat,
+    gitStatus,
+    lastGitEvent,
+    refreshGitStatus,
   } = useMochiStore();
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'timer' | 'reminders' | 'tasks' | 'notes' | 'chat' | 'settings'
+    'overview' | 'timer' | 'reminders' | 'tasks' | 'notes' | 'chat' | 'git' | 'settings'
   >('overview');
+  const [showStretchesModal, setShowStretchesModal] = useState(false);
   const [metrics, setMetrics] = useState<SystemPerformanceMetrics | null>(null);
 
   useEffect(() => {
@@ -92,6 +102,7 @@ export const AssistantPanel: React.FC = () => {
   };
 
   const pendingTasks = state.tasks.filter((t) => !t.completed);
+  const levelInfo = calculateLevelInfo(state.settings.gamification?.xp || 0);
 
   return (
     <div className="assistant-window-container">
@@ -113,9 +124,20 @@ export const AssistantPanel: React.FC = () => {
           <img src={mochiLogo} alt="Mochi" className="brand-logo-img" />
           <span className="brand-title">Mochi Companion</span>
           <span className="mac-status-pill">{state.petState}</span>
+          <div className="mac-level-pill" title={`${state.settings.gamification?.xp || 0} Total XP (${levelInfo.progressPercent}% to next level)`}>
+            <Sparkles size={11} className="level-sparkle" />
+            <span>Lv.{levelInfo.level} {levelInfo.title}</span>
+          </div>
         </div>
 
         <div className="mac-title-spacer">
+          <button
+            className="mac-stretch-btn"
+            onClick={() => setShowStretchesModal(true)}
+            title="30s Quick Guided Stretches for Posture & Wrists"
+          >
+            <span>🧘 Stretch</span>
+          </button>
           <button
             className="mac-deep-work-btn"
             onClick={async () => {
@@ -168,6 +190,17 @@ export const AssistantPanel: React.FC = () => {
         >
           <Droplet size={16} />
           <span>Care</span>
+        </button>
+        <button
+          className={`nav-tab-btn ${activeTab === 'git' ? 'active' : ''}`}
+          onClick={() => setActiveTab('git')}
+          title="Git & Flow Companion"
+        >
+          <GitBranch size={16} />
+          <span>Git Flow</span>
+          {gitStatus?.commitsToday ? (
+            <span className="nav-badge-dot">{gitStatus.commitsToday}</span>
+          ) : null}
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
@@ -269,6 +302,9 @@ export const AssistantPanel: React.FC = () => {
                 <div className="shortcut-sub">View Tasks</div>
               </div>
             </div>
+
+            {/* Ambient Focus Soundscape Bar */}
+            <SoundscapePlayer compact={true} />
 
             {/* Live Timer Status Preview if running */}
             {state.timer.status !== 'stopped' && (
@@ -486,6 +522,15 @@ export const AssistantPanel: React.FC = () => {
           />
         )}
 
+        {activeTab === 'git' && (
+          <GitCompanionPanel
+            status={gitStatus}
+            lastEvent={lastGitEvent}
+            onRefresh={refreshGitStatus}
+            onOpenStretches={() => setShowStretchesModal(true)}
+          />
+        )}
+
         {activeTab === 'settings' && (
           <SettingsPanel
             settings={state.settings}
@@ -493,6 +538,12 @@ export const AssistantPanel: React.FC = () => {
           />
         )}
       </main>
+
+      <DeskStretchesModal
+        isOpen={showStretchesModal}
+        onClose={() => setShowStretchesModal(false)}
+        onRewardXp={addXp}
+      />
 
       {/* Full-Screen Alert Modal for Drink Water & Mindful Care */}
       {state.activeReminder && state.activeReminder.fullScreenAlert && (

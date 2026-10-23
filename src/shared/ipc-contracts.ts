@@ -10,6 +10,8 @@ import {
   PomodoroPhase,
   SystemActivityEvent,
   SystemPerformanceMetrics,
+  GitStatusState,
+  GitCompanionEvent,
 } from './types';
 
 export const IPC_CHANNELS = {
@@ -60,6 +62,12 @@ export const IPC_CHANNELS = {
 
   // AI & External Services
   AI_QUERY: 'ai:query',
+
+  // Git Companion
+  GIT_GET_STATUS: 'git:get-status',
+  GIT_EVENT: 'git:event',
+  GIT_SIMULATE: 'git:simulate',
+  GIT_REFRESH: 'git:refresh',
 
   // Platform & System
   SYSTEM_ACTIVITY_CHANGED: 'system:activity-changed',
@@ -125,6 +133,11 @@ export interface ElectronMochiAPI {
   getPlatform: () => Promise<'darwin' | 'win32' | 'linux'>;
   getSystemMetrics: () => Promise<SystemPerformanceMetrics>;
   quitApp: () => Promise<void>;
+
+  // Git Companion
+  getGitStatus?: () => Promise<GitStatusState>;
+  simulateGitEvent?: (type: 'commit' | 'push' | 'fatigue_warning') => Promise<void>;
+  onGitEvent?: (callback: (event: GitCompanionEvent) => void) => () => void;
 }
 
 declare global {

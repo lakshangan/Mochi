@@ -9,8 +9,37 @@ import {
   ReminderNotificationEvent,
   ChatMessage,
   PomodoroPhase,
+  PetGamificationState,
+  GitCompanionEvent,
+  GitStatusState,
 } from '../../shared/types';
 import { SoundEffects } from '../../shared/sound-effects';
+
+export const LEVEL_TITLES = [
+  'Baby Blob',
+  'Curious Sprite',
+  'Flow Apprentice',
+  'Deep Work Wizard',
+  'Cosmic Flow Master',
+];
+
+export const calculateLevelInfo = (xp: number = 0) => {
+  const level = Math.min(5, Math.floor(xp / 150) + 1);
+  const title = LEVEL_TITLES[level - 1] || 'Cosmic Flow Master';
+  const currentLevelBaseXp = (level - 1) * 150;
+  const nextLevelXp = level * 150;
+  const progressPercent = Math.min(100, Math.round(((xp - currentLevelBaseXp) / 150) * 100));
+  return { level, title, progressPercent, nextLevelXp };
+};
+
+const DEFAULT_GAMIFICATION: PetGamificationState = {
+  xp: 0,
+  level: 1,
+  title: 'Baby Blob',
+  pettingCount: 0,
+  treatsFed: 0,
+  streakDays: 1,
+};
 
 const DEFAULT_STATE: MochiFullState = {
   settings: {
@@ -48,6 +77,7 @@ const DEFAULT_STATE: MochiFullState = {
     ai: {
       provider: 'offline-local',
     },
+    gamification: DEFAULT_GAMIFICATION,
   },
   position: { x: 300, y: 300 },
   tasks: [],
@@ -65,6 +95,7 @@ const DEFAULT_STATE: MochiFullState = {
   },
   activeReminder: null,
   petState: 'idle',
+  gamification: DEFAULT_GAMIFICATION,
 };
 
 export function useMochiStore() {
@@ -120,15 +151,59 @@ export function useMochiStore() {
         setState((prev) => ({ ...prev, petState }));
       });
 
+      const unsubGit = window.mochiApi.onGitEvent
+        ? window.mochiApi.onGitEvent((ev: any) => {
+            setLastGitEvent(ev);
+            refreshGitStatus();
+            if (ev.type === 'commit') {
+              addXp(75);
+              if (state.settings.soundEnabled) {
+                SoundEffects.gitCommit(state.settings.soundVolume);
+              }
+            } else if (ev.type === 'push') {
+              addXp(100);
+              if (state.settings.soundEnabled) {
+                SoundEffects.celebrate(state.settings.soundVolume);
+              }
+            }
+          })
+        : () => {};
+
       return () => {
         unsubTimerTick();
         unsubTimerComp();
         unsubReminder();
         unsubState();
         unsubPetState();
+        unsubGit();
       };
     }
   }, [state.settings.soundEnabled, state.settings.soundVolume]);
+
+  const [gitStatus, setGitStatus] = useState<GitStatusState | null>(null);
+  const [lastGitEvent, setLastGitEvent] = useState<GitCompanionEvent | null>(null);
+
+  // Sync theme attribute to HTML
+  useEffect(() => {
+    const theme = state.settings.theme || 'neon-dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [state.settings.theme]);
+
+  // Fetch initial Git status
+  const refreshGitStatus = useCallback(async () => {
+    if (window.mochiApi?.getGitStatus) {
+      try {
+        const status = await window.mochiApi.getGitStatus();
+        setGitStatus(status);
+      } catch {
+        // fallback
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshGitStatus();
+  }, [refreshGitStatus]);
 
   // Actions
   const updateSettings = useCallback(async (partial: Partial<AppSettings>) => {
@@ -147,6 +222,90 @@ export function useMochiStore() {
       await window.mochiApi.setPetState(petState);
     }
   }, []);
+
+  const addXp = useCallback((amount: number) => {
+    setState((prev) => {
+      const curGam = prev.settings.gamification || DEFAULT_GAMIFICATION;
+      const newXp = curGam.xp + amount;
+      const { level, title } = calculateLevelInfo(newXp);
+      const leveledUp = level > curGam.level;
+
+      if (leveledUp && prev.settings.soundEnabled) {
+        SoundEffects.celebrate(prev.settings.soundVolume);
+      }
+
+      const updatedGam: PetGamificationState = {
+        ...curGam,
+        xp: newXp,
+        level,
+        title,
+      };
+
+      const updatedSettings = {
+        ...prev.settings,
+        gamification: updatedGam,
+      };
+
+      if (window.mochiApi) {
+        window.mochiApi.saveSettings({ gamification: updatedGam });
+      }
+
+      return {
+        ...prev,
+        settings: updatedSettings,
+        gamification: updatedGam,
+      };
+    });
+  }, []);
+
+  const feedTreat = useCallback(
+    (treat: 'espresso' | 'cookie' | 'water') => {
+      if (treat === 'espresso') {
+        SoundEffects.treatEat(state.settings.soundVolume);
+        addXp(25);
+        setPetState('fire');
+      } else if (treat === 'cookie') {
+        SoundEffects.treatEat(state.settings.soundVolume);
+        addXp(20);
+        setPetState('happy');
+      } else if (treat === 'water') {
+        if (window.mochiApi) {
+          window.mochiApi.completeWater();
+        }
+        SoundEffects.waterDrop(state.settings.soundVolume);
+        addXp(30);
+        setPetState('hydrated');
+      }
+      setState((prev) => {
+        const curGam = prev.settings.gamification || DEFAULT_GAMIFICATION;
+        const updatedGam = { ...curGam, treatsFed: (curGam.treatsFed || 0) + 1 };
+        if (window.mochiApi) {
+          window.mochiApi.saveSettings({ gamification: updatedGam });
+        }
+        return {
+          ...prev,
+          settings: { ...prev.settings, gamification: updatedGam },
+        };
+      });
+    },
+    [addXp, setPetState, state.settings.soundVolume]
+  );
+
+  const recordPetting = useCallback(() => {
+    SoundEffects.purr(state.settings.soundVolume);
+    addXp(5);
+    setState((prev) => {
+      const curGam = prev.settings.gamification || DEFAULT_GAMIFICATION;
+      const updatedGam = { ...curGam, pettingCount: (curGam.pettingCount || 0) + 1 };
+      if (window.mochiApi) {
+        window.mochiApi.saveSettings({ gamification: updatedGam });
+      }
+      return {
+        ...prev,
+        settings: { ...prev.settings, gamification: updatedGam },
+      };
+    });
+  }, [addXp, state.settings.soundVolume]);
 
   // Timer actions
   const startTimer = useCallback(
@@ -282,8 +441,11 @@ export function useMochiStore() {
         await window.mochiApi.saveTasks(updated);
       }
       const justCompleted = updated.find((t) => t.id === id)?.completed;
-      if (justCompleted && state.settings.soundEnabled) {
-        SoundEffects.celebrate(state.settings.soundVolume);
+      if (justCompleted) {
+        addXp(30);
+        if (state.settings.soundEnabled) {
+          SoundEffects.celebrate(state.settings.soundVolume);
+        }
       }
     },
     [state.tasks, state.settings.soundEnabled, state.settings.soundVolume]
@@ -387,5 +549,11 @@ export function useMochiStore() {
     addNote,
     updateNote,
     deleteNote,
+    addXp,
+    feedTreat,
+    recordPetting,
+    gitStatus,
+    lastGitEvent,
+    refreshGitStatus,
   };
 }

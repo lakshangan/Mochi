@@ -88,6 +88,43 @@ export interface AiSettings {
   temperature?: number;
 }
 
+export type SoundscapePreset = 'rain' | 'cafe' | 'forest' | 'binaural' | 'off';
+
+export interface PetGamificationState {
+  xp: number;
+  level: number;
+  title: string;
+  pettingCount: number;
+  treatsFed: number;
+  streakDays: number;
+}
+
+export interface GitCommitEvent {
+  hash: string;
+  shortHash: string;
+  author: string;
+  message: string;
+  timestamp: number;
+}
+
+export interface GitStatusState {
+  isRepo: boolean;
+  repoPath: string;
+  currentBranch: string;
+  commitsToday: number;
+  continuousCodingMinutes: number;
+  longestStreakDays: number;
+  currentStreakDays: number;
+  lastCommit?: GitCommitEvent;
+  fatigueWarningActive: boolean;
+}
+
+export interface GitCompanionEvent {
+  type: 'commit' | 'push' | 'fatigue_warning' | 'streak_update';
+  message: string;
+  data?: any;
+}
+
 export interface AppSettings {
   userName?: string; // personalized user name (e.g. "Alex")
   hasSeenWelcome?: boolean; // whether first-time cinematic welcome was completed
@@ -107,9 +144,14 @@ export interface AppSettings {
   breakReminders: BreakReminderSettings;
   pomodoro: PomodoroSettings;
   ai: AiSettings;
-  theme: 'neon-dark' | 'glass-midnight' | 'deep-space';
+  theme: 'neon-dark' | 'glass-midnight' | 'deep-space' | 'matcha-zen' | 'sunset-glow';
   customOrbMatrix?: number[][]; // 11x11 custom dot matrix face (RAM-efficient, purely offline)
   useCustomOrbMatrix?: boolean;
+  soundscapePreset?: SoundscapePreset;
+  soundscapeVolume?: number;
+  gitTrackingEnabled?: boolean;
+  fatigueAlertMinutes?: number; // default 90
+  gamification?: PetGamificationState;
 }
 
 export interface TaskItem {
@@ -210,6 +252,8 @@ export interface MochiFullState {
   timer: ActiveTimerState;
   activeReminder: ReminderNotificationEvent | null;
   petState: PetAnimationState;
+  gitStatus?: GitStatusState;
+  gamification?: PetGamificationState;
 }
 
 export interface SystemPerformanceMetrics {

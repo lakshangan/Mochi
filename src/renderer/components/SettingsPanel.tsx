@@ -123,6 +123,45 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <Sliders size={16} /> Pet Appearance & Display
         </div>
 
+        {/* Liquid Glass Aesthetic Themes */}
+        <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}>
+          <div className="setting-label-col">
+            <span className="setting-name">Liquid Glass Theme</span>
+            <span className="setting-desc">Tailored color palettes with specular rim illumination</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+            {[
+              { id: 'neon-dark', name: 'Cyber Neon', color: '#0a84ff', border: '#5e5ce6' },
+              { id: 'glass-midnight', name: 'Frosted Midnight', color: '#0071e3', border: '#38bdf8' },
+              { id: 'deep-space', name: 'OLED Obsidian', color: '#e2e8f0', border: '#64748b' },
+              { id: 'matcha-zen', name: 'Matcha Zen', color: '#32d74b', border: '#10b981' },
+              { id: 'sunset-glow', name: 'Sunset Glow', color: '#ff9f0a', border: '#ff453a' },
+            ].map((th) => (
+              <button
+                key={th.id}
+                type="button"
+                onClick={() => onUpdateSettings({ theme: th.id as any })}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  border: (settings.theme || 'neon-dark') === th.id ? `1.5px solid ${th.border}` : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: (settings.theme || 'neon-dark') === th.id ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  fontSize: '12px',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: th.color, boxShadow: `0 0 8px ${th.color}` }} />
+                <span>{th.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="setting-label-col">

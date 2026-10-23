@@ -10,6 +10,7 @@ import { AssistantWindow } from './windows/assistant-window';
 import { AlertWindow } from './windows/alert-window';
 import { PlatformAdapter } from './platform/platform-adapter';
 import { SystemActivityMonitor } from './services/system-activity';
+import { GitCompanionService } from './services/git-companion-service';
 import { IPC_CHANNELS } from '../shared/ipc-contracts';
 import { AppSettings, PetAnimationState, PetPosition, TaskItem, NoteItem, PomodoroPhase, ReminderNotificationEvent } from '../shared/types';
 
@@ -28,6 +29,7 @@ let notificationService: NotificationService;
 let timerService: TimerService;
 let reminderService: ReminderService;
 let activityMonitor: SystemActivityMonitor;
+let gitCompanionService: GitCompanionService;
 let trayService: TrayService;
 let petWindow: PetWindow;
 let assistantWindow: AssistantWindow;
@@ -394,6 +396,16 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.GIT_GET_STATUS, () => {
+    return gitCompanionService ? gitCompanionService.getStatus() : null;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GIT_SIMULATE, (_event, type: 'commit' | 'push' | 'fatigue_warning') => {
+    if (gitCompanionService) {
+      gitCompanionService.simulateEvent(type);
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.SYSTEM_QUIT, () => {
     app.quit();
   });
@@ -404,10 +416,24 @@ app.whenReady().then(() => {
   notificationService = new NotificationService();
   timerService = new TimerService(persistenceService, notificationService);
   reminderService = new ReminderService(persistenceService, notificationService);
+  gitCompanionService = new GitCompanionService();
+
+  gitCompanionService.onEvent((event) => {
+    broadcast(IPC_CHANNELS.GIT_EVENT, event);
+    if (event.type === 'commit' || event.type === 'push') {
+      broadcast(IPC_CHANNELS.PET_SET_STATE, 'celebrating');
+    } else if (event.type === 'fatigue_warning') {
+      broadcast(IPC_CHANNELS.PET_SET_STATE, 'reminding');
+      notificationService.showNotification('90-Minute Coding Streak Alert! 🧘', event.message);
+    }
+  });
 
   activityMonitor = new SystemActivityMonitor((activity) => {
     broadcast(IPC_CHANNELS.SYSTEM_ACTIVITY_CHANGED, activity);
     broadcast(IPC_CHANNELS.PET_SET_STATE, activity.state);
+    if (gitCompanionService) {
+      gitCompanionService.recordCodingActivity(activity);
+    }
   });
   
   // Only start activity monitor if user is on macOS and it's enabled in settings? 
@@ -514,6 +540,7 @@ function setupGlobalGazeTracking(): void {
 }
 
 app.on('before-quit', () => {
+  gitCompanionService?.stop();
   trayService?.destroy();
   if (persistenceService) {
     persistenceService.flushPendingSave();

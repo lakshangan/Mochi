@@ -4,9 +4,26 @@ import { AnimationController } from '../engine/animation-controller';
 import { BehaviorEngine } from '../engine/behavior-engine';
 import { PetAnimationState, SystemActivityEvent, ActiveTimerState } from '../../shared/types';
 import { SoundEffects } from '../../shared/sound-effects';
-import { Power, Timer as TimerIcon, Sparkles } from 'lucide-react';
+import {
+  Power,
+  Timer as TimerIcon,
+  Sparkles,
+  Droplet,
+  Coffee,
+  Cookie,
+  Heart,
+  Eye,
+  Maximize2,
+  Minimize2,
+  Music,
+  Flame,
+  GitBranch,
+} from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { GlowLavaOrb } from './GlowLavaOrb';
+import { ConfettiEffect } from './ConfettiEffect';
+import { EyeReliefGuide } from './EyeReliefGuide';
+import { SoundscapeService } from '../services/soundscape-service';
 import type { OrbState } from '@/registry/lib/orb-state';
 
 const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
@@ -63,6 +80,16 @@ export const OrbPet: React.FC = () => {
     appName?: string;
   } | null>(null);
 
+  // Next-Gen Interactive States
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isDynamicIsland, setIsDynamicIsland] = useState(false);
+  const [showTreats, setShowTreats] = useState(false);
+  const [showEyeRelief, setShowEyeRelief] = useState(false);
+  const [loveMeter, setLoveMeter] = useState(0);
+  const [showLoveWave, setShowLoveWave] = useState(false);
+  const [squashScale, setSquashScale] = useState({ x: 1, y: 1 });
+  const [soundscapePreset, setSoundscapePreset] = useState<string>('off');
+
   const formatTime = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
     const secs = totalSec % 60;
@@ -85,6 +112,84 @@ export const OrbPet: React.FC = () => {
           { title: 'Pure momentum ⚡', subtitle: 'Click to open assistant.' },
         ];
     return tips[Math.floor(Math.random() * tips.length)];
+  };
+
+  const handlePetMouseMove = () => {
+    // Stroking / petting the orb fills the love meter
+    setLoveMeter((prev) => {
+      const next = prev + 4;
+      if (next >= 100) {
+        SoundEffects.purr(0.35);
+        setShowLoveWave(true);
+        setTimeout(() => setShowLoveWave(false), 2400);
+        setReactionMessage({
+          title: 'Mochi loves you! 🥰✨',
+          subtitle: 'So warm & cozy! Love meter 100% full.',
+        });
+        setTimeout(() => setReactionMessage(null), 4000);
+        return 0;
+      }
+      return next;
+    });
+  };
+
+  const handleFeedTreat = (treat: 'espresso' | 'cookie' | 'water') => {
+    if (treat === 'espresso') {
+      SoundEffects.treatEat(0.3);
+      animControllerRef.current?.triggerReaction('fire', 6000);
+      setReactionMessage({
+        title: 'Espresso Surge! ☕🔥',
+        subtitle: 'Turbo coding speed online! Caffeine overdrive.',
+      });
+    } else if (treat === 'cookie') {
+      SoundEffects.treatEat(0.3);
+      animControllerRef.current?.triggerReaction('happy', 5000);
+      setReactionMessage({
+        title: 'Delicious Mochi Cookie! 🍪✨',
+        subtitle: 'Mmm, sweet fuel for deep focus.',
+      });
+    } else if (treat === 'water') {
+      SoundEffects.waterDrop(0.35);
+      animControllerRef.current?.triggerReaction('hydrated', 6000);
+      if (window.mochiApi) {
+        window.mochiApi.completeWater();
+      }
+      setReactionMessage({
+        title: 'Hydrated & Crisp! 💧✨',
+        subtitle: '250ml logged. Body & mind refreshed!',
+      });
+    }
+    setShowTreats(false);
+    setTimeout(() => setReactionMessage(null), 5000);
+  };
+
+  const handleCycleSoundscape = () => {
+    const sequence = ['off', 'rain', 'cafe', 'forest', 'binaural'];
+    const curr = SoundscapeService.getCurrentPreset();
+    const nextIdx = (sequence.indexOf(curr) + 1) % sequence.length;
+    const nextPreset = sequence[nextIdx] as any;
+    SoundscapeService.play(nextPreset);
+    setSoundscapePreset(nextPreset);
+    SoundEffects.chirp(0.2);
+    setReactionMessage({
+      title: nextPreset === 'off' ? 'Soundscapes Paused' : `Soundscape: ${nextPreset.toUpperCase()} 🎵`,
+      subtitle: nextPreset === 'off' ? 'Ambient focus sound muted.' : 'Procedural lo-fi background active.',
+    });
+    setTimeout(() => setReactionMessage(null), 3000);
+  };
+
+  const handleToggleIsland = () => {
+    SoundEffects.whoosh(0.25);
+    setIsDynamicIsland((prev) => !prev);
+  };
+
+  const handleQuickTimerToggle = () => {
+    SoundEffects.chirp(0.25);
+    if (isTimerRunning) {
+      if (window.mochiApi) window.mochiApi.pauseTimer();
+    } else {
+      if (window.mochiApi) window.mochiApi.startPomodoro('focus');
+    }
   };
 
   const tapCountRef = useRef(0);
@@ -205,9 +310,12 @@ export const OrbPet: React.FC = () => {
     const move = new MovementController(containerRef.current, {
       onDragStart: () => {
         behavior.handleDragStart();
+        setSquashScale({ x: 1.14, y: 0.86 });
       },
       onDragEnd: () => {
         behavior.handleDragEnd();
+        setSquashScale({ x: 0.88, y: 1.12 });
+        setTimeout(() => setSquashScale({ x: 1, y: 1 }), 220);
       },
       onGazeMove: (nx, ny) => {
         setGaze({ x: nx, y: ny });
@@ -225,6 +333,7 @@ export const OrbPet: React.FC = () => {
     let unsubReminder: (() => void) | undefined;
     let unsubActivity: (() => void) | undefined;
     let unsubGaze: (() => void) | undefined;
+    let unsubGit: (() => void) | undefined;
 
     let reactionTimeout: NodeJS.Timeout;
     let speakingTimeout: NodeJS.Timeout;
@@ -434,6 +543,30 @@ export const OrbPet: React.FC = () => {
         }
       });
 
+      if (window.mochiApi.onGitEvent) {
+        unsubGit = window.mochiApi.onGitEvent((ev: any) => {
+          if (ev.type === 'commit' || ev.type === 'push') {
+            setShowConfetti(true);
+            SoundEffects.gitCommit(0.35);
+            anim.triggerReaction('celebrating', 5000);
+            setReactionMessage({
+              title: ev.type === 'commit' ? 'Git Commit! 🚀' : 'Code Pushed! 🌟',
+              subtitle: ev.message,
+            });
+            if (reactionTimeout) clearTimeout(reactionTimeout);
+            reactionTimeout = setTimeout(() => setReactionMessage(null), 6500);
+          } else if (ev.type === 'fatigue_warning') {
+            anim.triggerReaction('reminding', 6000);
+            setReactionMessage({
+              title: '90m Straight Coding Alert! 🧘',
+              subtitle: ev.message,
+            });
+            if (reactionTimeout) clearTimeout(reactionTimeout);
+            reactionTimeout = setTimeout(() => setReactionMessage(null), 8500);
+          }
+        });
+      }
+
       return () => {
         unsubAnim();
         unsubIpc?.();
@@ -443,6 +576,7 @@ export const OrbPet: React.FC = () => {
         unsubActivity?.();
         unsubGaze?.();
         unsubSettings?.();
+        unsubGit?.();
         if (reactionTimeout) clearTimeout(reactionTimeout);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         if (typingTimeout) clearTimeout(typingTimeout);
@@ -474,122 +608,245 @@ export const OrbPet: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div
-        className="mochi-pet-stage"
-        style={{
-          width: petSize,
-          height: petSize,
-        }}
-      >
-        {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
+      <ConfettiEffect active={showConfetti} onComplete={() => setShowConfetti(false)} />
+      <EyeReliefGuide isOpen={showEyeRelief} onClose={() => setShowEyeRelief(false)} />
+
+      {/* Dynamic Island Pill Mode */}
+      {isDynamicIsland ? (
         <div
-          className="mochi-bubble-anchor"
-          style={{
-            transform: `translateX(-50%) scale(${bubbleScale})`,
-            transformOrigin: 'bottom center',
-          }}
+          className="mochi-dynamic-island-pill"
+          onClick={handleToggleIsland}
+          title="Dynamic Island Mode (Click to expand into full companion)"
         >
-          {showOnboarding ? (
-            <form
-              className="mochi-onboarding-capsule"
-              onSubmit={handleSaveName}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <span className="onboarding-sparkle">✨</span>
-              <input
-                type="text"
-                className="onboarding-input"
-                placeholder="Your name? (e.g. Alex)"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                autoFocus
-                maxLength={20}
-              />
-              <button type="submit" className="onboarding-submit-btn" title="Save name">
-                ✓
-              </button>
-            </form>
-          ) : (isHovered || reactionMessage) ? (
-            <div
-              className="mochi-speech-bubble"
-              onClick={handlePetAction}
-              onMouseDown={(e) => e.stopPropagation()}
-              title="Click to open Mochi Assistant"
-            >
-              <div className="bubble-status-dot" data-state={currentState} />
-
-              {/* Integrated Live Timer Chip inside capsule */}
-              {isTimerRunning && (
-                <div className="bubble-timer-chip">
-                  <TimerIcon size={11} className="timer-chip-icon" />
-                  <span>{formatTime(activeTimer.remainingSeconds)}</span>
-                  <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
-                </div>
-              )}
-
-              <div className="bubble-body">
-                <span className="bubble-text">
-                  {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
-                </span>
-              </div>
-            </div>
-          ) : isTimerRunning ? (
-            /* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */
-            <div
-              className="mochi-timer-hologram-pill"
-              onClick={handlePetAction}
-              onMouseDown={(e) => e.stopPropagation()}
-              title="Click to open timer controls"
-            >
-              <span className="timer-hologram-dot" />
-              <TimerIcon size={12} className="timer-hologram-icon" />
-              <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
-              <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Living Mascot Canvas Container */}
-        <div
-          ref={containerRef}
-          className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
-          style={{ width: petSize, height: petSize }}
-          title="Mochi Companion (Click to open, right-click to hide into status bar, drag to move)"
-          onContextMenu={(e) => {
-            e.preventDefault();
-            if (window.mochiApi) {
-              window.mochiApi.setPetVisible(false);
-              window.mochiApi.showNotification(
-                'Deep Work Mode Active 🧘',
-                'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
-              );
-            }
-          }}
-        >
-          {orbMode === 'glow-lava' ? (
+          <div className="island-orb-preview">
             <GlowLavaOrb
               state={currentState}
               isSpeaking={isSpeaking}
-              isTyping={isTyping}
-              typingBurst={typingBurst}
-              gaze={gaze}
-              isTimerActive={Boolean(isTimerRunning)}
-              timerProgress={timerProgress}
-              size={petSize}
-              customMatrix={customMatrix}
+              size={26}
             />
-          ) : (
-            <ParticlesOrb
-              state={mapPetStateToOrbState(currentState)}
-              size={Math.round(petSize * 0.98)}
-              speed={1}
-              colorFrom="#f0abfc"
-              colorTo="#818cf8"
-            />
-          )}
+          </div>
+          <div className="island-center-content">
+            {isTimerRunning ? (
+              <div className="island-timer-row">
+                <span className="island-time">{formatTime(activeTimer.remainingSeconds)}</span>
+                <span className="island-chip">{activeTimer.label || 'FOCUS'}</span>
+              </div>
+            ) : (
+              <div className="island-text-row">
+                <span className="island-title">{userName ? `Mochi • ${userName}` : 'Mochi Flow'}</span>
+                <span className="island-desc">Ready to build ✨</span>
+              </div>
+            )}
+          </div>
+          <button
+            className="island-expand-icon-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleIsland();
+            }}
+            title="Expand to Orb"
+          >
+            <Maximize2 size={12} />
+          </button>
         </div>
-      </div>
+      ) : (
+        <div
+          className="mochi-pet-stage"
+          style={{
+            width: petSize,
+            height: petSize,
+          }}
+        >
+          {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
+          <div
+            className="mochi-bubble-anchor"
+            style={{
+              transform: `translateX(-50%) scale(${bubbleScale})`,
+              transformOrigin: 'bottom center',
+            }}
+          >
+            {showOnboarding ? (
+              <form
+                className="mochi-onboarding-capsule"
+                onSubmit={handleSaveName}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span className="onboarding-sparkle">✨</span>
+                <input
+                  type="text"
+                  className="onboarding-input"
+                  placeholder="Your name? (e.g. Alex)"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  autoFocus
+                  maxLength={20}
+                />
+                <button type="submit" className="onboarding-submit-btn" title="Save name">
+                  ✓
+                </button>
+              </form>
+            ) : (isHovered || reactionMessage) ? (
+              <div
+                className="mochi-speech-bubble"
+                onClick={handlePetAction}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Click to open Mochi Assistant"
+              >
+                <div className="bubble-status-dot" data-state={currentState} />
+
+                {/* Integrated Live Timer Chip inside capsule */}
+                {isTimerRunning && (
+                  <div className="bubble-timer-chip">
+                    <TimerIcon size={11} className="timer-chip-icon" />
+                    <span>{formatTime(activeTimer.remainingSeconds)}</span>
+                    <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
+                  </div>
+                )}
+
+                <div className="bubble-body">
+                  <span className="bubble-text">
+                    {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
+                  </span>
+                </div>
+              </div>
+            ) : isTimerRunning ? (
+              /* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */
+              <div
+                className="mochi-timer-hologram-pill"
+                onClick={handlePetAction}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Click to open timer controls"
+              >
+                <span className="timer-hologram-dot" />
+                <TimerIcon size={12} className="timer-hologram-icon" />
+                <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
+                <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Quick-Action Hover HUD Dock */}
+          {isHovered && !showOnboarding && (
+            <div className="mochi-hover-hud" onMouseDown={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleQuickTimerToggle}
+                className="hud-pill-btn"
+                title={isTimerRunning ? 'Pause Timer' : 'Start Focus Pomodoro'}
+              >
+                <TimerIcon size={12} />
+                <span>{isTimerRunning ? 'Pause' : 'Focus'}</span>
+              </button>
+              <button
+                onClick={() => handleFeedTreat('water')}
+                className="hud-pill-btn"
+                title="Quick Log 250ml Water"
+              >
+                <Droplet size={12} />
+                <span>+250ml</span>
+              </button>
+              <button
+                onClick={handleCycleSoundscape}
+                className={`hud-pill-btn ${soundscapePreset !== 'off' ? 'active-glow' : ''}`}
+                title={`Soundscape: ${soundscapePreset.toUpperCase()}`}
+              >
+                <Music size={12} />
+              </button>
+              <button
+                onClick={() => setShowTreats(!showTreats)}
+                className="hud-pill-btn"
+                title="Treats & Food"
+              >
+                <Cookie size={12} />
+              </button>
+              <button
+                onClick={() => setShowEyeRelief(true)}
+                className="hud-pill-btn"
+                title="20-20-20 Eye Exercise"
+              >
+                <Eye size={12} />
+              </button>
+              <button
+                onClick={handleToggleIsland}
+                className="hud-pill-btn"
+                title="Snap to Dynamic Island Pill"
+              >
+                <Minimize2 size={12} />
+              </button>
+            </div>
+          )}
+
+          {/* Treats Drawer */}
+          {showTreats && (
+            <div className="mochi-treats-drawer" onMouseDown={(e) => e.stopPropagation()}>
+              <button onClick={() => handleFeedTreat('espresso')} className="treat-item-btn" title="Espresso Surge (+25 XP)">
+                ☕ <span>Espresso</span>
+              </button>
+              <button onClick={() => handleFeedTreat('cookie')} className="treat-item-btn" title="Sweet Cookie (+20 XP)">
+                🍪 <span>Cookie</span>
+              </button>
+              <button onClick={() => handleFeedTreat('water')} className="treat-item-btn" title="Fresh Water (+30 XP)">
+                💧 <span>Water</span>
+              </button>
+            </div>
+          )}
+
+          {/* Floating Love Heart Wave */}
+          {showLoveWave && (
+            <div className="mochi-love-wave">
+              <span>💖</span>
+              <span>🥰</span>
+              <span>💖</span>
+            </div>
+          )}
+
+          {/* Living Mascot Canvas Container with Spring Jelly Physics */}
+          <div
+            ref={containerRef}
+            className={`mochi-orb-canvas-container ${isHovered || reactionMessage ? 'hovered' : ''}`}
+            style={{
+              width: petSize,
+              height: petSize,
+              transform: `scale(${squashScale.x}, ${squashScale.y}) translate(${gaze.x * 6}px, ${gaze.y * 6}px)`,
+              transition: 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            onMouseMove={handlePetMouseMove}
+            title="Mochi Companion (Click to open, right-click to hide, drag to move)"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              if (window.mochiApi) {
+                window.mochiApi.setPetVisible(false);
+                window.mochiApi.showNotification(
+                  'Deep Work Mode Active 🧘',
+                  'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
+                );
+              }
+            }}
+          >
+            {orbMode === 'glow-lava' ? (
+              <GlowLavaOrb
+                state={currentState}
+                isSpeaking={isSpeaking}
+                isTyping={isTyping}
+                typingBurst={typingBurst}
+                gaze={gaze}
+                isTimerActive={Boolean(isTimerRunning)}
+                timerProgress={timerProgress}
+                size={petSize}
+                customMatrix={customMatrix}
+              />
+            ) : (
+              <ParticlesOrb
+                state={mapPetStateToOrbState(currentState)}
+                size={Math.round(petSize * 0.98)}
+                speed={1}
+                colorFrom="#f0abfc"
+                colorTo="#818cf8"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
