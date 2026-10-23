@@ -75,6 +75,7 @@ export const IPC_CHANNELS = {
   SYSTEM_GET_PLATFORM: 'system:get-platform',
   SYSTEM_GET_METRICS: 'system:get-metrics',
   SYSTEM_QUIT: 'system:quit',
+  SYSTEM_PREPARE_QUIT: 'system:prepare-quit',
 } as const;
 
 export interface ElectronMochiAPI {
@@ -133,6 +134,7 @@ export interface ElectronMochiAPI {
   getPlatform: () => Promise<'darwin' | 'win32' | 'linux'>;
   getSystemMetrics: () => Promise<SystemPerformanceMetrics>;
   quitApp: () => Promise<void>;
+  onPrepareQuit?: (callback: () => void) => () => void;
 
   // Git Companion
   getGitStatus?: () => Promise<GitStatusState>;

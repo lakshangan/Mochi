@@ -407,7 +407,10 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.SYSTEM_QUIT, () => {
-    app.quit();
+    broadcast(IPC_CHANNELS.SYSTEM_PREPARE_QUIT);
+    setTimeout(() => {
+      app.quit();
+    }, 450);
   });
 }
 

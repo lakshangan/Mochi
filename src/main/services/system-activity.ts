@@ -24,23 +24,23 @@ export interface AppClassification {
 }
 
 const DEV_SUBTITLES = [
-  'Crafting clean code.',
-  'Zero bugs found.',
-  '10x dev mode.',
-  'Terminal trembles.',
-  'Turning caffeine to code.',
-  'Push fearlessly.',
-  'Pure flow state.',
+  "You're in the zone ✨",
+  'Loving this code momentum!',
+  'Clean code, one function at a time 🚀',
+  'Deep focus mode online ✨',
+  'Take a deep breath and keep building 🌿',
+  'Zero distractions — you got this!',
+  'Crafting something great today ✨',
 ];
 
 const TYPING_SUBTITLES = [
-  'Fingers flying!',
-  'Fast hands!',
-  'Keyboard on fire!',
-  'Crushing syntax.',
-  'Writing magic.',
-  'In the zone.',
-  'Flow state locked in.',
+  "You're locked in 🎯",
+  'Loving your pace today ✨',
+  'Thoughts turning into reality 💡',
+  'In a great flow state ✨',
+  'Brilliant focus right now 🚀',
+  'Great typing rhythm!',
+  'Steady progress, step by step ✨',
 ];
 
 const APP_DATABASE: Record<string, AppClassification> = {
@@ -1575,106 +1575,127 @@ export class SystemActivityMonitor {
         finalState = 'listening';
         finalTitle = classification.category === 'entertainment' ? classification.title : 'Listening to Music 🎧';
         finalSubtitle = 'Headphones on & vibing to the beat 🎧';
+      } else {
+        const isMochiOrElectron =
+          rawApp.toLowerCase().includes('electron') ||
+          rawApp.toLowerCase().includes('mochi') ||
+          classification.formattedName.toLowerCase() === 'electron';
+
+        if (isMochiOrElectron) {
+        if (isKeyboardTyping || (timeSinceLastInput < 1.4 && this.typingStreak >= 2)) {
+          finalState = 'happy';
+          finalTitle = 'Always here ✨';
+          finalSubtitle = 'Chatting with Mochi ✨';
+        } else if (isMouseMoving && idleSeconds < 1.2) {
+          finalState = 'curious';
+          finalTitle = 'Right beside you 😊';
+          finalSubtitle = 'Ready whenever you need me ✨';
+        } else {
+          finalState = 'idle';
+          finalTitle = 'Peaceful Space 🌿';
+          finalSubtitle = 'Take a deep breath & relax your shoulders 🌿';
+        }
       } else if (isDevApp) {
         // Active in VS Code, Antigravity IDE, Cursor, Xcode, etc.
         if (isKeyboardTyping || (timeSinceLastInput < 1.4 && this.typingStreak >= 2)) {
           finalState = 'coding';
-          finalTitle = `Coding in ${classification.formattedName} </>`;
-          finalSubtitle = `Crafting code in ${classification.formattedName} </>`;
+          finalTitle = 'In the zone ✨';
+          finalSubtitle = 'Loving this code momentum!';
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Navigating code in ${classification.formattedName}`;
+          finalTitle = 'Deep in code 💻';
+          finalSubtitle = 'Architecting clean solutions ✨';
         } else if (idleSeconds < 30) {
           finalState = 'coding';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Active workspace in ${classification.formattedName} </>`;
+          finalTitle = 'Focus Flow 🚀';
+          finalSubtitle = 'Clean code flow locked in.';
         } else {
           finalState = 'idle';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Standing by in ${classification.formattedName}`;
+          finalTitle = 'Breather Time 🌿';
+          finalSubtitle = 'Remember to relax your shoulders & hydrate 💧';
         }
       } else if (classification.category === 'communication') {
         // Messaging & Communication (WhatsApp, Slack, Discord, Telegram, Messages, iMessage)
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
-          finalTitle = `Chatting in ${classification.formattedName} 💬`;
-          finalSubtitle = `Typing up a friendly reply! 💬`;
+          finalTitle = 'Friendly Chat 💬';
+          finalSubtitle = 'Sending thoughtful words ✨';
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Reading messages in ${classification.formattedName} 💬`;
+          finalTitle = 'Staying in touch 💬';
+          finalSubtitle = 'Reading updates and messages.';
         } else if (idleSeconds < 25) {
           finalState = 'happy';
-          finalTitle = classification.title;
-          finalSubtitle = `Catching up on messages in ${classification.formattedName} ✨`;
+          finalTitle = 'Connected ✨';
+          finalSubtitle = 'Keeping in touch with the team.';
         } else {
           finalState = 'idle';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Standing by in ${classification.formattedName}`;
+          finalTitle = 'Standing by ✨';
+          finalSubtitle = 'Right beside you whenever you need me.';
         }
       } else if (classification.category === 'entertainment') {
         // Video & Media (YouTube, Netflix, Twitch, Spotify)
         finalState = 'listening';
         finalTitle = classification.title;
-        finalSubtitle = classification.subtitles[0] || `Enjoying entertainment on ${classification.formattedName} 🎬`;
+        finalSubtitle = 'Good tunes for a good mood 🎵';
       } else if (classification.category === 'design') {
         // Design & Creative (Figma, Canva, Photoshop, Blender)
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
-          finalTitle = `Designing in ${classification.formattedName} 🎨`;
-          finalSubtitle = `Crafting visual elements 🎨`;
+          finalTitle = 'Creative Vision 🎨';
+          finalSubtitle = 'Designing something beautiful ✨';
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Pixel-perfect craft in ${classification.formattedName} ✨`;
+          finalTitle = 'Visual Craft 🎨';
+          finalSubtitle = 'Every detail looking crisp & polished ✨';
         } else if (idleSeconds < 25) {
           finalState = 'curious';
-          finalTitle = classification.title;
-          finalSubtitle = `Creative flow in ${classification.formattedName} 🎨`;
+          finalTitle = 'Design Flow ✨';
+          finalSubtitle = 'Bringing creative ideas to life.';
         } else {
           finalState = 'idle';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Standing by in ${classification.formattedName}`;
+          finalTitle = 'Admiring the Craft 🎨';
+          finalSubtitle = 'Stepping back to admire the craft ✨';
         }
       } else if (classification.category === 'productivity') {
         // Productivity (Notion, Google Docs, Sheets, Word, Excel, Notes)
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
-          finalTitle = `Writing in ${classification.formattedName} 📝`;
-          finalSubtitle = `Documenting thoughts & ideas 📝`;
+          finalTitle = 'Capturing Thoughts 📝';
+          finalSubtitle = 'Organizing ideas with clarity ✨';
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'focused';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Organizing in ${classification.formattedName} ⚡`;
+          finalTitle = 'Organizing Flow ✨';
+          finalSubtitle = 'Setting everything in good order.';
         } else if (idleSeconds < 25) {
           finalState = classification.state;
-          finalTitle = classification.title;
-          finalSubtitle = `Focus session in ${classification.formattedName} ⚡`;
+          finalTitle = 'Productive Focus 🎯';
+          finalSubtitle = 'Making solid progress on your goals ✨';
         } else {
           finalState = 'idle';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Standing by in ${classification.formattedName}`;
+          finalTitle = 'Mindful Pause 🌿';
+          finalSubtitle = 'Clear mind, clear workspace.';
         }
       } else {
         // General Applications & Web
         if (isKeyboardTyping || (timeSinceLastInput < 1.2 && this.typingStreak >= 2)) {
           finalState = 'typing';
-          finalTitle = `Typing in ${classification.formattedName}`;
-          finalSubtitle = `Active typing in ${classification.formattedName}`;
+          finalTitle = 'Active & Focused ✨';
+          finalSubtitle = 'Thoughts turning into action ✨';
         } else if (isMouseMoving && idleSeconds < 1.2) {
           finalState = 'curious';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Exploring in ${classification.formattedName}`;
+          finalTitle = 'Exploring 💡';
+          finalSubtitle = 'Discovering new insights & ideas.';
         } else if (idleSeconds < 25) {
           finalState = classification.state;
-          finalTitle = classification.title;
-          finalSubtitle = `Active in ${classification.formattedName}`;
+          finalTitle = 'Focusing ✨';
+          finalSubtitle = 'Floating right beside you.';
         } else {
           finalState = 'idle';
-          finalTitle = classification.formattedName;
-          finalSubtitle = `Standing by in ${classification.formattedName}`;
+          finalTitle = 'Peaceful Space 🌿';
+          finalSubtitle = 'Take a gentle breath whenever you need.';
         }
+      }
       }
 
       const appChanged = rawApp.toLowerCase() !== this.lastAppName.toLowerCase();

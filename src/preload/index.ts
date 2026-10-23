@@ -185,6 +185,13 @@ const mochiApi: ElectronMochiAPI = {
   quitApp: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_QUIT);
   },
+  onPrepareQuit: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on(IPC_CHANNELS.SYSTEM_PREPARE_QUIT, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.SYSTEM_PREPARE_QUIT, handler);
+    };
+  },
 
   // Git Companion
   getGitStatus: () => {

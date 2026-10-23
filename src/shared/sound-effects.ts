@@ -241,6 +241,52 @@ export const SoundEffects = {
     osc.stop(now + 0.16);
   },
 
+  appleChime(volume = 0.3) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // Pristine Apple-style glassy harmonic chime arpeggio: C#5 -> F#5 -> A#5 -> C#6
+    const chord = [554.37, 739.99, 932.33, 1108.73];
+    chord.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.05);
+      gain.gain.linearRampToValueAtTime(volume * 0.16, now + idx * 0.05 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + idx * 0.05 + 0.42);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.05);
+      osc.stop(now + idx * 0.05 + 0.45);
+    });
+  },
+
+  appleSleep(volume = 0.25) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // Gentle descending harmonic lullaby for graceful quit: F#5 -> D#5 -> B4
+    const notes = [739.99, 622.25, 493.88];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.09);
+      gain.gain.linearRampToValueAtTime(volume * 0.14, now + idx * 0.09 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + idx * 0.09 + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.09);
+      osc.stop(now + idx * 0.09 + 0.4);
+    });
+  },
+
   codeFlow(_volume = 0.2) {
     // Kept silent during typing to avoid audio pollution
   },

@@ -118,7 +118,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 8px;
+  padding-bottom: 14px;
   background: transparent;
   position: relative;
   overflow: visible;
@@ -131,12 +131,13 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Floating anchor positioned snugly right above the orb */
 .mochi-bubble-anchor {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 5px);
   left: 50%;
   display: flex;
   flex-direction: column;
@@ -2314,29 +2315,34 @@ input:checked + .slider:before {
    NEXT-GEN UPGRADE: APPLE DYNAMIC ISLAND PILL MODE
    ======================================================== */
 .mochi-dynamic-island-pill {
-  position: absolute;
-  bottom: 12px;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 14px 5px 6px;
+  padding: 5px 14px 5px 7px;
   height: 44px;
-  min-width: 200px;
-  background: rgba(18, 18, 22, 0.88);
+  min-width: 220px;
+  max-width: 290px;
+  background: rgba(14, 15, 20, 0.92);
   backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 9999px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 15px var(--border-glow);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.65), 
+    0 0 16px rgba(10, 132, 255, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
   cursor: pointer;
   z-index: 999;
   animation: islandPillEntrance 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 2px;
 }
 
 .mochi-dynamic-island-pill:hover {
   transform: translateY(-2px) scale(1.02);
   border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55), 0 0 22px var(--cyan-glow);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.75), 0 0 22px rgba(10, 132, 255, 0.45);
 }
 
 @keyframes islandPillEntrance {
@@ -2345,12 +2351,109 @@ input:checked + .slider:before {
 }
 
 .island-orb-preview {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Island Fluid Orb (High-DPI Apple Dynamic Island Sphere) */
+.island-fluid-orb {
+  position: relative;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: visible;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.island-fluid-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #38bdf8 0%, #0071e3 55%, #051937 100%);
+  box-shadow: 
+    0 0 10px rgba(10, 132, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  animation: islandOrbBreathe 3s ease-in-out infinite alternate;
+}
+
+.island-fluid-orb[data-state='coding'] .island-fluid-core,
+.island-fluid-orb[data-state='focused'] .island-fluid-core,
+.island-fluid-orb[data-state='fire'] .island-fluid-core {
+  background: radial-gradient(circle at 35% 30%, #22d3ee 0%, #0284c7 55%, #082f49 100%);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.island-fluid-orb[data-state='happy'] .island-fluid-core,
+.island-fluid-orb[data-state='celebrating'] .island-fluid-core {
+  background: radial-gradient(circle at 35% 30%, #fde047 0%, #f59e0b 55%, #78350f 100%);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.island-fluid-orb[data-state='listening'] .island-fluid-core {
+  background: radial-gradient(circle at 35% 30%, #f472b6 0%, #a855f7 55%, #3b0764 100%);
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.island-fluid-orb[data-state='sleeping'] .island-fluid-core {
+  background: radial-gradient(circle at 35% 30%, #818cf8 0%, #4338ca 60%, #1e1b4b 100%);
+  box-shadow: 0 0 8px rgba(129, 140, 248, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  opacity: 0.85;
+}
+
+.island-specular-glass {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  right: 3px;
+  height: 42%;
+  border-radius: 50% / 80% 80% 20% 20%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.08) 80%, transparent 100%);
+  pointer-events: none;
+}
+
+.island-face-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.island-vector-face {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.85));
+}
+
+.island-eye-pill {
+  transition: height 0.12s ease, y 0.12s ease;
+}
+
+.island-speaking-halo {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 247, 255, 0.6);
+  animation: speakingRipple 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes speakingRipple {
+  0% { transform: scale(0.9); opacity: 0.85; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+@keyframes islandOrbBreathe {
+  0% { transform: scale(0.96); filter: brightness(0.95); }
+  100% { transform: scale(1.03); filter: brightness(1.1); }
 }
 
 .island-center-content {
@@ -2358,6 +2461,7 @@ input:checked + .slider:before {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 }
 
 .island-timer-row {
@@ -2388,32 +2492,41 @@ input:checked + .slider:before {
 .island-text-row {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .island-title {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .island-desc {
   font-size: 10px;
-  color: var(--text-dim);
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .island-expand-icon-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .island-expand-icon-btn:hover {
@@ -2422,103 +2535,159 @@ input:checked + .slider:before {
 }
 
 /* ========================================================
-   QUICK-ACTION HOVER HUD (MINI DOCK)
+   APPLE-STYLE ENTRANCE & QUIT ANIMATIONS
    ======================================================== */
-.mochi-hover-hud {
+.mochi-pet-stage.apple-entrance,
+.mochi-dynamic-island-pill.apple-entrance {
+  animation: appleMochiEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes appleMochiEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.22) translateY(24px);
+    filter: blur(14px) brightness(1.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.07) translateY(-3px);
+    filter: blur(0px) brightness(1.15);
+  }
+  82% {
+    transform: scale(0.97) translateY(1px);
+    filter: brightness(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px) brightness(1);
+  }
+}
+
+.apple-start-bloom-ring {
   position: absolute;
-  bottom: 0px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(20, 20, 26, 0.78);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  z-index: 1000;
-  animation: hudSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 247, 255, 0.7);
+  box-shadow: 0 0 24px rgba(0, 247, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  animation: appleBloomExpand 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 50;
 }
 
-@keyframes hudSlideUp {
-  0% { transform: translateX(-50%) translateY(8px); opacity: 0; }
-  100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+@keyframes appleBloomExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0;
+  }
 }
 
-.hud-pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  color: var(--text-main);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+.mochi-pet-stage.apple-exit,
+.mochi-dynamic-island-pill.apple-exit {
+  animation: appleMochiExit 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
-.hud-pill-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.hud-pill-btn.active-glow {
-  background: rgba(10, 132, 255, 0.25);
-  border-color: var(--cyan-glow);
-  color: var(--cyan-glow);
-  box-shadow: 0 0 10px rgba(10, 132, 255, 0.3);
+@keyframes appleMochiExit {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px) brightness(1);
+  }
+  28% {
+    transform: scale(1.06) translateY(-4px);
+    filter: brightness(1.25) drop-shadow(0 0 18px rgba(0, 247, 255, 0.6));
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.08) translateY(16px);
+    filter: blur(14px) brightness(0.5);
+  }
 }
 
 /* ========================================================
-   TREATS DRAWER & PETTING LOVE WAVES
+   APPLE-STYLE GLASS CONTEXT MENU (RIGHT CLICK)
    ======================================================== */
-.mochi-treats-drawer {
+.mochi-apple-context-menu {
   position: absolute;
-  bottom: 42px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  background: rgba(25, 25, 32, 0.9);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 9999px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-  z-index: 1001;
-  animation: drawerPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  min-width: 170px;
+  background: rgba(22, 23, 29, 0.92);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.7),
+    0 0 16px rgba(10, 132, 255, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  z-index: 2000;
+  animation: contextMenuPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  user-select: none;
 }
 
-@keyframes drawerPop {
-  0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
-  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+@keyframes contextMenuPop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.92) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
 }
 
-.treat-item-btn {
-  display: inline-flex;
+.context-menu-item {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  color: #fff;
-  font-size: 11px;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
 }
 
-.treat-item-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  transform: scale(1.08);
+.context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: translateX(1px);
+}
+
+.context-menu-item.danger {
+  color: #ff6b6b;
+}
+
+.context-menu-item.danger:hover {
+  background: rgba(255, 59, 48, 0.2);
+  color: #ff453a;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 3px 2px;
 }
 
 .mochi-love-wave {

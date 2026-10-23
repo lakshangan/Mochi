@@ -13,6 +13,7 @@ import {
   Cookie,
   Heart,
   Eye,
+  EyeOff,
   Maximize2,
   Minimize2,
   Music,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { GlowLavaOrb } from './GlowLavaOrb';
+import { IslandFluidOrb } from './IslandFluidOrb';
 import { ConfettiEffect } from './ConfettiEffect';
 import { EyeReliefGuide } from './EyeReliefGuide';
 import { SoundscapeService } from '../services/soundscape-service';
@@ -80,15 +82,25 @@ export const OrbPet: React.FC = () => {
     appName?: string;
   } | null>(null);
 
-  // Next-Gen Interactive States
+  // Next-Gen Interactive & Apple Motion States
   const [showConfetti, setShowConfetti] = useState(false);
   const [isDynamicIsland, setIsDynamicIsland] = useState(false);
-  const [showTreats, setShowTreats] = useState(false);
   const [showEyeRelief, setShowEyeRelief] = useState(false);
   const [loveMeter, setLoveMeter] = useState(0);
   const [showLoveWave, setShowLoveWave] = useState(false);
   const [squashScale, setSquashScale] = useState({ x: 1, y: 1 });
-  const [soundscapePreset, setSoundscapePreset] = useState<string>('off');
+  const [isEntering, setIsEntering] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  // Apple-style entrance animation and chime on startup
+  useEffect(() => {
+    SoundEffects.appleChime(0.3);
+    const enterTimer = setTimeout(() => {
+      setIsEntering(false);
+    }, 650);
+    return () => clearTimeout(enterTimer);
+  }, []);
 
   const formatTime = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
@@ -99,17 +111,18 @@ export const OrbPet: React.FC = () => {
   const getDynamicGreeting = (name = userName) => {
     const tips = name
       ? [
-          { title: `Hey ${name}! What's up? ✨`, subtitle: 'Floating right beside you.' },
-          { title: `Ready to build, ${name}? 🚀`, subtitle: 'System optimal & ready.' },
-          { title: `Flow state on deck, ${name}!`, subtitle: 'Zero distractions.' },
-          { title: `Stay hydrated, ${name}! 💧`, subtitle: 'Keep that energy high.' },
-          { title: `Pure momentum, ${name}! ⚡`, subtitle: 'Crushing goals today.' },
+          { title: `Hey ${name}! How are you feeling? ✨`, subtitle: 'Floating right beside you.' },
+          { title: `You're doing great, ${name}! 🚀`, subtitle: 'Take things one step at a time.' },
+          { title: `Loving this momentum, ${name}! ✨`, subtitle: 'Zero distractions today.' },
+          { title: `Stay hydrated, ${name}! 💧`, subtitle: 'A quick sip of water keeps energy high.' },
+          { title: `Take a deep breath, ${name} 🌿`, subtitle: 'Relax your shoulders and breathe.' },
+          { title: `I'm right here with you, ${name} 😊`, subtitle: 'Click me anytime to open assistant.' },
         ]
       : [
-          { title: 'Ready to build 🚀', subtitle: 'System optimal & ready.' },
-          { title: 'Flow state on deck ✨', subtitle: 'Zero distractions.' },
-          { title: 'Stay hydrated 💧', subtitle: 'Grab some water.' },
-          { title: 'Pure momentum ⚡', subtitle: 'Click to open assistant.' },
+          { title: 'Hey there! Ready to build ✨', subtitle: 'Floating right beside you.' },
+          { title: 'Flow state on deck 🚀', subtitle: 'Take things one step at a time.' },
+          { title: 'Stay refreshed & hydrated 💧', subtitle: 'Grab a quick sip of water.' },
+          { title: 'Take a deep breath 🌿', subtitle: 'Relax your shoulders and breathe.' },
         ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -117,7 +130,7 @@ export const OrbPet: React.FC = () => {
   const handlePetMouseMove = () => {
     // Stroking / petting the orb fills the love meter
     setLoveMeter((prev) => {
-      const next = prev + 4;
+      const next = prev + 5;
       if (next >= 100) {
         SoundEffects.purr(0.35);
         setShowLoveWave(true);
@@ -133,63 +146,9 @@ export const OrbPet: React.FC = () => {
     });
   };
 
-  const handleFeedTreat = (treat: 'espresso' | 'cookie' | 'water') => {
-    if (treat === 'espresso') {
-      SoundEffects.treatEat(0.3);
-      animControllerRef.current?.triggerReaction('fire', 6000);
-      setReactionMessage({
-        title: 'Espresso Surge! ☕🔥',
-        subtitle: 'Turbo coding speed online! Caffeine overdrive.',
-      });
-    } else if (treat === 'cookie') {
-      SoundEffects.treatEat(0.3);
-      animControllerRef.current?.triggerReaction('happy', 5000);
-      setReactionMessage({
-        title: 'Delicious Mochi Cookie! 🍪✨',
-        subtitle: 'Mmm, sweet fuel for deep focus.',
-      });
-    } else if (treat === 'water') {
-      SoundEffects.waterDrop(0.35);
-      animControllerRef.current?.triggerReaction('hydrated', 6000);
-      if (window.mochiApi) {
-        window.mochiApi.completeWater();
-      }
-      setReactionMessage({
-        title: 'Hydrated & Crisp! 💧✨',
-        subtitle: '250ml logged. Body & mind refreshed!',
-      });
-    }
-    setShowTreats(false);
-    setTimeout(() => setReactionMessage(null), 5000);
-  };
-
-  const handleCycleSoundscape = () => {
-    const sequence = ['off', 'rain', 'cafe', 'forest', 'binaural'];
-    const curr = SoundscapeService.getCurrentPreset();
-    const nextIdx = (sequence.indexOf(curr) + 1) % sequence.length;
-    const nextPreset = sequence[nextIdx] as any;
-    SoundscapeService.play(nextPreset);
-    setSoundscapePreset(nextPreset);
-    SoundEffects.chirp(0.2);
-    setReactionMessage({
-      title: nextPreset === 'off' ? 'Soundscapes Paused' : `Soundscape: ${nextPreset.toUpperCase()} 🎵`,
-      subtitle: nextPreset === 'off' ? 'Ambient focus sound muted.' : 'Procedural lo-fi background active.',
-    });
-    setTimeout(() => setReactionMessage(null), 3000);
-  };
-
   const handleToggleIsland = () => {
     SoundEffects.whoosh(0.25);
     setIsDynamicIsland((prev) => !prev);
-  };
-
-  const handleQuickTimerToggle = () => {
-    SoundEffects.chirp(0.25);
-    if (isTimerRunning) {
-      if (window.mochiApi) window.mochiApi.pauseTimer();
-    } else {
-      if (window.mochiApi) window.mochiApi.startPomodoro('focus');
-    }
   };
 
   const tapCountRef = useRef(0);
@@ -199,7 +158,6 @@ export const OrbPet: React.FC = () => {
     setIsHovered(true);
     setGreeting(getDynamicGreeting(userName));
     animControllerRef.current?.triggerReaction('happy', 2500);
-    // Silent on hover so simply moving mouse does not cause audio interruption
   };
 
   const handleMouseLeave = () => {
@@ -221,11 +179,31 @@ export const OrbPet: React.FC = () => {
     animControllerRef.current?.triggerReaction('celebrating', 4000);
     setReactionMessage({
       title: 'Awesome to meet you! ✨',
-      subtitle: `Hey ${trimmed}! What's up? I'm right here with you.`,
+      subtitle: `Hey ${trimmed}! I'm right here beside you.`,
     });
     setTimeout(() => {
       setReactionMessage(null);
     }, 6000);
+  };
+
+  const handleGracefulQuit = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (isExiting) return;
+    setIsExiting(true);
+    animControllerRef.current?.triggerReaction('sleeping', 5000);
+    SoundEffects.appleSleep(0.28);
+    const name = userNameRef.current;
+    setReactionMessage({
+      title: 'Rest well! 🌙',
+      subtitle: name ? `See you soon, ${name}! ✨` : 'See you soon! ✨',
+    });
+    setTimeout(() => {
+      if (window.mochiApi) {
+        window.mochiApi.quitApp();
+      } else {
+        window.close();
+      }
+    }, 420);
   };
 
   const handlePetAction = () => {
@@ -245,29 +223,17 @@ export const OrbPet: React.FC = () => {
         if (window.mochiApi) {
           window.mochiApi.toggleAssistant();
         }
-      }, 280);
+      }, 240);
     } else if (tapCountRef.current === 2) {
-      // 2 Taps: Wait briefly to see if user triple-taps
-      tapTimerRef.current = setTimeout(() => {
-        tapCountRef.current = 0;
-        SoundEffects.bonk(0.28);
-        animControllerRef.current?.triggerReaction('beaten', 6500);
-        if (window.mochiApi) {
-          window.mochiApi.triggerPetReaction('beaten');
-        }
-        setReactionMessage({
-          title: 'Ouch! >_<',
-          subtitle: 'Why tap so hard? Mochi feels dizzy & bruised! 🤕',
-        });
-        setTimeout(() => {
-          setReactionMessage(null);
-        }, 6500);
-      }, 260);
-    } else if (tapCountRef.current >= 3) {
-      // 3 Taps: Cool cyber party / sunglasses / hyper-drive!
+      // 2 Taps (Double-tap): Smoothly toggle between Mascot Orb and Dynamic Island Pill!
       tapCountRef.current = 0;
-      SoundEffects.party(0.35);
-      animControllerRef.current?.triggerReaction('party', 7500);
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      handleToggleIsland();
+    } else if (tapCountRef.current >= 3) {
+      // 3 Taps: Cool cyber party / sunglasses mode!
+      tapCountRef.current = 0;
+      SoundEffects.celebrate(0.35);
+      animControllerRef.current?.triggerReaction('party', 7000);
       if (window.mochiApi) {
         window.mochiApi.triggerPetReaction('party');
       }
@@ -277,16 +243,7 @@ export const OrbPet: React.FC = () => {
       });
       setTimeout(() => {
         setReactionMessage(null);
-      }, 7500);
-    }
-  };
-
-  const handleQuit = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (window.mochiApi) {
-      window.mochiApi.quitApp();
-    } else {
-      window.close();
+      }, 7000);
     }
   };
 
@@ -567,6 +524,13 @@ export const OrbPet: React.FC = () => {
         });
       }
 
+      let unsubPrepareQuit: (() => void) | undefined;
+      if (window.mochiApi?.onPrepareQuit) {
+        unsubPrepareQuit = window.mochiApi.onPrepareQuit(() => {
+          handleGracefulQuit();
+        });
+      }
+
       return () => {
         unsubAnim();
         unsubIpc?.();
@@ -577,6 +541,7 @@ export const OrbPet: React.FC = () => {
         unsubGaze?.();
         unsubSettings?.();
         unsubGit?.();
+        unsubPrepareQuit?.();
         if (reactionTimeout) clearTimeout(reactionTimeout);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         if (typingTimeout) clearTimeout(typingTimeout);
@@ -607,6 +572,9 @@ export const OrbPet: React.FC = () => {
       className="mochi-pet-window"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={() => {
+        if (contextMenuPos) setContextMenuPos(null);
+      }}
     >
       <ConfettiEffect active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <EyeReliefGuide isOpen={showEyeRelief} onClose={() => setShowEyeRelief(false)} />
@@ -614,15 +582,19 @@ export const OrbPet: React.FC = () => {
       {/* Dynamic Island Pill Mode */}
       {isDynamicIsland ? (
         <div
-          className="mochi-dynamic-island-pill"
-          onClick={handleToggleIsland}
-          title="Dynamic Island Mode (Click to expand into full companion)"
+          className={`mochi-dynamic-island-pill ${isEntering ? 'apple-entrance' : ''} ${isExiting ? 'apple-exit' : ''}`}
+          onClick={handlePetAction}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextMenuPos({ x: e.clientX, y: e.clientY });
+          }}
+          title="Dynamic Island Mode (Click to open, double-click to expand)"
         >
           <div className="island-orb-preview">
-            <GlowLavaOrb
+            <IslandFluidOrb
               state={currentState}
               isSpeaking={isSpeaking}
-              size={26}
+              size={28}
             />
           </div>
           <div className="island-center-content">
@@ -634,7 +606,9 @@ export const OrbPet: React.FC = () => {
             ) : (
               <div className="island-text-row">
                 <span className="island-title">{userName ? `Mochi • ${userName}` : 'Mochi Flow'}</span>
-                <span className="island-desc">Ready to build ✨</span>
+                <span className="island-desc">
+                  {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : 'Ready to build ✨'}
+                </span>
               </div>
             )}
           </div>
@@ -644,19 +618,26 @@ export const OrbPet: React.FC = () => {
               e.stopPropagation();
               handleToggleIsland();
             }}
-            title="Expand to Orb"
+            title="Expand to Mascot Orb"
           >
-            <Maximize2 size={12} />
+            <Maximize2 size={13} />
           </button>
         </div>
       ) : (
         <div
-          className="mochi-pet-stage"
+          className={`mochi-pet-stage ${isEntering ? 'apple-entrance' : ''} ${isExiting ? 'apple-exit' : ''}`}
           style={{
             width: petSize,
             height: petSize,
           }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextMenuPos({ x: e.clientX, y: e.clientY });
+          }}
         >
+          {/* Apple Startup Bloom Ring */}
+          {isEntering && <div className="apple-start-bloom-ring" />}
+
           {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
           <div
             className="mochi-bubble-anchor"
@@ -726,72 +707,7 @@ export const OrbPet: React.FC = () => {
             ) : null}
           </div>
 
-          {/* Quick-Action Hover HUD Dock */}
-          {isHovered && !showOnboarding && (
-            <div className="mochi-hover-hud" onMouseDown={(e) => e.stopPropagation()}>
-              <button
-                onClick={handleQuickTimerToggle}
-                className="hud-pill-btn"
-                title={isTimerRunning ? 'Pause Timer' : 'Start Focus Pomodoro'}
-              >
-                <TimerIcon size={12} />
-                <span>{isTimerRunning ? 'Pause' : 'Focus'}</span>
-              </button>
-              <button
-                onClick={() => handleFeedTreat('water')}
-                className="hud-pill-btn"
-                title="Quick Log 250ml Water"
-              >
-                <Droplet size={12} />
-                <span>+250ml</span>
-              </button>
-              <button
-                onClick={handleCycleSoundscape}
-                className={`hud-pill-btn ${soundscapePreset !== 'off' ? 'active-glow' : ''}`}
-                title={`Soundscape: ${soundscapePreset.toUpperCase()}`}
-              >
-                <Music size={12} />
-              </button>
-              <button
-                onClick={() => setShowTreats(!showTreats)}
-                className="hud-pill-btn"
-                title="Treats & Food"
-              >
-                <Cookie size={12} />
-              </button>
-              <button
-                onClick={() => setShowEyeRelief(true)}
-                className="hud-pill-btn"
-                title="20-20-20 Eye Exercise"
-              >
-                <Eye size={12} />
-              </button>
-              <button
-                onClick={handleToggleIsland}
-                className="hud-pill-btn"
-                title="Snap to Dynamic Island Pill"
-              >
-                <Minimize2 size={12} />
-              </button>
-            </div>
-          )}
-
-          {/* Treats Drawer */}
-          {showTreats && (
-            <div className="mochi-treats-drawer" onMouseDown={(e) => e.stopPropagation()}>
-              <button onClick={() => handleFeedTreat('espresso')} className="treat-item-btn" title="Espresso Surge (+25 XP)">
-                ☕ <span>Espresso</span>
-              </button>
-              <button onClick={() => handleFeedTreat('cookie')} className="treat-item-btn" title="Sweet Cookie (+20 XP)">
-                🍪 <span>Cookie</span>
-              </button>
-              <button onClick={() => handleFeedTreat('water')} className="treat-item-btn" title="Fresh Water (+30 XP)">
-                💧 <span>Water</span>
-              </button>
-            </div>
-          )}
-
-          {/* Floating Love Heart Wave */}
+          {/* Floating Love Heart Wave from petting */}
           {showLoveWave && (
             <div className="mochi-love-wave">
               <span>💖</span>
@@ -811,17 +727,7 @@ export const OrbPet: React.FC = () => {
               transition: 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
             onMouseMove={handlePetMouseMove}
-            title="Mochi Companion (Click to open, right-click to hide, drag to move)"
-            onContextMenu={(e) => {
-              e.preventDefault();
-              if (window.mochiApi) {
-                window.mochiApi.setPetVisible(false);
-                window.mochiApi.showNotification(
-                  'Deep Work Mode Active 🧘',
-                  'Mochi is hidden for full-screen focus. Click the Mochi icon in your status bar at top right to restore anytime!'
-                );
-              }
-            }}
+            title="Mochi Companion (Click to open, double-click for pill mode, right-click for menu, drag to move)"
           >
             {orbMode === 'glow-lava' ? (
               <GlowLavaOrb
@@ -845,6 +751,63 @@ export const OrbPet: React.FC = () => {
               />
             )}
           </div>
+        </div>
+      )}
+
+      {/* Apple-Style Glass Context Menu on Right-Click */}
+      {contextMenuPos && (
+        <div
+          className="mochi-apple-context-menu"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              setContextMenuPos(null);
+              window.mochiApi?.toggleAssistant();
+            }}
+          >
+            <Sparkles size={13} />
+            <span>Open Assistant</span>
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              setContextMenuPos(null);
+              handleToggleIsland();
+            }}
+          >
+            {isDynamicIsland ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
+            <span>{isDynamicIsland ? 'Expand to Mascot' : 'Snap to Pill Mode'}</span>
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              setContextMenuPos(null);
+              if (window.mochiApi) {
+                window.mochiApi.setPetVisible(false);
+                window.mochiApi.showNotification(
+                  'Deep Work Mode Active 🧘',
+                  'Mochi is resting. Click the Mochi icon in your menu bar to wake anytime!'
+                );
+              }
+            }}
+          >
+            <EyeOff size={13} />
+            <span>Rest Mochi (Hide)</span>
+          </button>
+          <div className="context-menu-divider" />
+          <button
+            className="context-menu-item danger"
+            onClick={() => {
+              setContextMenuPos(null);
+              handleGracefulQuit();
+            }}
+          >
+            <Power size={13} />
+            <span>Turn Off Mochi</span>
+          </button>
         </div>
       )}
     </div>

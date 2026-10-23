@@ -206,7 +206,10 @@ export class TrayService {
       {
         label: 'Turn Off Mochi (Quit)',
         click: () => {
-          app.quit();
+          this.broadcast(IPC_CHANNELS.SYSTEM_PREPARE_QUIT);
+          setTimeout(() => {
+            app.quit();
+          }, 450);
         },
       },
     ];
