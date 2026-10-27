@@ -1546,8 +1546,8 @@ export class SystemActivityMonitor {
           appName: classification.formattedName,
           category: classification.category,
           state: 'waking',
-          title: 'Welcome Back',
-          subtitle: `Ready to flow in ${classification.formattedName}.`,
+          title: 'Waking up the assistant... 💤',
+          subtitle: 'Waking up the assistant... 💤',
           timestamp: now,
           isTyping: false,
         };

@@ -68,12 +68,12 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
   };
 
   const QUICK_PROMPTS = [
-    'Start a 25-minute timer',
-    'Remind me to drink water in 30 minutes',
-    'Add task: Review tomorrow schedule',
-    'Start Pomodoro focus session',
-    'Make Mochi happy',
-    'Tell me a productivity tip',
+    'How are you feeling today? ✨',
+    'Start a 25-minute focus session ⏱️',
+    'Remind me to drink water in 30 minutes 💧',
+    'I feel a bit overwhelmed right now 🌿',
+    'Tell me a productivity tip 💡',
+    'Make me laugh with a joke 😄',
   ];
 
   const chatOrbState = isTyping

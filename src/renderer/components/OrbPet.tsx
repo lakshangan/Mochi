@@ -111,18 +111,22 @@ export const OrbPet: React.FC = () => {
   const getDynamicGreeting = (name = userName) => {
     const tips = name
       ? [
-          { title: `Hey ${name}! How are you feeling? ✨`, subtitle: 'Floating right beside you.' },
-          { title: `You're doing great, ${name}! 🚀`, subtitle: 'Take things one step at a time.' },
+          { title: `Hey ${name}! How are you feeling today? ✨`, subtitle: 'Floating right beside you.' },
+          { title: `Ready to get in the zone, ${name}? 🚀`, subtitle: 'Take things one step at a time.' },
           { title: `Loving this momentum, ${name}! ✨`, subtitle: 'Zero distractions today.' },
           { title: `Stay hydrated, ${name}! 💧`, subtitle: 'A quick sip of water keeps energy high.' },
           { title: `Take a deep breath, ${name} 🌿`, subtitle: 'Relax your shoulders and breathe.' },
           { title: `I'm right here with you, ${name} 😊`, subtitle: 'Click me anytime to open assistant.' },
+          { title: `Deep work mode on deck, ${name} ⚡`, subtitle: 'Let’s build something great.' },
+          { title: `Remember to blink & stretch, ${name} 🍃`, subtitle: 'Resting is part of high performance.' },
         ]
       : [
-          { title: 'Hey there! Ready to build ✨', subtitle: 'Floating right beside you.' },
+          { title: 'Hey there! How is your focus today? ✨', subtitle: 'Floating right beside you.' },
           { title: 'Flow state on deck 🚀', subtitle: 'Take things one step at a time.' },
           { title: 'Stay refreshed & hydrated 💧', subtitle: 'Grab a quick sip of water.' },
           { title: 'Take a deep breath 🌿', subtitle: 'Relax your shoulders and breathe.' },
+          { title: 'Ready to build something awesome? ✨', subtitle: 'Click me anytime to open assistant.' },
+          { title: 'Posture check! Relax your shoulders 🍃', subtitle: 'Mindful rest keeps energy high.' },
         ];
     return tips[Math.floor(Math.random() * tips.length)];
   };
@@ -220,9 +224,18 @@ export const OrbPet: React.FC = () => {
         tapCountRef.current = 0;
         behaviorEngineRef.current?.handlePetClick();
         SoundEffects.chirp(0.25);
+        // Show the exact wake up message and sleep/wake eyes from the photo!
+        animControllerRef.current?.triggerReaction('sleeping', 3200);
+        setReactionMessage({
+          title: 'Waking up the assistant... 💤',
+          subtitle: 'Waking up the assistant... 💤',
+        });
         if (window.mochiApi) {
           window.mochiApi.toggleAssistant();
         }
+        setTimeout(() => {
+          setReactionMessage(null);
+        }, 3600);
       }, 240);
     } else if (tapCountRef.current === 2) {
       // 2 Taps (Double-tap): Smoothly toggle between Mascot Orb and Dynamic Island Pill!
@@ -638,12 +651,15 @@ export const OrbPet: React.FC = () => {
           {/* Apple Startup Bloom Ring */}
           {isEntering && <div className="apple-start-bloom-ring" />}
 
+          {/* Glowing Green Status Dot at top-right rim (matching photo!) */}
+          <div className="orb-status-indicator" data-state={currentState} title="Assistant Status" />
+
           {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
           <div
             className="mochi-bubble-anchor"
             style={{
-              transform: `translateX(-50%) scale(${bubbleScale})`,
-              transformOrigin: 'bottom center',
+              transform: `scale(${bubbleScale})`,
+              transformOrigin: 'bottom right',
             }}
           >
             {showOnboarding ? (
@@ -674,7 +690,12 @@ export const OrbPet: React.FC = () => {
                 onMouseDown={(e) => e.stopPropagation()}
                 title="Click to open Mochi Assistant"
               >
-                <div className="bubble-status-dot" data-state={currentState} />
+                {/* Cloud scallops along top to match the photo */}
+                <div className="cloud-scallop-1" />
+                <div className="cloud-scallop-2" />
+
+                {/* Connector thought bubble dot pointing down to the orb */}
+                <div className="bubble-connector-dot" />
 
                 {/* Integrated Live Timer Chip inside capsule */}
                 {isTimerRunning && (

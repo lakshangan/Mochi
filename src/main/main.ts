@@ -294,6 +294,9 @@ function registerIpcHandlers(): void {
         const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
         const model = settings.model || 'gpt-4o-mini';
 
+        const userName = persistenceService.getState().settings.userName;
+        const userContext = userName ? ` The user's name is ${userName}. Address them warmly when appropriate.` : '';
+
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -306,7 +309,7 @@ function registerIpcHandlers(): void {
               {
                 role: 'system',
                 content:
-                  'You are Mochi, a friendly, calm, intelligent, and glowing digital orb companion on the desktop. Keep responses concise, uplifting, and productivity-focused (under 3 sentences). Offer helpful advice for study, breaks, hydration, and tasks.',
+                  `You are Mochi, a lively, wonderfully natural, intelligent, and empathetic digital desktop companion.${userContext} Speak in fluent, warm, conversational human language. Never sound robotic, canned, or corporate. Keep responses concise and engaging (1 to 3 punchy sentences), offering uplifting encouragement, study/focus advice, quick wellness checks (hydration, breaks), and charming friendly banter with natural emojis (✨, ☕, 🚀, 💡, 🌿).`,
               },
               ...(history || []).slice(-4).map((m: any) => ({
                 role: m.sender === 'user' ? 'user' : 'assistant',

@@ -30,8 +30,8 @@ export class PetWindow {
     }
     this.currentPosition = { x, y };
 
-    const windowW = Math.max(300, this.petSize + 130);
-    const windowH = Math.max(160, this.petSize + 65);
+    const windowW = Math.max(380, this.petSize + 250);
+    const windowH = Math.max(180, this.petSize + 70);
 
     const iconPath = path.join(__dirname, '../assets/trayIcon.png');
 
