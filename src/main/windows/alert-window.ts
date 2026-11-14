@@ -51,6 +51,7 @@ export class AlertWindow {
     });
 
     PlatformAdapter.configureWindowForPlatform(this.window, true);
+    PlatformAdapter.applySecurityRestrictions(this.window, isDev, devUrl);
 
     if (PlatformAdapter.isMac()) {
       this.window.setAlwaysOnTop(true, 'screen-saver');

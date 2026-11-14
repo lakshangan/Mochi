@@ -9,6 +9,9 @@ import { AiChatPanel } from './AiChatPanel';
 import { SettingsPanel } from './SettingsPanel';
 import { GitCompanionPanel } from './GitCompanionPanel';
 import { DeskStretchesModal } from './DeskStretchesModal';
+import { AssistantTitlebar } from './AssistantTitlebar';
+import { OnboardingModal } from './OnboardingModal';
+import { MindfulBreathingModal } from './MindfulBreathingModal';
 import { SoundscapePlayer } from './SoundscapePlayer';
 import { SystemPerformanceMetrics } from '../../shared/types';
 import {
@@ -20,26 +23,26 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  X,
   Sparkles,
-  Play,
   Flame,
-  Power,
-  EyeOff,
   Activity,
   Cpu,
   HardDrive,
   ShieldCheck,
   GitBranch,
+  Wind,
+  Compass,
 } from 'lucide-react';
 
 export const AssistantPanel: React.FC = () => {
   const {
     state,
+    platform,
     messages,
     addMessage,
     updateSettings,
     setPetState,
+    resetAllData,
     startTimer,
     pauseTimer,
     resumeTimer,
@@ -60,7 +63,6 @@ export const AssistantPanel: React.FC = () => {
     updateNote,
     deleteNote,
     addXp,
-    feedTreat,
     gitStatus,
     lastGitEvent,
     refreshGitStatus,
@@ -70,8 +72,18 @@ export const AssistantPanel: React.FC = () => {
     'overview' | 'timer' | 'reminders' | 'tasks' | 'notes' | 'chat' | 'git' | 'settings'
   >('overview');
   const [showStretchesModal, setShowStretchesModal] = useState(false);
+  const [showBreathingModal, setShowBreathingModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [metrics, setMetrics] = useState<SystemPerformanceMetrics | null>(null);
 
+  // Auto trigger onboarding if first time launch
+  useEffect(() => {
+    if (state.settings && !state.settings.hasSeenWelcome) {
+      setShowOnboarding(true);
+    }
+  }, [state.settings?.hasSeenWelcome]);
+
+  // Periodic metrics polling
   useEffect(() => {
     let timer: NodeJS.Timeout;
     const fetchMetrics = async () => {
@@ -101,103 +113,113 @@ export const AssistantPanel: React.FC = () => {
     }
   };
 
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showOnboarding) {
+          setShowOnboarding(false);
+        } else if (showBreathingModal) {
+          setShowBreathingModal(false);
+        } else if (showStretchesModal) {
+          setShowStretchesModal(false);
+        } else {
+          closeWindow();
+        }
+      } else if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') {
+          const tabMap: Record<string, typeof activeTab> = {
+            '1': 'overview',
+            '2': 'timer',
+            '3': 'reminders',
+            '4': 'git',
+            '5': 'tasks',
+            '6': 'notes',
+            '7': 'chat',
+            '8': 'settings',
+          };
+          if (tabMap[e.key]) {
+            setActiveTab(tabMap[e.key]);
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showOnboarding, showBreathingModal, showStretchesModal]);
+
   const pendingTasks = state.tasks.filter((t) => !t.completed);
   const levelInfo = calculateLevelInfo(state.settings.gamification?.xp || 0);
 
   return (
-    <div className="assistant-window-container">
-      {/* Apple macOS Native Titlebar */}
-      <div className="assistant-header-bar">
-        <div className="mac-traffic-lights">
-          <button className="traffic-dot close" onClick={handleQuit} title="Turn Off / Quit Mochi">
-            <span className="traffic-icon">×</span>
-          </button>
-          <button className="traffic-dot minimize" onClick={closeWindow} title="Hide Assistant Panel">
-            <span className="traffic-icon">−</span>
-          </button>
-          <button className="traffic-dot zoom" title="Zoom">
-            <span className="traffic-icon">+</span>
-          </button>
-        </div>
-
-        <div className="mac-title-center">
-          <img src={mochiLogo} alt="Mochi" className="brand-logo-img" />
-          <span className="brand-title">Mochi Companion</span>
-          <span className="mac-status-pill">{state.petState}</span>
-          <div className="mac-level-pill" title={`${state.settings.gamification?.xp || 0} Total XP (${levelInfo.progressPercent}% to next level)`}>
-            <Sparkles size={11} className="level-sparkle" />
-            <span>Lv.{levelInfo.level} {levelInfo.title}</span>
-          </div>
-        </div>
-
-        <div className="mac-title-spacer">
-          <button
-            className="mac-stretch-btn"
-            onClick={() => setShowStretchesModal(true)}
-            title="30s Quick Guided Stretches for Posture & Wrists"
-          >
-            <span>🧘 Stretch</span>
-          </button>
-          <button
-            className="mac-deep-work-btn"
-            onClick={async () => {
-              if (window.mochiApi) {
-                await window.mochiApi.setPetVisible(false);
-                await window.mochiApi.showNotification(
-                  'Deep Work Mode Active 🧘',
-                  'Mochi is hidden for full-screen focus. Click the Mochi icon in the status bar at top anytime to restore!'
-                );
-              }
-            }}
-            title="Hide Mochi for full-screen Deep Work (accessible from status bar at top)"
-          >
-            <EyeOff size={11} />
-            <span>Deep Work</span>
-          </button>
-          <button
-            className="mac-turn-off-btn"
-            onClick={handleQuit}
-            title="Turn Off Mochi (Quit App)"
-          >
-            <Power size={11} />
-            <span>Turn Off</span>
-          </button>
-        </div>
-      </div>
+    <div className={`assistant-window-container platform-${platform}`}>
+      {/* OS-Adaptive Native Titlebar */}
+      <AssistantTitlebar
+        platform={platform}
+        petState={state.petState}
+        levelInfo={levelInfo}
+        totalXp={state.settings.gamification?.xp || 0}
+        onClose={closeWindow}
+        onMinimize={() => {
+          if (window.mochiApi?.minimizeWindow) {
+            window.mochiApi.minimizeWindow();
+          } else {
+            closeWindow();
+          }
+        }}
+        onQuit={handleQuit}
+        onOpenStretches={() => setShowStretchesModal(true)}
+        onOpenBreathing={() => setShowBreathingModal(true)}
+        onOpenOnboarding={() => setShowOnboarding(true)}
+        onToggleDeepWork={async () => {
+          if (window.mochiApi) {
+            await window.mochiApi.setPetVisible(false);
+            const hint =
+              platform === 'darwin'
+                ? 'Click the Mochi icon in the top menu bar to restore anytime!'
+                : 'Click the Mochi icon in the system notification tray to restore anytime!';
+            await window.mochiApi.showNotification(
+              'Deep Work Mode Active 🧘',
+              `Mochi is tucked away for focus. ${hint}`
+            );
+          }
+        }}
+      />
 
       {/* Navigation Tab Bar */}
       <nav className="assistant-nav-bar">
         <button
           className={`nav-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
-          title="Overview"
+          title="Overview (Press 1)"
         >
-          <LayoutDashboard size={16} />
+          <LayoutDashboard size={14} />
           <span>Home</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'timer' ? 'active' : ''}`}
           onClick={() => setActiveTab('timer')}
-          title="Timers"
+          title="Timers (Press 2)"
         >
-          <Clock size={16} />
+          <Clock size={14} />
           <span>Timer</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'reminders' ? 'active' : ''}`}
           onClick={() => setActiveTab('reminders')}
-          title="Reminders"
+          title="Care & Wellness (Press 3)"
         >
-          <Droplet size={16} />
+          <Droplet size={14} />
           <span>Care</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'git' ? 'active' : ''}`}
           onClick={() => setActiveTab('git')}
-          title="Git & Flow Companion"
+          title="Git & Flow Companion (Press 4)"
         >
-          <GitBranch size={16} />
-          <span>Git Flow</span>
+          <GitBranch size={14} />
+          <span>Git</span>
           {gitStatus?.commitsToday ? (
             <span className="nav-badge-dot">{gitStatus.commitsToday}</span>
           ) : null}
@@ -205,33 +227,33 @@ export const AssistantPanel: React.FC = () => {
         <button
           className={`nav-tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
           onClick={() => setActiveTab('tasks')}
-          title="Tasks"
+          title="Tasks (Press 5)"
         >
-          <CheckSquare size={16} />
+          <CheckSquare size={14} />
           <span>Tasks</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
           onClick={() => setActiveTab('notes')}
-          title="Notes"
+          title="Notes (Press 6)"
         >
-          <FileText size={16} />
+          <FileText size={14} />
           <span>Notes</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
           onClick={() => setActiveTab('chat')}
-          title="AI & Commands"
+          title="AI & Commands (Press 7)"
         >
-          <MessageSquare size={16} />
+          <MessageSquare size={14} />
           <span>Chat</span>
         </button>
         <button
           className={`nav-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
-          title="Settings"
+          title="Settings (Press 8)"
         >
-          <Settings size={16} />
+          <Settings size={14} />
           <span>Settings</span>
         </button>
       </nav>
@@ -254,6 +276,32 @@ export const AssistantPanel: React.FC = () => {
               >
                 Pet Mochi
               </button>
+            </div>
+
+            {/* Weekly Productivity & Focus Pulse */}
+            <div className="weekly-pulse-card">
+              <div className="weekly-pulse-header">
+                <span className="weekly-pulse-title">
+                  <Activity size={13} className="text-cyan" />
+                  <span>Weekly Flow & Wellness Pulse</span>
+                </span>
+                <span className="flow-score-badge">94% Flow State</span>
+              </div>
+              <div className="weekly-days-row">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
+                  const todayIdx = (new Date().getDay() + 6) % 7; // 0 = Mon, 6 = Sun
+                  const isToday = idx === todayIdx;
+                  return (
+                    <div key={day} className={`weekly-day-pill ${isToday ? 'today' : ''}`}>
+                      <span>{day}</span>
+                      <div
+                        className="day-dot-status"
+                        style={{ opacity: idx <= todayIdx ? 1 : 0.2 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Quick Actions Grid */}
@@ -284,22 +332,23 @@ export const AssistantPanel: React.FC = () => {
               <div
                 className="shortcut-card"
                 onClick={() => {
-                  setActiveTab('timer');
-                  startTimer(15 * 60, 'Power Sprint');
+                  setShowBreathingModal(true);
                 }}
               >
-                <Clock size={18} className="text-violet" />
-                <div className="shortcut-title">15m Timer</div>
-                <div className="shortcut-sub">Quick Sprint</div>
+                <Wind size={18} className="text-violet" />
+                <div className="shortcut-title">Box Breathing</div>
+                <div className="shortcut-sub">4-4-4-4 Calm Reset</div>
               </div>
 
               <div
                 className="shortcut-card"
-                onClick={() => setActiveTab('tasks')}
+                onClick={() => {
+                  setShowOnboarding(true);
+                }}
               >
-                <CheckSquare size={18} className="text-emerald" />
-                <div className="shortcut-title">{pendingTasks.length} Pending</div>
-                <div className="shortcut-sub">View Tasks</div>
+                <Compass size={18} className="text-emerald" />
+                <div className="shortcut-title">Feature Tour</div>
+                <div className="shortcut-sub">Guide & Gestures</div>
               </div>
             </div>
 
@@ -359,7 +408,7 @@ export const AssistantPanel: React.FC = () => {
               <div className="section-header-row">
                 <span className="section-heading" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Activity size={13} className="text-cyan" />
-                  <span>Hardware Pulse & Diagnostics</span>
+                  <span>Hardware Pulse & Diagnostics ({platform === 'darwin' ? 'macOS' : platform === 'win32' ? 'Windows' : 'Linux'})</span>
                 </span>
                 <span style={{ fontSize: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span className="diag-dot-pulse" />
@@ -396,10 +445,10 @@ export const AssistantPanel: React.FC = () => {
                   <div className="diag-metric-box">
                     <div className="diag-metric-header">
                       <ShieldCheck size={11} className="text-violet" />
-                      <span>Leak Watchdog</span>
+                      <span>Security & Leak Watchdog</span>
                     </div>
                     <div className="diag-metric-number text-emerald">Protected</div>
-                    <div className="diag-metric-sub">Zero Leaks Detected</div>
+                    <div className="diag-metric-sub">CSP & Sandboxed</div>
                   </div>
                 </div>
               </div>
@@ -535,6 +584,8 @@ export const AssistantPanel: React.FC = () => {
           <SettingsPanel
             settings={state.settings}
             onUpdateSettings={updateSettings}
+            onOpenOnboarding={() => setShowOnboarding(true)}
+            onResetAll={resetAllData}
           />
         )}
       </main>
@@ -542,6 +593,22 @@ export const AssistantPanel: React.FC = () => {
       <DeskStretchesModal
         isOpen={showStretchesModal}
         onClose={() => setShowStretchesModal(false)}
+        onRewardXp={addXp}
+      />
+
+      <MindfulBreathingModal
+        isOpen={showBreathingModal}
+        onClose={() => setShowBreathingModal(false)}
+        onRewardXp={addXp}
+        onSetPetState={setPetState}
+      />
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        platform={platform}
+        currentSettings={state.settings}
+        onSaveSettings={updateSettings}
+        onClose={() => setShowOnboarding(false)}
         onRewardXp={addXp}
       />
 

@@ -15,16 +15,21 @@ import {
   Image as ImageIcon,
   Upload,
   Trash2,
+  Compass,
 } from 'lucide-react';
 
 interface SettingsPanelProps {
   settings: AppSettings;
   onUpdateSettings: (settings: Partial<AppSettings>) => void;
+  onOpenOnboarding?: () => void;
+  onResetAll?: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   settings,
   onUpdateSettings,
+  onOpenOnboarding,
+  onResetAll,
 }) => {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
 
@@ -867,15 +872,35 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         <div className="setting-item">
           <div className="setting-label-col">
+            <span className="setting-name">Replay Feature Tour & Onboarding</span>
+            <span className="setting-desc">Revisit the initial setup guide and gesture cheat sheet</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline"
+            onClick={onOpenOnboarding}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Compass size={13} className="text-cyan" />
+            <span>Open Tour</span>
+          </button>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-label-col">
             <span className="setting-name">Reset Application Data</span>
             <span className="setting-desc">Clear local tasks, notes, and preferences</span>
           </div>
           <button
             className="btn btn-sm btn-outline text-danger"
-            onClick={() => {
-              if (confirm('Reset all Mochi companion data and restart with defaults?')) {
-                localStorage.clear();
-                window.location.reload();
+            onClick={async () => {
+              if (confirm('Reset all Mochi companion data and restart with clean defaults?')) {
+                if (onResetAll) {
+                  await onResetAll();
+                } else {
+                  localStorage.clear();
+                  window.location.reload();
+                }
               }
             }}
           >
@@ -897,7 +922,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <span style={{ fontSize: '10px', background: 'rgba(0, 247, 255, 0.15)', color: '#00f7ff', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>v1.0.0</span>
           </div>
           <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.55)', marginTop: '2px' }}>
-            Universal AI Desktop Companion for macOS • Reacting to your flow
+            Universal AI Desktop Companion for macOS, Windows & Linux • Reacting to your flow
           </div>
         </div>
       </div>

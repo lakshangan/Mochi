@@ -100,6 +100,14 @@ const DEFAULT_STATE: MochiFullState = {
 
 export function useMochiStore() {
   const [state, setState] = useState<MochiFullState>(DEFAULT_STATE);
+  const [platform, setPlatform] = useState<'darwin' | 'win32' | 'linux'>(() => {
+    if (typeof window !== 'undefined' && (window as any).navigator?.userAgent) {
+      const ua = (window as any).navigator.userAgent.toLowerCase();
+      if (ua.includes('win')) return 'win32';
+      if (ua.includes('linux')) return 'linux';
+    }
+    return 'darwin';
+  });
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'init-1',
@@ -113,6 +121,13 @@ export function useMochiStore() {
   // Initialize from electron main process
   useEffect(() => {
     if (window.mochiApi) {
+      if (window.mochiApi.getPlatform) {
+        window.mochiApi.getPlatform().then((plat) => {
+          setPlatform(plat);
+          document.documentElement.setAttribute('data-platform', plat);
+        });
+      }
+
       window.mochiApi.getInitialState().then((initial) => {
         setState((prev) => ({
           ...prev,
@@ -524,12 +539,24 @@ export function useMochiStore() {
     setMessages((prev) => [...prev, fullMsg]);
   }, []);
 
+  const resetAllData = useCallback(async () => {
+    if (window.mochiApi?.resetAllData) {
+      const fresh = await window.mochiApi.resetAllData();
+      setState(fresh);
+    } else {
+      setState(DEFAULT_STATE);
+    }
+    localStorage.clear();
+  }, []);
+
   return {
     state,
+    platform,
     messages,
     addMessage,
     updateSettings,
     setPetState,
+    resetAllData,
     startTimer,
     pauseTimer,
     resumeTimer,

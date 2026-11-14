@@ -5,8 +5,8 @@ import { PlatformAdapter } from '../platform/platform-adapter';
 
 export class AssistantWindow {
   private window: BrowserWindow | null = null;
-  private width = 440;
-  private height = 660;
+  private width = 490;
+  private height = 680;
 
   public createOrToggle(
     petPosition: PetPosition,
@@ -40,8 +40,8 @@ export class AssistantWindow {
       transparent: true,
       backgroundColor: '#00000000',
       resizable: true,
-      minWidth: 380,
-      minHeight: 520,
+      minWidth: 440,
+      minHeight: 560,
       alwaysOnTop: true,
       hasShadow: true,
       thickFrame: false,
@@ -57,6 +57,7 @@ export class AssistantWindow {
     });
 
     PlatformAdapter.configureWindowForPlatform(this.window, true);
+    PlatformAdapter.applySecurityRestrictions(this.window, isDev, devUrl);
 
     if (PlatformAdapter.isMac()) {
       this.window.setVibrancy('under-window');
@@ -79,6 +80,22 @@ export class AssistantWindow {
   public hide(): void {
     if (this.window && !this.window.isDestroyed()) {
       this.window.hide();
+    }
+  }
+
+  public minimize(): void {
+    if (this.window && !this.window.isDestroyed()) {
+      this.window.minimize();
+    }
+  }
+
+  public toggleMaximize(): void {
+    if (this.window && !this.window.isDestroyed()) {
+      if (this.window.isMaximized()) {
+        this.window.unmaximize();
+      } else {
+        this.window.maximize();
+      }
     }
   }
 

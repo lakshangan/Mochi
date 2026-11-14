@@ -60,7 +60,21 @@ export class TrayService {
     this.updateMenu();
 
     this.tray.on('click', () => {
-      this.updateMenu();
+      if (process.platform === 'win32' || process.platform === 'linux') {
+        this.petWindow.toggle();
+        this.updateMenu();
+      } else {
+        this.updateMenu();
+      }
+    });
+
+    this.tray.on('double-click', () => {
+      this.assistantWindow.createOrToggle(
+        this.petWindow.getPosition(),
+        this.preloadPath,
+        this.isDev,
+        this.devUrl
+      );
     });
   }
 

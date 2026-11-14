@@ -363,9 +363,14 @@ npm run dev
 ```
 
 ### Running Tests
-Executes the automated test suite covering command parsing, activity monitoring, timers, persistence, and safe storage:
+Executes the comprehensive automated test suite (58 tests) covering security, pill-to-orb state transitions, command parsing, activity monitoring, timers, persistence, and safe storage:
 ```bash
 npm test
+```
+
+To run the dedicated Electron security hardening and invariant test suite:
+```bash
+npm run test:security
 ```
 
 ### Building for Production

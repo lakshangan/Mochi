@@ -7,11 +7,12 @@
     "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
     "dev:renderer": "vite",
     "dev:main": "cross-env NODE_ENV=development vite build --config vite.main.config.ts --watch",
-    "dev:electron": "wait-on http://localhost:5173 dist/main/main.js && electron dist/main/main.js",
+    "dev:electron": "wait-on http://localhost:5173 dist/main/main.js && cross-env ELECTRON_RUN_AS_NODE= electron dist/main/main.js",
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
     "build:main": "vite build --config vite.main.config.ts && node scripts/copy-assets.js",
     "test": "vitest run",
+    "test:security": "vitest run tests/security-checks.test.ts",
     "test:watch": "vitest",
     "test:perf": "vitest run tests/benchmark.test.ts",
     "bench": "node scripts/benchmark-ram.js",
@@ -21,7 +22,7 @@
     "package:mac:all": "npm run build && electron-builder --mac --arm64 --x64 --universal",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
-    "start": "cross-env NODE_ENV=production electron dist/main/main.js"
+    "start": "cross-env NODE_ENV=production ELECTRON_RUN_AS_NODE= electron dist/main/main.js"
   },
   "build": {
     "appId": "com.mochi.desktopcompanion",

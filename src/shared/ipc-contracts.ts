@@ -35,6 +35,7 @@ export const IPC_CHANNELS = {
   SAVE_TASKS: 'state:save-tasks',
   SAVE_NOTES: 'state:save-notes',
   STATE_UPDATED: 'state:updated',
+  STATE_RESET: 'state:reset',
 
   // Timer Controls
   TIMER_START: 'timer:start',
@@ -85,6 +86,7 @@ export interface ElectronMochiAPI {
   getPosition: () => Promise<PetPosition>;
   toggleAssistant: () => Promise<boolean>;
   closeAssistant: () => Promise<void>;
+  minimizeWindow?: () => Promise<void>;
   closeAlertWindow?: () => Promise<void>;
   triggerFullScreenAlertPreview?: () => Promise<void>;
   togglePetVisibility: () => Promise<boolean>;
@@ -97,6 +99,7 @@ export interface ElectronMochiAPI {
   saveSettings: (settings: Partial<AppSettings>) => Promise<AppSettings>;
   saveTasks: (tasks: TaskItem[]) => Promise<TaskItem[]>;
   saveNotes: (notes: NoteItem[]) => Promise<NoteItem[]>;
+  resetAllData?: () => Promise<MochiFullState>;
   onStateUpdated: (callback: (state: Partial<MochiFullState>) => void) => () => void;
 
   // Timers

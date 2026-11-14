@@ -49,6 +49,7 @@ const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
 
 export const OrbPet: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const islandRef = useRef<HTMLDivElement>(null);
   const animControllerRef = useRef<AnimationController | null>(null);
   const behaviorEngineRef = useRef<BehaviorEngine | null>(null);
   const moveControllerRef = useRef<MovementController | null>(null);
@@ -85,6 +86,7 @@ export const OrbPet: React.FC = () => {
   // Next-Gen Interactive & Apple Motion States
   const [showConfetti, setShowConfetti] = useState(false);
   const [isDynamicIsland, setIsDynamicIsland] = useState(false);
+  const [isExpanding, setIsExpanding] = useState(false);
   const [showEyeRelief, setShowEyeRelief] = useState(false);
   const [loveMeter, setLoveMeter] = useState(0);
   const [showLoveWave, setShowLoveWave] = useState(false);
@@ -151,8 +153,26 @@ export const OrbPet: React.FC = () => {
   };
 
   const handleToggleIsland = () => {
-    SoundEffects.whoosh(0.25);
-    setIsDynamicIsland((prev) => !prev);
+    setIsDynamicIsland((prev) => {
+      const next = !prev;
+      if (!next) {
+        // Expanding back to orb!
+        SoundEffects.pop(0.35);
+        setIsExpanding(true);
+        setTimeout(() => setIsExpanding(false), 450);
+        setSquashScale({ x: 1, y: 1 });
+        animControllerRef.current?.triggerReaction('happy', 2500);
+        setReactionMessage({
+          title: 'Back in Orb mode! ✨',
+          subtitle: 'Ready to build alongside you.',
+        });
+        setTimeout(() => setReactionMessage(null), 3500);
+      } else {
+        // Snapping into minimal pill mode
+        SoundEffects.whoosh(0.25);
+      }
+      return next;
+    });
   };
 
   const tapCountRef = useRef(0);
@@ -260,43 +280,22 @@ export const OrbPet: React.FC = () => {
     }
   };
 
+  // 1. Persistent Animation Controller, Behavior Engine & IPC Listeners
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    // 1. Animation Controller
+    // Animation Controller
     const anim = new AnimationController();
     animControllerRef.current = anim;
 
-    // 2. Behavior Engine
+    // Behavior Engine
     const behavior = new BehaviorEngine(anim);
     behaviorEngineRef.current = behavior;
 
-    // 3. Sync animation state
+    // Sync animation state
     const unsubAnim = anim.onChange((state) => {
       setCurrentState(state);
     });
 
-    // 4. Movement & Gaze Controller
-    const move = new MovementController(containerRef.current, {
-      onDragStart: () => {
-        behavior.handleDragStart();
-        setSquashScale({ x: 1.14, y: 0.86 });
-      },
-      onDragEnd: () => {
-        behavior.handleDragEnd();
-        setSquashScale({ x: 0.88, y: 1.12 });
-        setTimeout(() => setSquashScale({ x: 1, y: 1 }), 220);
-      },
-      onGazeMove: (nx, ny) => {
-        setGaze({ x: nx, y: ny });
-      },
-      onClick: () => {
-        handlePetAction();
-      },
-    });
-    moveControllerRef.current = move;
-
-    // 5. IPC listeners
+    // IPC listeners
     let unsubIpc: (() => void) | undefined;
     let unsubTimerTick: (() => void) | undefined;
     let unsubTimerComp: (() => void) | undefined;
@@ -558,7 +557,6 @@ export const OrbPet: React.FC = () => {
         if (reactionTimeout) clearTimeout(reactionTimeout);
         if (speakingTimeout) clearTimeout(speakingTimeout);
         if (typingTimeout) clearTimeout(typingTimeout);
-        move.destroy();
         anim.destroy();
         behavior.destroy();
       };
@@ -566,11 +564,48 @@ export const OrbPet: React.FC = () => {
 
     return () => {
       unsubAnim();
-      move.destroy();
       anim.destroy();
       behavior.destroy();
     };
-  }, [orbMode]);
+  }, []);
+
+  // 2. Dynamic Movement & Gaze Controller (Seamlessly binds/re-binds across Orb and Pill mode)
+  useEffect(() => {
+    if (moveControllerRef.current) {
+      moveControllerRef.current.destroy();
+      moveControllerRef.current = null;
+    }
+
+    const activeEl = isDynamicIsland ? islandRef.current : containerRef.current;
+    if (!activeEl) return;
+
+    const move = new MovementController(activeEl, {
+      onDragStart: () => {
+        behaviorEngineRef.current?.handleDragStart();
+        setSquashScale({ x: 1.14, y: 0.86 });
+      },
+      onDragEnd: () => {
+        behaviorEngineRef.current?.handleDragEnd();
+        setSquashScale({ x: 0.88, y: 1.12 });
+        setTimeout(() => setSquashScale({ x: 1, y: 1 }), 220);
+      },
+      onGazeMove: (nx, ny) => {
+        setGaze({ x: nx, y: ny });
+      },
+      onClick: () => {
+        handlePetAction();
+      },
+    });
+
+    moveControllerRef.current = move;
+
+    return () => {
+      move.destroy();
+      if (moveControllerRef.current === move) {
+        moveControllerRef.current = null;
+      }
+    };
+  }, [isDynamicIsland, orbMode]);
 
   const isTimerRunning = activeTimer && activeTimer.status === 'running';
   const timerProgress =
@@ -595,13 +630,18 @@ export const OrbPet: React.FC = () => {
       {/* Dynamic Island Pill Mode */}
       {isDynamicIsland ? (
         <div
+          ref={islandRef}
           className={`mochi-dynamic-island-pill ${isEntering ? 'apple-entrance' : ''} ${isExiting ? 'apple-exit' : ''}`}
           onClick={handlePetAction}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            handleToggleIsland();
+          }}
           onContextMenu={(e) => {
             e.preventDefault();
             setContextMenuPos({ x: e.clientX, y: e.clientY });
           }}
-          title="Dynamic Island Mode (Click to open, double-click to expand)"
+          title="Dynamic Island Mode (Click to open, double-click to expand, drag to move)"
         >
           <div className="island-orb-preview">
             <IslandFluidOrb
@@ -627,6 +667,9 @@ export const OrbPet: React.FC = () => {
           </div>
           <button
             className="island-expand-icon-btn"
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.stopPropagation();
               handleToggleIsland();
@@ -638,7 +681,7 @@ export const OrbPet: React.FC = () => {
         </div>
       ) : (
         <div
-          className={`mochi-pet-stage ${isEntering ? 'apple-entrance' : ''} ${isExiting ? 'apple-exit' : ''}`}
+          className={`mochi-pet-stage ${isEntering ? 'apple-entrance' : ''} ${isExpanding ? 'orb-expanding' : ''} ${isExiting ? 'apple-exit' : ''}`}
           style={{
             width: petSize,
             height: petSize,
@@ -804,13 +847,15 @@ export const OrbPet: React.FC = () => {
           </button>
           <button
             className="context-menu-item"
-            onClick={() => {
+            onClick={async () => {
               setContextMenuPos(null);
               if (window.mochiApi) {
-                window.mochiApi.setPetVisible(false);
+                await window.mochiApi.setPetVisible(false);
+                const plat = await window.mochiApi.getPlatform?.();
+                const locationHint = plat === 'darwin' ? 'menu bar at top' : 'taskbar notification tray';
                 window.mochiApi.showNotification(
                   'Deep Work Mode Active 🧘',
-                  'Mochi is resting. Click the Mochi icon in your menu bar to wake anytime!'
+                  `Mochi is resting. Click the Mochi icon in your ${locationHint} to wake anytime!`
                 );
               }
             }}

@@ -1,3 +1,5 @@
+delete process.env.ELECTRON_RUN_AS_NODE;
+
 import { app, ipcMain, screen, Tray, Menu } from 'electron';
 import path from 'path';
 import { PersistenceService } from './services/persistence-service';
@@ -11,6 +13,7 @@ import { AlertWindow } from './windows/alert-window';
 import { PlatformAdapter } from './platform/platform-adapter';
 import { SystemActivityMonitor } from './services/system-activity';
 import { GitCompanionService } from './services/git-companion-service';
+import { SecurityValidator } from './security/security-validator';
 import { IPC_CHANNELS } from '../shared/ipc-contracts';
 import { AppSettings, PetAnimationState, PetPosition, TaskItem, NoteItem, PomodoroPhase, ReminderNotificationEvent } from '../shared/types';
 
@@ -88,7 +91,9 @@ function setupAutoWander(): void {
 function registerIpcHandlers(): void {
   // Window controls
   ipcMain.handle(IPC_CHANNELS.WINDOW_DRAG, (_event, deltaX: number, deltaY: number) => {
-    petWindow.moveBy(deltaX, deltaY);
+    const safeX = SecurityValidator.validateCoordinate(deltaX, 0, -500, 500);
+    const safeY = SecurityValidator.validateCoordinate(deltaY, 0, -500, 500);
+    petWindow.moveBy(safeX, safeY);
     persistenceService.updatePosition(petWindow.getPosition(), false); // debounced write!
   });
 
@@ -97,8 +102,13 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_SET_POSITION, (_event, pos: PetPosition) => {
-    petWindow.setPosition(pos);
-    persistenceService.updatePosition(pos, true);
+    if (!pos || typeof pos !== 'object') return;
+    const safePos: PetPosition = {
+      x: SecurityValidator.validateCoordinate(pos.x, 300),
+      y: SecurityValidator.validateCoordinate(pos.y, 300),
+    };
+    petWindow.setPosition(safePos);
+    persistenceService.updatePosition(safePos, true);
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_TOGGLE_ASSISTANT, () => {
@@ -108,6 +118,10 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT, () => {
     assistantWindow.hide();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
+    assistantWindow.minimize();
   });
 
   ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE_ALERT, () => {
@@ -158,41 +172,55 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, (_event, partial: Partial<AppSettings>) => {
-    const updated = persistenceService.updateSettings(partial);
-    if (partial.petSize) {
-      petWindow.resize(partial.petSize);
+    const safePartial = SecurityValidator.sanitizeObject<Partial<AppSettings>>(partial || {});
+    const updated = persistenceService.updateSettings(safePartial);
+    if (safePartial.petSize) {
+      petWindow.resize(safePartial.petSize);
     }
-    if (partial.alwaysOnTop !== undefined) {
-      petWindow.setAlwaysOnTop(partial.alwaysOnTop);
+    if (safePartial.alwaysOnTop !== undefined) {
+      petWindow.setAlwaysOnTop(safePartial.alwaysOnTop);
     }
-    if (partial.autoWander !== undefined || partial.wanderIntervalSeconds !== undefined) {
+    if (safePartial.autoWander !== undefined || safePartial.wanderIntervalSeconds !== undefined) {
       setupAutoWander();
     }
-    if (partial.launchAtLogin !== undefined) {
-      PlatformAdapter.setLaunchAtLogin(partial.launchAtLogin);
+    if (safePartial.launchAtLogin !== undefined) {
+      PlatformAdapter.setLaunchAtLogin(safePartial.launchAtLogin);
     }
-    if (partial.userName !== undefined) {
+    if (safePartial.userName !== undefined) {
       trayService?.updateMenu();
     }
     broadcast(IPC_CHANNELS.STATE_UPDATED, { settings: updated });
     return updated;
   });
 
+  ipcMain.handle(IPC_CHANNELS.STATE_RESET, () => {
+    const freshState = persistenceService.resetAllData();
+    freshState.timer = timerService.reset();
+    broadcast(IPC_CHANNELS.STATE_UPDATED, freshState);
+    broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
+    trayService?.updateMenu();
+    return freshState;
+  });
+
   ipcMain.handle(IPC_CHANNELS.SAVE_TASKS, (_event, tasks: TaskItem[]) => {
-    const updated = persistenceService.updateTasks(tasks);
+    const safeTasks = Array.isArray(tasks) ? SecurityValidator.sanitizeObject<TaskItem[]>(tasks) : [];
+    const updated = persistenceService.updateTasks(safeTasks);
     broadcast(IPC_CHANNELS.STATE_UPDATED, { tasks: updated });
     return updated;
   });
 
   ipcMain.handle(IPC_CHANNELS.SAVE_NOTES, (_event, notes: NoteItem[]) => {
-    const updated = persistenceService.updateNotes(notes);
+    const safeNotes = Array.isArray(notes) ? SecurityValidator.sanitizeObject<NoteItem[]>(notes) : [];
+    const updated = persistenceService.updateNotes(safeNotes);
     broadcast(IPC_CHANNELS.STATE_UPDATED, { notes: updated });
     return updated;
   });
 
   // Timers
   ipcMain.handle(IPC_CHANNELS.TIMER_START, (_event, seconds: number, label?: string) => {
-    const state = timerService.startCountdown(seconds, label);
+    const safeSeconds = SecurityValidator.validateTimerSeconds(seconds, 1500);
+    const safeLabel = typeof label === 'string' ? label.slice(0, 100) : undefined;
+    const state = timerService.startCountdown(safeSeconds, safeLabel);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'focused');
     return state;
   });
@@ -227,7 +255,8 @@ function registerIpcHandlers(): void {
   // Reminders
   ipcMain.handle(IPC_CHANNELS.REMINDER_WATER_SNOOZE, (_event, minutes = 10) => {
     alertWindow?.close();
-    reminderService.snoozeWater(minutes);
+    const safeMinutes = SecurityValidator.validateSnoozeMinutes(minutes, 10);
+    reminderService.snoozeWater(safeMinutes);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'angry');
     setTimeout(() => {
       broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
@@ -254,7 +283,8 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.REMINDER_BREAK_SNOOZE, (_event, minutes = 10) => {
     alertWindow?.close();
-    reminderService.snoozeBreak(minutes);
+    const safeMinutes = SecurityValidator.validateSnoozeMinutes(minutes, 10);
+    reminderService.snoozeBreak(safeMinutes);
     broadcast(IPC_CHANNELS.PET_SET_STATE, 'idle');
   });
 
@@ -281,18 +311,27 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, reaction);
   });
 
-  // AI Proxy Handler
+  // AI Proxy Handler with SSRF and Payload Protection
   ipcMain.handle(
     IPC_CHANNELS.AI_QUERY,
     async (_event, prompt: string, history: any[]) => {
+      if (typeof prompt !== 'string') {
+        return { text: '', error: 'Invalid prompt format' };
+      }
+      const safePrompt = prompt.slice(0, 2000); // Prevent buffer/memory exhaustion attacks
       const settings = persistenceService.getState().settings.ai;
       if (settings.provider !== 'openai' || !settings.apiKey) {
         return { text: '', error: 'OpenAI provider not configured with API key' };
       }
 
+      const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
+      const endpointCheck = SecurityValidator.validateEndpointUrl(endpoint);
+      if (!endpointCheck.valid) {
+        return { text: '', error: endpointCheck.reason || 'Invalid API endpoint URL' };
+      }
+
       try {
-        const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
-        const model = settings.model || 'gpt-4o-mini';
+        const model = (settings.model || 'gpt-4o-mini').slice(0, 50);
 
         const userName = persistenceService.getState().settings.userName;
         const userContext = userName ? ` The user's name is ${userName}. Address them warmly when appropriate.` : '';
@@ -311,11 +350,11 @@ function registerIpcHandlers(): void {
                 content:
                   `You are Mochi, a lively, wonderfully natural, intelligent, and empathetic digital desktop companion.${userContext} Speak in fluent, warm, conversational human language. Never sound robotic, canned, or corporate. Keep responses concise and engaging (1 to 3 punchy sentences), offering uplifting encouragement, study/focus advice, quick wellness checks (hydration, breaks), and charming friendly banter with natural emojis (✨, ☕, 🚀, 💡, 🌿).`,
               },
-              ...(history || []).slice(-4).map((m: any) => ({
+              ...(Array.isArray(history) ? history : []).slice(-4).map((m: any) => ({
                 role: m.sender === 'user' ? 'user' : 'assistant',
-                content: m.text,
+                content: typeof m.text === 'string' ? m.text.slice(0, 1000) : '',
               })),
-              { role: 'user', content: prompt },
+              { role: 'user', content: safePrompt },
             ],
             temperature: settings.temperature ?? 0.7,
             max_tokens: 150,

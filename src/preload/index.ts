@@ -30,6 +30,9 @@ const mochiApi: ElectronMochiAPI = {
   closeAssistant: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ASSISTANT);
   },
+  minimizeWindow: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_MINIMIZE);
+  },
   closeAlertWindow: () => {
     return ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ALERT);
   },
@@ -61,6 +64,9 @@ const mochiApi: ElectronMochiAPI = {
   },
   saveNotes: (notes: NoteItem[]) => {
     return ipcRenderer.invoke(IPC_CHANNELS.SAVE_NOTES, notes);
+  },
+  resetAllData: () => {
+    return ipcRenderer.invoke(IPC_CHANNELS.STATE_RESET);
   },
   onStateUpdated: (callback: (state: Partial<MochiFullState>) => void) => {
     const handler = (_event: any, state: Partial<MochiFullState>) => callback(state);
