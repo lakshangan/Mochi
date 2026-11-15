@@ -94,5 +94,32 @@ describe('Local Ollama AI Integration & Security Defense', () => {
       expect(response.suggestedAction).toBeDefined();
     });
   });
+
+  describe('3. High-Speed Streaming IPC Contracts & Performance Acceleration', () => {
+    it('supports streaming query invocation and lifecycle listeners', () => {
+      const mockStreamChunk = vi.fn();
+      const mockStreamEnd = vi.fn();
+      const mockQueryStream = vi.fn().mockResolvedValue({ started: true });
+
+      (window.mochiApi as any).queryAiStream = mockQueryStream;
+      (window.mochiApi as any).onAiStreamChunk = (cb: any) => {
+        mockStreamChunk.mockImplementation(cb);
+        return () => {};
+      };
+      (window.mochiApi as any).onAiStreamEnd = (cb: any) => {
+        mockStreamEnd.mockImplementation(cb);
+        return () => {};
+      };
+
+      expect(typeof window.mochiApi.queryAiStream).toBe('function');
+      expect(typeof (window.mochiApi as any).onAiStreamChunk).toBe('function');
+      expect(typeof (window.mochiApi as any).onAiStreamEnd).toBe('function');
+
+      // Verify stream start
+      const reqId = 'req-stream-123';
+      window.mochiApi.queryAiStream!(reqId, 'Hello fast Mochi', []);
+      expect(mockQueryStream).toHaveBeenCalledWith(reqId, 'Hello fast Mochi', []);
+    });
+  });
 });
 

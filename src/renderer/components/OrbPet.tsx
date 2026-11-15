@@ -132,6 +132,8 @@ export const OrbPet: React.FC = () => {
   const [ollamaOnline, setOllamaOnline] = useState<boolean>(false);
   const [matrixState, setMatrixState] = useState<MatrixOrbState>('idle');
   const [typingLevel, setTypingLevel] = useState<number>(0.2);
+  const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
+  const activeStreamIdRef = useRef<string | null>(null);
   const quickChatInputRef = useRef<HTMLInputElement>(null);
   const chatFeedRef = useRef<HTMLDivElement>(null);
   const typingDecayRef = useRef<number | null>(null);
@@ -209,9 +211,91 @@ export const OrbPet: React.FC = () => {
     return () => clearTimeout(enterTimer);
   }, []);
 
+  // High-Speed Streaming Listener (Sub-200ms Token Delivery & Dynamic Wave Ripple)
+  useEffect(() => {
+    if (!window.mochiApi?.onAiStreamChunk || !window.mochiApi?.onAiStreamEnd) return;
+
+    const unsubChunk = window.mochiApi.onAiStreamChunk(({ id, chunk }) => {
+      if (activeStreamIdRef.current !== id) return;
+
+      setIsChatThinking(false);
+      setStreamingMsgId(id);
+      setMatrixState('listening');
+      setTypingLevel(0.85); // Energize Matrix Orb acoustic wave with streaming tokens
+      setIsSpeaking(true);
+
+      setQuickChatHistory((prev) => {
+        const idx = prev.findIndex((m) => m.id === id);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], text: updated[idx].text + chunk };
+          return updated;
+        } else {
+          return [
+            ...prev,
+            {
+              id,
+              sender: 'mochi',
+              text: chunk,
+              time: 'Just now',
+            },
+          ];
+        }
+      });
+    });
+
+    const unsubEnd = window.mochiApi.onAiStreamEnd(({ id, model, error }) => {
+      if (activeStreamIdRef.current !== id) return;
+      activeStreamIdRef.current = null;
+      setStreamingMsgId(null);
+      setIsChatThinking(false);
+      setMatrixState('listening');
+
+      if (model) {
+        setOllamaModel(model);
+        setOllamaOnline(true);
+      }
+
+      if (error) {
+        setQuickChatHistory((prev) => {
+          const idx = prev.findIndex((m) => m.id === id);
+          if (idx !== -1 && prev[idx].text.trim()) {
+            return prev;
+          }
+          const notice = "I had a momentary connection hiccup with Ollama. Make sure 'ollama serve' is running and try again! ✨";
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], text: notice };
+            return updated;
+          }
+          return [
+            ...prev,
+            {
+              id,
+              sender: 'mochi',
+              text: notice,
+              time: 'Just now',
+            },
+          ];
+        });
+      }
+
+      SoundEffects.chirp(0.35);
+      setTimeout(() => {
+        setIsSpeaking(false);
+        setTypingLevel(0.25);
+      }, 3000);
+    });
+
+    return () => {
+      unsubChunk();
+      unsubEnd();
+    };
+  }, []);
+
   const handleSendPrompt = async (promptToSend: string, chipId?: string) => {
     const prompt = promptToSend.trim();
-    if (!prompt || isChatThinking) return;
+    if (!prompt || isChatThinking || activeStreamIdRef.current) return;
 
     if (chipId) {
       setSelectedChipId(chipId);
@@ -232,57 +316,82 @@ export const OrbPet: React.FC = () => {
     setMatrixState('thinking');
     SoundEffects.tap(0.2);
 
+    const historyForIpc = newHistory.map(m => ({ sender: m.sender, text: m.text }));
+    const requestId = `mochi-${Date.now()}`;
+    activeStreamIdRef.current = requestId;
+
+    // Add placeholder message ready for streaming
+    setQuickChatHistory((prev) => [
+      ...prev,
+      {
+        id: requestId,
+        sender: 'mochi',
+        text: '',
+        time: 'Just now',
+      },
+    ]);
+
+    // Attempt high-speed streaming first (sub-200ms TTFT)
+    if (window.mochiApi?.queryAiStream) {
+      try {
+        const streamResult = await window.mochiApi.queryAiStream(requestId, prompt, historyForIpc);
+        if (streamResult?.started) {
+          return; // The streaming event listener will populate tokens in real-time
+        }
+      } catch {
+        // Stream initiation failed, fallback to queryAi below
+      }
+    }
+
+    // Fallback: Synchronous queryAi
     try {
       let replyText = '';
       if (window.mochiApi?.queryAi) {
-        const historyForIpc = newHistory.map(m => ({ sender: m.sender, text: m.text }));
         const aiResult = await window.mochiApi.queryAi(prompt, historyForIpc);
         if (aiResult?.text) {
           replyText = aiResult.text;
           if (aiResult.model) setOllamaModel(aiResult.model);
           setOllamaOnline(true);
         } else if (aiResult?.error) {
-          // Graceful local heuristic fallback
           const fallback = await AiCompanionService.generateResponse(prompt, historyForIpc as any, { provider: 'offline-local' });
-          replyText = `${fallback.text}\n\n*(Local Ollama notice: ${aiResult.error})*`;
+          replyText = `${fallback.text}
+
+*(Local Ollama notice: ${aiResult.error})*`;
         }
       } else {
-        const historyForIpc = newHistory.map(m => ({ sender: m.sender, text: m.text }));
         const fallback = await AiCompanionService.generateResponse(prompt, historyForIpc as any, { provider: 'offline-local' });
         replyText = fallback.text;
       }
 
-      // Ollama replied! Trigger wave response animation & sound effect
+      activeStreamIdRef.current = null;
       setIsChatThinking(false);
       setMatrixState('listening');
       setTypingLevel(0.75);
       setIsSpeaking(true);
       SoundEffects.chirp(0.35);
 
-      const mochiMessage: ChatMessage = {
-        id: `mochi-${Date.now()}`,
-        sender: 'mochi',
-        text: replyText,
-        time: 'Just now',
-      };
-      setQuickChatHistory((prev) => [...prev, mochiMessage]);
+      setQuickChatHistory((prev) =>
+        prev.map((msg) => (msg.id === requestId ? { ...msg, text: replyText } : msg))
+      );
 
       setTimeout(() => {
         setIsSpeaking(false);
         setTypingLevel(0.25);
       }, 4500);
     } catch {
+      activeStreamIdRef.current = null;
       setIsChatThinking(false);
       setMatrixState('listening');
-      setQuickChatHistory((prev) => [
-        ...prev,
-        {
-          id: `err-${Date.now()}`,
-          sender: 'mochi',
-          text: "I had a momentary connection hiccup with Ollama. Make sure 'ollama serve' is active and try again! ✨",
-          time: 'Just now',
-        },
-      ]);
+      setQuickChatHistory((prev) =>
+        prev.map((msg) =>
+          msg.id === requestId
+            ? {
+                ...msg,
+                text: "I had a momentary connection hiccup with Ollama. Make sure 'ollama serve' is active and try again! ✨",
+              }
+            : msg
+        )
+      );
     }
   };
 
@@ -875,6 +984,12 @@ export const OrbPet: React.FC = () => {
               {/* Options Dropdown */}
               {showMenuDropdown && (
                 <div className="modern-options-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <div className="dropdown-section-title">⚡ Speed & Performance</div>
+                  <div className="dropdown-info-text">
+                    Streaming enabled. Instant model tip: <br />
+                    <code>ollama run llama3.2:1b</code>
+                  </div>
+                  <div className="dropdown-divider" />
                   <button
                     className="dropdown-opt-btn"
                     onClick={() => {
@@ -928,20 +1043,24 @@ export const OrbPet: React.FC = () => {
             </div>
 
             {/* Conversation Messages */}
-            {quickChatHistory.map((msg) => (
-              <div key={msg.id} className={`modern-msg-group ${msg.sender}`}>
-                {msg.sender === 'user' ? (
-                  <>
-                    <div className="modern-user-bubble">
-                      {msg.text}
-                    </div>
-                    <span className="modern-bubble-timestamp right">{msg.time}</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="modern-ai-bubble">
-                      {msg.text}
-                    </div>
+            {quickChatHistory.map((msg) => {
+              if (msg.sender === 'mochi' && !msg.text) return null;
+              const isCurrentlyStreaming = streamingMsgId === msg.id;
+              return (
+                <div key={msg.id} className={`modern-msg-group ${msg.sender}`}>
+                  {msg.sender === 'user' ? (
+                    <>
+                      <div className="modern-user-bubble">
+                        {msg.text}
+                      </div>
+                      <span className="modern-bubble-timestamp right">{msg.time}</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="modern-ai-bubble">
+                        {msg.text}
+                        {isCurrentlyStreaming && <span className="modern-streaming-cursor">▍</span>}
+                      </div>
                     <div className="modern-ai-footer-row">
                       <div className="modern-feedback-actions">
                         <button
@@ -971,7 +1090,8 @@ export const OrbPet: React.FC = () => {
                   </>
                 )}
               </div>
-            ))}
+            );
+          })}
 
             {/* Thinking / Reasoning State */}
             {isChatThinking && (

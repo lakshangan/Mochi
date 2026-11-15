@@ -173,6 +173,23 @@ const mochiApi: ElectronMochiAPI = {
   queryAi: (prompt: string, history: any[]) => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_QUERY, prompt, history);
   },
+  queryAiStream: (requestId: string, prompt: string, history: any[]) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AI_QUERY_STREAM, requestId, prompt, history);
+  },
+  onAiStreamChunk: (callback: (payload: { id: string; chunk: string }) => void) => {
+    const handler = (_event: any, payload: { id: string; chunk: string }) => callback(payload);
+    ipcRenderer.on(IPC_CHANNELS.AI_STREAM_CHUNK, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.AI_STREAM_CHUNK, handler);
+    };
+  },
+  onAiStreamEnd: (callback: (payload: { id: string; fullText: string; model?: string; error?: string }) => void) => {
+    const handler = (_event: any, payload: { id: string; fullText: string; model?: string; error?: string }) => callback(payload);
+    ipcRenderer.on(IPC_CHANNELS.AI_STREAM_END, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.AI_STREAM_END, handler);
+    };
+  },
   getOllamaModels: (endpointUrl?: string) => {
     return ipcRenderer.invoke(IPC_CHANNELS.OLLAMA_GET_MODELS, endpointUrl);
   },

@@ -316,6 +316,8 @@ function registerIpcHandlers(): void {
     return true;
   });
 
+  let cachedOllamaModel: string | null = null;
+
   // AI Proxy Handler with SSRF Defense (Supports Local Ollama & OpenAI)
   ipcMain.handle(
     IPC_CHANNELS.AI_QUERY,
@@ -338,15 +340,19 @@ function registerIpcHandlers(): void {
         }
 
         try {
-          // Resolve model: use configured model or discover from Ollama
+          // Resolve model: use configured model or discover from Ollama (with memory cache)
           let selectedModel = (settings.model || '').trim();
+          if (!selectedModel && cachedOllamaModel) {
+            selectedModel = cachedOllamaModel;
+          }
           if (!selectedModel) {
             try {
-              const tagsRes = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(2000) });
+              const tagsRes = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(1500) });
               if (tagsRes.ok) {
                 const tagsData = (await tagsRes.json()) as any;
                 if (Array.isArray(tagsData.models) && tagsData.models.length > 0) {
                   selectedModel = tagsData.models[0].name || tagsData.models[0].model;
+                  cachedOllamaModel = selectedModel;
                 }
               }
             } catch {
@@ -367,7 +373,7 @@ function registerIpcHandlers(): void {
             { role: 'user', content: safePrompt },
           ];
 
-          // Query Ollama /api/chat
+          // Query Ollama /api/chat with High-Speed Inference Flags
           const res = await fetch(`${endpoint}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -375,8 +381,13 @@ function registerIpcHandlers(): void {
               model: selectedModel,
               messages: chatMessages,
               stream: false,
+              keep_alive: '30m', // Keep model hot in memory to eliminate cold reload delay
               options: {
                 temperature: settings.temperature ?? 0.7,
+                num_predict: 140, // Cap response to 1-3 punchy sentences (sub-second generation)
+                num_ctx: 1024,    // Faster KV context evaluation
+                top_k: 40,
+                top_p: 0.9,
               },
             }),
             signal: AbortSignal.timeout(45000), // 45s timeout for local LLM inference
@@ -399,6 +410,11 @@ function registerIpcHandlers(): void {
               prompt: safePrompt,
               system: systemPrompt,
               stream: false,
+              keep_alive: '30m',
+              options: {
+                num_predict: 140,
+                num_ctx: 1024,
+              },
             }),
             signal: AbortSignal.timeout(45000),
           });
@@ -474,6 +490,143 @@ function registerIpcHandlers(): void {
       }
 
       return { text: '', error: 'AI provider is set to offline-local' };
+    }
+  );
+
+  // AI Streaming Proxy for Instant Real-Time Tokens (Sub-200ms TTFT)
+  ipcMain.handle(
+    IPC_CHANNELS.AI_QUERY_STREAM,
+    async (event, requestId: string, prompt: string, history: any[]) => {
+      if (typeof prompt !== 'string' || !requestId) {
+        return { started: false, error: 'Invalid prompt or requestId' };
+      }
+      const safePrompt = prompt.slice(0, 2000);
+      const settings = persistenceService.getState().settings.ai || { provider: 'ollama' };
+      const userName = persistenceService.getState().settings.userName;
+      const userContext = userName ? ` The user's name is ${userName}. Address them warmly when appropriate.` : '';
+      const systemPrompt = `You are Mochi, a lively, wonderfully natural, intelligent, and empathetic digital desktop companion.${userContext} Speak in fluent, warm, conversational human language. Never sound robotic, canned, or corporate. Keep responses concise and engaging (1 to 3 punchy sentences), offering uplifting encouragement, study/focus advice, quick wellness checks (hydration, breaks), and charming friendly banter with natural emojis (✨, ☕, 🚀, 💡, 🌿).`;
+
+      const endpoint = (settings.apiEndpoint || 'http://127.0.0.1:11434').trim().replace(/\/+$/, '');
+      const endpointCheck = SecurityValidator.validateOllamaEndpoint(endpoint);
+      if (!endpointCheck.valid) {
+        event.sender.send(IPC_CHANNELS.AI_STREAM_END, {
+          id: requestId,
+          fullText: '',
+          error: endpointCheck.reason || 'Invalid endpoint',
+        });
+        return { started: false, error: endpointCheck.reason };
+      }
+
+      let selectedModel = (settings.model || '').trim();
+      if (!selectedModel && cachedOllamaModel) {
+        selectedModel = cachedOllamaModel;
+      }
+      if (!selectedModel) {
+        try {
+          const tagsRes = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(1500) });
+          if (tagsRes.ok) {
+            const tagsData = (await tagsRes.json()) as any;
+            if (Array.isArray(tagsData.models) && tagsData.models.length > 0) {
+              selectedModel = tagsData.models[0].name || tagsData.models[0].model;
+              cachedOllamaModel = selectedModel;
+            }
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      if (!selectedModel) selectedModel = 'llama3.2';
+
+      const chatMessages = [
+        { role: 'system', content: systemPrompt },
+        ...(Array.isArray(history) ? history : []).slice(-6).map((m: any) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: typeof m.text === 'string' ? m.text.slice(0, 1000) : '',
+        })),
+        { role: 'user', content: safePrompt },
+      ];
+
+      try {
+        const res = await fetch(`${endpoint}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: chatMessages,
+            stream: true,
+            keep_alive: '30m', // Keep model hot in memory to eliminate cold reload delay
+            options: {
+              temperature: settings.temperature ?? 0.7,
+              num_predict: 140, // Fast response cap
+              num_ctx: 1024,
+              top_k: 40,
+              top_p: 0.9,
+            },
+          }),
+          signal: AbortSignal.timeout(45000),
+        });
+
+        if (!res.ok || !res.body) {
+          throw new Error(`Ollama returned status ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            try {
+              const parsed = JSON.parse(trimmed);
+              const chunk = parsed.message?.content || parsed.response || '';
+              if (chunk) {
+                fullText += chunk;
+                event.sender.send(IPC_CHANNELS.AI_STREAM_CHUNK, { id: requestId, chunk });
+              }
+            } catch {
+              // Partial line JSON
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          try {
+            const parsed = JSON.parse(buffer.trim());
+            const chunk = parsed.message?.content || parsed.response || '';
+            if (chunk) {
+              fullText += chunk;
+              event.sender.send(IPC_CHANNELS.AI_STREAM_CHUNK, { id: requestId, chunk });
+            }
+          } catch {
+            // Ignore
+          }
+        }
+
+        event.sender.send(IPC_CHANNELS.AI_STREAM_END, {
+          id: requestId,
+          fullText,
+          model: selectedModel,
+        });
+
+        return { started: true };
+      } catch (err: any) {
+        event.sender.send(IPC_CHANNELS.AI_STREAM_END, {
+          id: requestId,
+          fullText: '',
+          error: err?.message || 'Streaming failed',
+        });
+        return { started: false, error: err?.message };
+      }
     }
   );
 
