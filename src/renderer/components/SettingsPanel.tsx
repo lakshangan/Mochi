@@ -32,6 +32,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onResetAll,
 }) => {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [ollamaStatus, setOllamaStatus] = useState<{
+    checking: boolean;
+    available?: boolean;
+    models?: string[];
+    error?: string;
+  }>({ checking: false });
+
+  const checkOllamaConnection = async () => {
+    setOllamaStatus({ checking: true });
+    try {
+      if (window.mochiApi?.getOllamaModels) {
+        const res = await window.mochiApi.getOllamaModels(settings.ai?.apiEndpoint);
+        setOllamaStatus({
+          checking: false,
+          available: res.available,
+          models: res.models,
+          error: res.error,
+        });
+        if (res.available && res.models && res.models.length > 0 && !settings.ai.model) {
+          onUpdateSettings({
+            ai: { ...settings.ai, model: res.models[0] },
+          });
+        }
+      } else {
+        setOllamaStatus({ checking: false, available: false, error: 'IPC bridge not ready' });
+      }
+    } catch (err: any) {
+      setOllamaStatus({ checking: false, available: false, error: err.message });
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -768,11 +798,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="setting-label-col">
             <span className="setting-name">Provider</span>
             <span className="setting-desc">
-              Core Mochi features operate 100% offline without an external API key.
+              Choose your AI engine. Ollama runs 100% locally and privately on your machine.
             </span>
           </div>
           <select
-            value={settings.ai.provider}
+            value={settings.ai.provider || 'ollama'}
             onChange={(e) =>
               onUpdateSettings({
                 ai: { ...settings.ai, provider: e.target.value as any },
@@ -780,10 +810,114 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             }
             className="select-dropdown w-full"
           >
-            <option value="offline-local">Offline Local Heuristic (No Key Needed)</option>
-            <option value="openai">OpenAI Compatible (GPT-4o / custom endpoint)</option>
+            <option value="ollama">Ollama Local LLM (100% Private, Free, On-Device)</option>
+            <option value="offline-local">Offline Rule-Based Companion (Lightweight)</option>
+            <option value="openai">OpenAI Compatible (Cloud API)</option>
           </select>
         </div>
+
+        {(settings.ai.provider === 'ollama' || !settings.ai.provider) && (
+          <>
+            <div
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: 'rgba(34, 197, 94, 0.12)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                fontSize: '11px',
+                color: '#86efac',
+                lineHeight: '1.4',
+                marginTop: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>🛡️</span>
+              <span>
+                <strong>100% Private & Local:</strong> Chats with Mochi run directly on your hardware via Ollama. No data ever leaves your computer.
+              </span>
+            </div>
+
+            <div className="setting-item vertical">
+              <div className="setting-label-col">
+                <span className="setting-name">Ollama Endpoint</span>
+                <span className="setting-desc">Default local address (e.g. http://127.0.0.1:11434)</span>
+              </div>
+              <input
+                type="text"
+                placeholder="http://127.0.0.1:11434"
+                value={settings.ai.apiEndpoint || 'http://127.0.0.1:11434'}
+                onChange={(e) =>
+                  onUpdateSettings({
+                    ai: { ...settings.ai, apiEndpoint: e.target.value },
+                  })
+                }
+                className="text-input"
+              />
+            </div>
+
+            <div className="setting-item vertical">
+              <div className="setting-label-col">
+                <span className="setting-name">Model Name</span>
+                <span className="setting-desc">Local model installed in Ollama (e.g. llama3.2, mistral, deepseek-r1)</span>
+              </div>
+              <div className="input-with-button">
+                <input
+                  type="text"
+                  placeholder="llama3.2"
+                  value={settings.ai.model || 'llama3.2'}
+                  onChange={(e) =>
+                    onUpdateSettings({
+                      ai: { ...settings.ai, model: e.target.value },
+                    })
+                  }
+                  className="text-input"
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  onClick={checkOllamaConnection}
+                  disabled={ollamaStatus.checking}
+                >
+                  {ollamaStatus.checking ? 'Testing...' : 'Discover Models'}
+                </button>
+              </div>
+
+              {ollamaStatus.available && ollamaStatus.models && (
+                <div style={{ marginTop: '8px', fontSize: '11px', color: '#38bdf8' }}>
+                  <span>✓ Ollama Connected! Available models: </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                    {ollamaStatus.models.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => onUpdateSettings({ ai: { ...settings.ai, model: m } })}
+                        style={{
+                          background: settings.ai.model === m ? 'rgba(56, 189, 248, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                          border: settings.ai.model === m ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#fff',
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          cursor: 'pointer',
+                          fontSize: '10.5px',
+                        }}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {ollamaStatus.available === false && (
+                <div style={{ marginTop: '6px', fontSize: '11px', color: '#f87171' }}>
+                  ⚠️ {ollamaStatus.error || 'Cannot connect to Ollama. Make sure `ollama serve` is running.'}
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {settings.ai.provider === 'openai' && (
           <>

@@ -109,6 +109,53 @@ export class SecurityValidator {
   }
 
   /**
+   * Validates a local Ollama API endpoint.
+   * Explicitly allows local loopback (localhost, 127.0.0.1, ::1) over HTTP or HTTPS.
+   * Blocks cloud metadata services (169.254.x.x) and remote private subnets.
+   */
+  public static validateOllamaEndpoint(urlStr: string): { valid: boolean; reason?: string } {
+    if (!urlStr || typeof urlStr !== 'string') {
+      return { valid: false, reason: 'Endpoint URL must be a non-empty string' };
+    }
+
+    try {
+      const parsed = new URL(urlStr);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return { valid: false, reason: 'Security violation: Ollama endpoint must use HTTP or HTTPS' };
+      }
+
+      const host = parsed.hostname.toLowerCase();
+
+      // Check Cloud metadata IP (AWS/GCP/Azure link-local: 169.254.169.254)
+      if (host === '169.254.169.254' || host.startsWith('169.254.')) {
+        return { valid: false, reason: 'Security violation: Cloud metadata endpoints are blocked' };
+      }
+
+      // Explicitly allow local loopback
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+        return { valid: true };
+      }
+
+      // Block RFC 1918 remote private IPv4 ranges to prevent intranet scanning
+      if (host.startsWith('10.') || host.startsWith('192.168.')) {
+        return { valid: false, reason: 'Security violation: Remote private network endpoints are blocked' };
+      }
+
+      if (host.startsWith('172.')) {
+        const parts = host.split('.');
+        const secondOctet = parseInt(parts[1], 10);
+        if (secondOctet >= 16 && secondOctet <= 31) {
+          return { valid: false, reason: 'Security violation: Remote private network endpoints are blocked' };
+        }
+      }
+
+      return { valid: true };
+    } catch {
+      return { valid: false, reason: 'Malformed URL' };
+    }
+  }
+
+  /**
    * Validates an external URL for navigation or shell opening.
    * Only allows safe web protocols (https:, http:, mailto:).
    * Blocks dangerous protocols (javascript:, file:, data:, vbscript:, shell:, etc.)

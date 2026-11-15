@@ -311,7 +311,7 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, reaction);
   });
 
-  // AI Proxy Handler with SSRF and Payload Protection
+  // AI Proxy Handler with SSRF Defense (Supports Local Ollama & OpenAI)
   ipcMain.handle(
     IPC_CHANNELS.AI_QUERY,
     async (_event, prompt: string, history: any[]) => {
@@ -319,62 +319,186 @@ function registerIpcHandlers(): void {
         return { text: '', error: 'Invalid prompt format' };
       }
       const safePrompt = prompt.slice(0, 2000); // Prevent buffer/memory exhaustion attacks
-      const settings = persistenceService.getState().settings.ai;
-      if (settings.provider !== 'openai' || !settings.apiKey) {
-        return { text: '', error: 'OpenAI provider not configured with API key' };
-      }
+      const settings = persistenceService.getState().settings.ai || { provider: 'ollama' };
+      const userName = persistenceService.getState().settings.userName;
+      const userContext = userName ? ` The user's name is ${userName}. Address them warmly when appropriate.` : '';
+      const systemPrompt = `You are Mochi, a lively, wonderfully natural, intelligent, and empathetic digital desktop companion.${userContext} Speak in fluent, warm, conversational human language. Never sound robotic, canned, or corporate. Keep responses concise and engaging (1 to 3 punchy sentences), offering uplifting encouragement, study/focus advice, quick wellness checks (hydration, breaks), and charming friendly banter with natural emojis (✨, ☕, 🚀, 💡, 🌿).`;
 
-      const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
-      const endpointCheck = SecurityValidator.validateEndpointUrl(endpoint);
-      if (!endpointCheck.valid) {
-        return { text: '', error: endpointCheck.reason || 'Invalid API endpoint URL' };
-      }
-
-      try {
-        const model = (settings.model || 'gpt-4o-mini').slice(0, 50);
-
-        const userName = persistenceService.getState().settings.userName;
-        const userContext = userName ? ` The user's name is ${userName}. Address them warmly when appropriate.` : '';
-
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${settings.apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  `You are Mochi, a lively, wonderfully natural, intelligent, and empathetic digital desktop companion.${userContext} Speak in fluent, warm, conversational human language. Never sound robotic, canned, or corporate. Keep responses concise and engaging (1 to 3 punchy sentences), offering uplifting encouragement, study/focus advice, quick wellness checks (hydration, breaks), and charming friendly banter with natural emojis (✨, ☕, 🚀, 💡, 🌿).`,
-              },
-              ...(Array.isArray(history) ? history : []).slice(-4).map((m: any) => ({
-                role: m.sender === 'user' ? 'user' : 'assistant',
-                content: typeof m.text === 'string' ? m.text.slice(0, 1000) : '',
-              })),
-              { role: 'user', content: safePrompt },
-            ],
-            temperature: settings.temperature ?? 0.7,
-            max_tokens: 150,
-          }),
-        });
-
-        if (res.ok) {
-          const data = (await res.json()) as any;
-          const content = data.choices?.[0]?.message?.content?.trim();
-          if (content) {
-            return { text: content };
-          }
+      // 1. Local Ollama LLM Handler
+      if (settings.provider === 'ollama' || !settings.provider || settings.provider === 'custom') {
+        const endpoint = (settings.apiEndpoint || 'http://127.0.0.1:11434').trim().replace(/\/+$/, '');
+        const endpointCheck = SecurityValidator.validateOllamaEndpoint(endpoint);
+        if (!endpointCheck.valid) {
+          return { text: '', error: endpointCheck.reason || 'Invalid Ollama endpoint URL' };
         }
-        return { text: '', error: `Provider returned HTTP status ${res.status}` };
-      } catch (err: any) {
-        console.warn('[Main] AI query proxy error:', err);
-        return { text: '', error: err.message || 'AI query failed' };
+
+        try {
+          // Resolve model: use configured model or discover from Ollama
+          let selectedModel = (settings.model || '').trim();
+          if (!selectedModel) {
+            try {
+              const tagsRes = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(2000) });
+              if (tagsRes.ok) {
+                const tagsData = (await tagsRes.json()) as any;
+                if (Array.isArray(tagsData.models) && tagsData.models.length > 0) {
+                  selectedModel = tagsData.models[0].name || tagsData.models[0].model;
+                }
+              }
+            } catch {
+              // Ignore tags error, fallback to default
+            }
+          }
+          if (!selectedModel) {
+            selectedModel = 'llama3.2';
+          }
+
+          // Format chat messages
+          const chatMessages = [
+            { role: 'system', content: systemPrompt },
+            ...(Array.isArray(history) ? history : []).slice(-6).map((m: any) => ({
+              role: m.sender === 'user' ? 'user' : 'assistant',
+              content: typeof m.text === 'string' ? m.text.slice(0, 1000) : '',
+            })),
+            { role: 'user', content: safePrompt },
+          ];
+
+          // Query Ollama /api/chat
+          const res = await fetch(`${endpoint}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: selectedModel,
+              messages: chatMessages,
+              stream: false,
+              options: {
+                temperature: settings.temperature ?? 0.7,
+              },
+            }),
+            signal: AbortSignal.timeout(45000), // 45s timeout for local LLM inference
+          });
+
+          if (res.ok) {
+            const data = (await res.json()) as any;
+            const content = data.message?.content?.trim();
+            if (content) {
+              return { text: content, model: data.model || selectedModel, provider: 'ollama' };
+            }
+          }
+
+          // Fallback to /api/generate if /api/chat is not available
+          const genRes = await fetch(`${endpoint}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: selectedModel,
+              prompt: safePrompt,
+              system: systemPrompt,
+              stream: false,
+            }),
+            signal: AbortSignal.timeout(45000),
+          });
+
+          if (genRes.ok) {
+            const genData = (await genRes.json()) as any;
+            const content = genData.response?.trim();
+            if (content) {
+              return { text: content, model: selectedModel, provider: 'ollama' };
+            }
+          }
+
+          return { text: '', error: `Ollama returned HTTP status ${res.status}. Please check model "${selectedModel}".` };
+        } catch (err: any) {
+          if (err.name === 'TimeoutError') {
+            return { text: '', error: 'Ollama took too long to generate a response (timeout).' };
+          }
+          return {
+            text: '',
+            error: `Could not connect to Ollama at ${endpoint}. Please ensure Ollama is running (\`ollama serve\`).`,
+          };
+        }
       }
+
+      // 2. OpenAI / Cloud API Handler
+      if (settings.provider === 'openai') {
+        if (!settings.apiKey) {
+          return { text: '', error: 'OpenAI provider not configured with API key' };
+        }
+
+        const endpoint = settings.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
+        const endpointCheck = SecurityValidator.validateEndpointUrl(endpoint);
+        if (!endpointCheck.valid) {
+          return { text: '', error: endpointCheck.reason || 'Invalid API endpoint URL' };
+        }
+
+        try {
+          const model = (settings.model || 'gpt-4o-mini').slice(0, 50);
+
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${settings.apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                ...(Array.isArray(history) ? history : []).slice(-4).map((m: any) => ({
+                  role: m.sender === 'user' ? 'user' : 'assistant',
+                  content: typeof m.text === 'string' ? m.text.slice(0, 1000) : '',
+                })),
+                { role: 'user', content: safePrompt },
+              ],
+              temperature: settings.temperature ?? 0.7,
+              max_tokens: 150,
+            }),
+          });
+
+          if (res.ok) {
+            const data = (await res.json()) as any;
+            const content = data.choices?.[0]?.message?.content?.trim();
+            if (content) {
+              return { text: content, model, provider: 'openai' };
+            }
+          }
+          return { text: '', error: `OpenAI provider returned HTTP status ${res.status}` };
+        } catch (err: any) {
+          console.warn('[Main] AI query proxy error:', err);
+          return { text: '', error: err.message || 'AI query failed' };
+        }
+      }
+
+      return { text: '', error: 'AI provider is set to offline-local' };
     }
   );
+
+  // Ollama Model Discovery & Health Check Handler
+  ipcMain.handle(IPC_CHANNELS.OLLAMA_GET_MODELS, async (_event, endpointUrl?: string) => {
+    const rawEndpoint = endpointUrl || persistenceService.getState().settings.ai?.apiEndpoint || 'http://127.0.0.1:11434';
+    const endpoint = rawEndpoint.trim().replace(/\/+$/, '');
+    const check = SecurityValidator.validateOllamaEndpoint(endpoint);
+    if (!check.valid) {
+      return { available: false, models: [], error: check.reason };
+    }
+
+    try {
+      const res = await fetch(`${endpoint}/api/tags`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        const models = Array.isArray(data.models)
+          ? data.models.map((m: any) => m.name || m.model).filter(Boolean)
+          : [];
+        return { available: true, models };
+      }
+      return { available: false, models: [], error: `Ollama returned status ${res.status}` };
+    } catch (err: any) {
+      return {
+        available: false,
+        models: [],
+        error: `Ollama is not reachable at ${endpoint}. Run 'ollama serve' or open the Ollama application.`,
+      };
+    }
+  });
 
   // System
   ipcMain.handle(IPC_CHANNELS.SYSTEM_SHOW_NOTIFICATION, (_event, title: string, body: string) => {

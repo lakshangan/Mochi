@@ -166,9 +166,12 @@ const mochiApi: ElectronMochiAPI = {
     };
   },
 
-  // AI Main Process Proxy
+  // AI Main Process Proxy (Local Ollama & Cloud)
   queryAi: (prompt: string, history: any[]) => {
     return ipcRenderer.invoke(IPC_CHANNELS.AI_QUERY, prompt, history);
+  },
+  getOllamaModels: (endpointUrl?: string) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.OLLAMA_GET_MODELS, endpointUrl);
   },
 
   // System

@@ -19,6 +19,8 @@ import {
   Music,
   Flame,
   GitBranch,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { GlowLavaOrb } from './GlowLavaOrb';
@@ -26,6 +28,7 @@ import { IslandFluidOrb } from './IslandFluidOrb';
 import { ConfettiEffect } from './ConfettiEffect';
 import { EyeReliefGuide } from './EyeReliefGuide';
 import { SoundscapeService } from '../services/soundscape-service';
+import { AiCompanionService } from '../services/ai-service';
 import type { OrbState } from '@/registry/lib/orb-state';
 
 const mapPetStateToOrbState = (petState: PetAnimationState): OrbState => {
@@ -95,6 +98,27 @@ export const OrbPet: React.FC = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
+  // Direct Floating Orb Chat with Local Ollama AI
+  const [showQuickChat, setShowQuickChat] = useState(false);
+  const [quickChatInput, setQuickChatInput] = useState('');
+  const [isChatThinking, setIsChatThinking] = useState(false);
+  const [quickChatHistory, setQuickChatHistory] = useState<{ sender: 'user' | 'mochi'; text: string }[]>([]);
+  const [ollamaModel, setOllamaModel] = useState<string>('llama3.2');
+  const [ollamaOnline, setOllamaOnline] = useState<boolean>(false);
+  const quickChatInputRef = useRef<HTMLInputElement>(null);
+
+  // Check Ollama service on startup
+  useEffect(() => {
+    if (window.mochiApi?.getOllamaModels) {
+      window.mochiApi.getOllamaModels().then((res) => {
+        if (res.available && res.models && res.models.length > 0) {
+          setOllamaOnline(true);
+          setOllamaModel(res.models[0]);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   // Apple-style entrance animation and chime on startup
   useEffect(() => {
     SoundEffects.appleChime(0.3);
@@ -103,6 +127,59 @@ export const OrbPet: React.FC = () => {
     }, 650);
     return () => clearTimeout(enterTimer);
   }, []);
+
+  const handleSendQuickChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const prompt = quickChatInput.trim();
+    if (!prompt || isChatThinking) return;
+
+    const userMessage = { sender: 'user' as const, text: prompt };
+    const newHistory = [...quickChatHistory, userMessage];
+    setQuickChatHistory(newHistory);
+    setQuickChatInput('');
+    setIsChatThinking(true);
+
+    // Set Orb to Thinking State (triggers fluid thinking orbital synthesis & aura)
+    animControllerRef.current?.setState('thinking');
+    SoundEffects.tap(0.2);
+
+    try {
+      let replyText = '';
+      if (window.mochiApi?.queryAi) {
+        const aiResult = await window.mochiApi.queryAi(prompt, newHistory);
+        if (aiResult?.text) {
+          replyText = aiResult.text;
+          if (aiResult.model) setOllamaModel(aiResult.model);
+          setOllamaOnline(true);
+        } else if (aiResult?.error) {
+          // Graceful local heuristic fallback
+          const fallback = await AiCompanionService.generateResponse(prompt, newHistory as any, { provider: 'offline-local' });
+          replyText = `${fallback.text}\n\n*(Local Ollama notice: ${aiResult.error})*`;
+        }
+      } else {
+        const fallback = await AiCompanionService.generateResponse(prompt, newHistory as any, { provider: 'offline-local' });
+        replyText = fallback.text;
+      }
+
+      // Ollama replied! Trigger speaking reaction & sound effect
+      setIsChatThinking(false);
+      setIsSpeaking(true);
+      animControllerRef.current?.triggerReaction('happy', 4500);
+      SoundEffects.chirp(0.35);
+
+      setQuickChatHistory((prev) => [...prev, { sender: 'mochi', text: replyText }]);
+
+      setTimeout(() => {
+        setIsSpeaking(false);
+      }, 5000);
+    } catch {
+      setIsChatThinking(false);
+      setQuickChatHistory((prev) => [
+        ...prev,
+        { sender: 'mochi', text: "My thoughts wandered for a second. Ask me again! ✨" },
+      ]);
+    }
+  };
 
   const formatTime = (totalSec: number) => {
     const mins = Math.floor(totalSec / 60);
@@ -665,19 +742,35 @@ export const OrbPet: React.FC = () => {
               </div>
             )}
           </div>
-          <button
-            className="island-expand-icon-btn"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleIsland();
-            }}
-            title="Expand to Mascot Orb"
-          >
-            <Maximize2 size={13} />
-          </button>
+          <div className="island-right-actions">
+            <button
+              className="island-chat-icon-btn"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowQuickChat((prev) => !prev);
+                if (!showQuickChat) {
+                  setTimeout(() => quickChatInputRef.current?.focus(), 80);
+                }
+              }}
+              title="Chat with Mochi (Local Ollama AI)"
+            >
+              <MessageSquare size={12} />
+            </button>
+            <button
+              className="island-expand-icon-btn"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleIsland();
+              }}
+              title="Expand to Mascot Orb"
+            >
+              <Maximize2 size={13} />
+            </button>
+          </div>
         </div>
       ) : (
         <div
@@ -691,6 +784,21 @@ export const OrbPet: React.FC = () => {
             setContextMenuPos({ x: e.clientX, y: e.clientY });
           }}
         >
+          {/* Quick Chat Right Trigger Button on the Orb */}
+          <button
+            className="orb-quick-chat-trigger-btn"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowQuickChat((prev) => !prev);
+              if (!showQuickChat) {
+                setTimeout(() => quickChatInputRef.current?.focus(), 80);
+              }
+            }}
+            title="Chat directly with Mochi (Local Ollama AI)"
+          >
+            <MessageSquare size={13} />
+          </button>
           {/* Apple Startup Bloom Ring */}
           {isEntering && <div className="apple-start-bloom-ring" />}
 
@@ -839,6 +947,17 @@ export const OrbPet: React.FC = () => {
             className="context-menu-item"
             onClick={() => {
               setContextMenuPos(null);
+              setShowQuickChat(true);
+              setTimeout(() => quickChatInputRef.current?.focus(), 80);
+            }}
+          >
+            <MessageSquare size={13} />
+            <span>Chat with Mochi (Local AI)</span>
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              setContextMenuPos(null);
               handleToggleIsland();
             }}
           >
@@ -874,6 +993,82 @@ export const OrbPet: React.FC = () => {
             <Power size={13} />
             <span>Turn Off Mochi</span>
           </button>
+        </div>
+      )}
+
+      {/* Floating Direct Chat Capsule (Local Ollama AI) */}
+      {showQuickChat && (
+        <div
+          className="mochi-quick-chat-capsule"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="quick-chat-header">
+            <div className="quick-chat-title-group">
+              <span className={`quick-chat-status-dot ${ollamaOnline ? 'online' : 'offline'}`} />
+              <span className="quick-chat-title">Chat with Mochi</span>
+              <span className="quick-chat-model-badge">
+                {ollamaModel || 'Ollama Local'}
+              </span>
+            </div>
+            <button
+              className="quick-chat-close-btn"
+              onClick={() => setShowQuickChat(false)}
+              title="Close Chat"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="quick-chat-body">
+            {quickChatHistory.length === 0 ? (
+              <div className="quick-chat-empty-hint">
+                <Sparkles size={12} className="text-cyan animate-pulse" />
+                <span>Private local AI chat powered by Ollama ({ollamaModel || 'llama3.2'}). Type below to speak directly with Mochi!</span>
+              </div>
+            ) : (
+              <div className="quick-chat-messages">
+                {quickChatHistory.slice(-5).map((msg, idx) => (
+                  <div key={idx} className={`quick-chat-msg ${msg.sender}`}>
+                    <span className="msg-bubble">{msg.text}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isChatThinking && (
+              <div className="quick-chat-thinking-indicator">
+                <div className="thinking-dots">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <span className="thinking-text">Thinking with {ollamaModel || 'Ollama'}...</span>
+              </div>
+            )}
+          </div>
+
+          <form className="quick-chat-input-bar" onSubmit={handleSendQuickChat}>
+            <input
+              ref={quickChatInputRef}
+              type="text"
+              className="quick-chat-input"
+              placeholder={isChatThinking ? "Mochi is thinking..." : "Ask or chat with Mochi..."}
+              value={quickChatInput}
+              onChange={(e) => setQuickChatInput(e.target.value)}
+              disabled={isChatThinking}
+              maxLength={400}
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="quick-chat-send-btn"
+              disabled={!quickChatInput.trim() || isChatThinking}
+              title="Send Message (Enter)"
+            >
+              <Send size={12} />
+            </button>
+          </form>
         </div>
       )}
     </div>

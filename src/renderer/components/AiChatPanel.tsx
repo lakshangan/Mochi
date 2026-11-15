@@ -97,24 +97,40 @@ export const AiChatPanel: React.FC<AiChatPanelProps> = ({
           background:
             aiSettings.provider === 'openai'
               ? 'rgba(234, 179, 8, 0.12)'
+              : aiSettings.provider === 'ollama' || !aiSettings.provider
+              ? 'rgba(56, 189, 248, 0.14)'
               : 'rgba(34, 197, 94, 0.12)',
           border:
             aiSettings.provider === 'openai'
               ? '1px solid rgba(234, 179, 8, 0.3)'
+              : aiSettings.provider === 'ollama' || !aiSettings.provider
+              ? '1px solid rgba(56, 189, 248, 0.35)'
               : '1px solid rgba(34, 197, 94, 0.3)',
-          color: aiSettings.provider === 'openai' ? '#fde047' : '#86efac',
+          color:
+            aiSettings.provider === 'openai'
+              ? '#fde047'
+              : aiSettings.provider === 'ollama' || !aiSettings.provider
+              ? '#7dd3fc'
+              : '#86efac',
           marginBottom: '10px',
         }}
       >
         {aiSettings.provider === 'openai' ? (
           <>
             <Cloud size={13} />
-            <span>External LLM Active (Prompts processed via configured OpenAI endpoint)</span>
+            <span>External LLM Active (Prompts processed via OpenAI endpoint)</span>
+          </>
+        ) : aiSettings.provider === 'ollama' || !aiSettings.provider ? (
+          <>
+            <Sparkles size={13} />
+            <span>
+              Ollama Local Model Active ({aiSettings.model || 'llama3.2'} • 100% Private On-Device)
+            </span>
           </>
         ) : (
           <>
             <Shield size={13} />
-            <span>100% Offline Local Engine (Strictly on-device, zero data transmitted)</span>
+            <span>Offline Local Engine (Zero network requests)</span>
           </>
         )}
       </div>

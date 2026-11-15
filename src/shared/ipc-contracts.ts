@@ -63,6 +63,7 @@ export const IPC_CHANNELS = {
 
   // AI & External Services
   AI_QUERY: 'ai:query',
+  OLLAMA_GET_MODELS: 'ai:ollama-get-models',
 
   // Git Companion
   GIT_GET_STATUS: 'git:get-status',
@@ -129,7 +130,8 @@ export interface ElectronMochiAPI {
   onGazeUpdate?: (callback: (gaze: { x: number; y: number }) => void) => () => void;
 
   // AI Main Process Proxy
-  queryAi: (prompt: string, history: any[]) => Promise<{ text: string; error?: string }>;
+  queryAi: (prompt: string, history: any[]) => Promise<{ text: string; model?: string; provider?: string; error?: string }>;
+  getOllamaModels?: (endpointUrl?: string) => Promise<{ available: boolean; models: string[]; error?: string }>;
 
   // System
   onSystemActivity: (callback: (activity: SystemActivityEvent) => void) => () => void;

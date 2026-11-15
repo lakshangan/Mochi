@@ -80,7 +80,7 @@ export interface PomodoroSettings {
 }
 
 export interface AiSettings {
-  provider: 'offline-local' | 'openai' | 'anthropic' | 'custom';
+  provider: 'offline-local' | 'ollama' | 'openai' | 'anthropic' | 'custom';
   apiKey?: string;
   encryptedApiKey?: string;
   apiEndpoint?: string;

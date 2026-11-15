@@ -166,6 +166,18 @@ describe('Security Checks & Hardening Suite', () => {
       const validEndpoint = SecurityValidator.validateEndpointUrl('https://api.openai.com/v1/chat/completions');
       expect(validEndpoint.valid).toBe(true);
     });
+
+    it('verifies safe local Ollama endpoints (loopback allowed, cloud metadata blocked)', () => {
+      expect(SecurityValidator.validateOllamaEndpoint('http://127.0.0.1:11434').valid).toBe(true);
+      expect(SecurityValidator.validateOllamaEndpoint('http://localhost:11434').valid).toBe(true);
+      expect(SecurityValidator.validateOllamaEndpoint('http://127.0.0.1:11434/api/chat').valid).toBe(true);
+
+      // Block cloud metadata & remote private subnets
+      expect(SecurityValidator.validateOllamaEndpoint('http://169.254.169.254/latest').valid).toBe(false);
+      expect(SecurityValidator.validateOllamaEndpoint('http://192.168.1.50:11434').valid).toBe(false);
+      expect(SecurityValidator.validateOllamaEndpoint('http://10.0.0.1:11434').valid).toBe(false);
+      expect(SecurityValidator.validateOllamaEndpoint('ftp://127.0.0.1:11434').valid).toBe(false);
+    });
   });
 
   describe('4. Navigation & Protocol Protection', () => {

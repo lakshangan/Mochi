@@ -770,6 +770,26 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       }
       drawFace(toExpr, transAlpha, cx, faceY);
 
+      // Fluid Dynamic Thinking Orbital Synthesis (Rotates smoothly in 3D perspective during LLM inference)
+      if (activeState === 'thinking') {
+        const thinkAngle = now * 0.0035;
+        const orbitR = 30 * scale;
+        for (let k = 0; k < 3; k++) {
+          const a = thinkAngle + (k * Math.PI * 2) / 3;
+          const px = cx + Math.cos(a) * orbitR;
+          const py = faceY + Math.sin(a) * (orbitR * 0.55);
+          const zScale = 0.8 + 0.35 * Math.sin(a);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px, py, Math.max(1.8, 2.8 * scale * zScale), 0, Math.PI * 2);
+          ctx.fillStyle = k === 0 ? '#38bdf8' : k === 1 ? '#c084fc' : '#00f7ff';
+          ctx.shadowColor = '#a855f7';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
       // Subtle rising sparkle embers
       emberTimer += dt;
       const shouldSpawnEmber = activeState === 'celebrating' || activeState === 'happy' || activeState === 'listening';
@@ -925,6 +945,22 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
 
       {/* 1. Outer Ambient Halo Bloom */}
       <div className="glow-orb-halo" />
+
+      {/* 1.5. Dynamic Holographic Thinking Rings (Active during Local LLM reasoning) */}
+      {state === 'thinking' && (
+        <div className="glow-orb-thinking-aura">
+          <div className="thinking-orbital-ring ring-outer" />
+          <div className="thinking-orbital-ring ring-inner" />
+        </div>
+      )}
+
+      {/* 1.6. Vocal Acoustic Waveform Ripples (Active when Mochi is responding) */}
+      {isSpeaking && (
+        <div className="glow-orb-speaking-aura">
+          <div className="speaking-wave wave-1" />
+          <div className="speaking-wave wave-2" />
+        </div>
+      )}
 
       {/* 2. Optional Orbital Timer Progress Ring */}
       {isTimerActive && (

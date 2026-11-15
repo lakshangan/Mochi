@@ -123,15 +123,25 @@ export class AiCompanionService {
       };
     }
 
-    // 2. If an external AI provider is configured and IPC bridge is available
-    if (settings.provider === 'openai') {
+    // 2. Query Local Ollama or Cloud AI Provider via Main Process Proxy
+    if (settings.provider === 'ollama' || settings.provider === 'openai' || !settings.provider) {
       try {
         if (window.mochiApi?.queryAi) {
           const aiResult = await window.mochiApi.queryAi(userText, history);
-          if (aiResult.text) {
+          if (aiResult?.text) {
             return {
               text: aiResult.text,
               isExternalAi: true,
+            };
+          }
+          if (aiResult?.error && settings.provider === 'ollama') {
+            return {
+              text: `Local Ollama status: ${aiResult.error} Falling back to offline companion mode for now! ✨`,
+              suggestedAction: {
+                type: 'view_tab',
+                label: 'Check Ollama Settings →',
+                payload: { tab: 'settings' },
+              },
             };
           }
         }

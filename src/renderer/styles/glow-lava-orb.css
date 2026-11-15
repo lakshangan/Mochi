@@ -76,6 +76,100 @@
   );
 }
 
+.glow-orb-wrapper[data-state='thinking'] .glow-orb-halo {
+  background: radial-gradient(
+    circle at center,
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(56, 189, 248, 0.35) 45%,
+    rgba(129, 140, 248, 0.18) 65%,
+    transparent 80%
+  );
+  opacity: 0.95;
+  filter: blur(22px);
+  animation: thinkingHaloBreathe 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes thinkingHaloBreathe {
+  0% { transform: scale(0.96); opacity: 0.75; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+/* ========================================================
+   HOLOGRAPHIC THINKING & VOCAL AURA (AI In-Chat Experience)
+   ======================================================== */
+.glow-orb-thinking-aura {
+  position: absolute;
+  inset: -14px;
+  pointer-events: none;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thinking-orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.thinking-orbital-ring.ring-outer {
+  inset: 0;
+  border: 1.5px dashed rgba(192, 132, 252, 0.65);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.3);
+  animation: orbitRingSpin 7s linear infinite;
+}
+
+.thinking-orbital-ring.ring-inner {
+  inset: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  animation: orbitRingSpinReverse 5s linear infinite;
+}
+
+@keyframes orbitRingSpin {
+  0% { transform: rotate(0deg) scale(0.98); }
+  50% { transform: rotate(180deg) scale(1.02); }
+  100% { transform: rotate(360deg) scale(0.98); }
+}
+
+@keyframes orbitRingSpinReverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Speaking Waveform Ripples */
+.glow-orb-speaking-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.speaking-wave {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 247, 255, 0.65);
+  box-shadow: 0 0 16px rgba(0, 247, 255, 0.45);
+  animation: speakingWavePulse 1.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.speaking-wave.wave-2 {
+  animation-delay: 0.7s;
+}
+
+@keyframes speakingWavePulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
 .glow-orb-wrapper[data-state='sleeping'] .glow-orb-halo {
   opacity: 0.25;
   filter: blur(30px);
