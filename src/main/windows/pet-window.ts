@@ -117,10 +117,10 @@ export class PetWindow {
     this.petSize = size;
     if (this.window && !this.window.isDestroyed()) {
       const targetW = this.isChatExpanded
-        ? Math.max(560, size + 390)
+        ? Math.max(600, size + 430)
         : Math.max(340, size + 160);
       const targetH = this.isChatExpanded
-        ? Math.max(480, size + 340)
+        ? Math.max(520, size + 370)
         : Math.max(220, size + 90);
       const [currentX, currentY] = this.window.getPosition();
       const [currentW, currentH] = this.window.getSize();
@@ -145,10 +145,10 @@ export class PetWindow {
     this.isChatExpanded = expanded;
 
     const targetW = expanded
-      ? Math.max(560, this.petSize + 390)
+      ? Math.max(600, this.petSize + 430)
       : Math.max(340, this.petSize + 160);
     const targetH = expanded
-      ? Math.max(480, this.petSize + 340)
+      ? Math.max(520, this.petSize + 370)
       : Math.max(220, this.petSize + 90);
 
     const [curX, curY] = this.window.getPosition();

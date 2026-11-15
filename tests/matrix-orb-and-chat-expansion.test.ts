@@ -99,8 +99,8 @@ describe('Desktop Pet Window Dynamic Chat Expansion & Bottom-Right Anchor Preser
     const desktopBottomRightY = startY + initialH;
 
     // Expand for chat mode
-    const expandedW = Math.max(560, petSize + 390); // 560
-    const expandedH = Math.max(480, petSize + 340); // 480
+    const expandedW = Math.max(600, petSize + 430); // 600
+    const expandedH = Math.max(520, petSize + 370); // 520
 
     const newX = startX + (initialW - expandedW);
     const newY = startY + (initialH - expandedH);
@@ -119,3 +119,4 @@ describe('Desktop Pet Window Dynamic Chat Expansion & Bottom-Right Anchor Preser
     expect(collapsedY + initialH).toBe(desktopBottomRightY);
   });
 });
+

@@ -2774,75 +2774,66 @@ input:checked + .slider:before {
 }
 
 /* ========================================================
-   FUTURISTIC FLOATING ORB CHAT (Local Ollama AI & Matrix Waves)
+   MODERN HIGH-END AI CHAT CARD (Matching Reference Design)
    ======================================================== */
 
-/* Sleek Cyber Floating Trigger Pill (Positioned completely outside the orb) */
+/* Clean Floating Trigger Chip (Outside the orb boundary) */
 .orb-cyber-chat-trigger {
   position: absolute;
   right: calc(100% + 12px);
-  bottom: 8px;
+  bottom: 10px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
+  gap: 6px;
+  padding: 6px 13px;
   border-radius: 9999px;
-  background: rgba(12, 16, 26, 0.92);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1.2px solid rgba(0, 247, 255, 0.4);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.6),
-    0 0 12px rgba(0, 247, 255, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
-  color: #00f7ff;
-  font-size: 11px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   pointer-events: auto;
   z-index: 130;
   white-space: nowrap;
   user-select: none;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .orb-cyber-chat-trigger:hover {
-  background: rgba(15, 23, 42, 0.98);
-  border-color: #00f7ff;
-  color: #ffffff;
-  transform: scale(1.08) translateX(-2px);
-  box-shadow: 
-    0 6px 22px rgba(0, 0, 0, 0.75),
-    0 0 18px rgba(0, 247, 255, 0.5);
+  background: #f8fafc;
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+  transform: scale(1.06) translateX(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.22);
 }
 
-/* Creative Pull-Up Holo-Chat Console (Docked to the left of the Matrix Orb) */
-.mochi-holo-chat-console {
-  width: 340px;
-  height: 350px;
+/* Modern AI Chat Card Container */
+.mochi-modern-chat-card {
+  width: 380px;
+  height: 440px;
   max-height: calc(100vh - 40px);
-  background: rgba(10, 14, 23, 0.94);
-  backdrop-filter: blur(36px) saturate(220%);
-  -webkit-backdrop-filter: blur(36px) saturate(220%);
-  border: 1.5px solid rgba(0, 247, 255, 0.35);
-  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
   box-shadow: 
-    0 24px 60px rgba(0, 0, 0, 0.85),
-    0 0 28px rgba(0, 247, 255, 0.22),
-    inset 0 1px 1px rgba(255, 255, 255, 0.22);
+    0 24px 50px -10px rgba(15, 23, 42, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   pointer-events: auto;
   z-index: 200;
-  animation: holoPullUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modernCardPullUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   user-select: text;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
-@keyframes holoPullUp {
+@keyframes modernCardPullUp {
   0% {
     opacity: 0;
-    transform: translateY(28px) scale(0.94);
+    transform: translateY(24px) scale(0.96);
   }
   100% {
     opacity: 1;
@@ -2850,60 +2841,105 @@ input:checked + .slider:before {
   }
 }
 
-.holo-console-header {
+/* Modern Chat Header */
+.modern-chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  padding: 13px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  position: relative;
 }
 
-.holo-header-info {
+.modern-header-profile {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
 }
 
-.holo-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 10px #22c55e;
+.modern-avatar-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
 }
 
-.holo-status-dot.idle {
-  background: #00f7ff;
-  box-shadow: 0 0 8px #00f7ff;
+.modern-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.holo-title {
-  font-size: 12px;
+.modern-title-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.modern-agent-title {
+  font-size: 13.5px;
   font-weight: 700;
-  letter-spacing: 0.3px;
-  color: #f1f5f9;
+  color: #0f172a;
+  letter-spacing: -0.1px;
 }
 
-.holo-model-pill {
-  font-size: 10px;
-  font-weight: 600;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 2px 7px;
-  border-radius: 6px;
-  max-width: 110px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.modern-agent-verified {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.holo-close-btn {
+.modern-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modern-status-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.modern-status-dot.offline {
+  background: #94a3b8;
+  box-shadow: none;
+}
+
+.modern-engine-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.modern-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.modern-header-icon-btn {
   background: transparent;
   border: none;
   color: #94a3b8;
-  padding: 4px;
+  padding: 5px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -2912,187 +2948,310 @@ input:checked + .slider:before {
   transition: all 0.15s ease;
 }
 
-.holo-close-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+.modern-header-icon-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
 }
 
-.holo-console-feed {
+/* Options dropdown */
+.modern-options-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  z-index: 220;
+}
+
+.dropdown-opt-btn {
+  background: transparent;
+  border: none;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-opt-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Stream / Feed */
+.modern-chat-stream {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  background: #ffffff;
 }
 
-.holo-empty-state {
+.modern-msg-group {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px 10px;
-  gap: 8px;
-  margin: auto 0;
+  max-width: 86%;
 }
 
-.holo-sparkle-icon {
-  color: #00f7ff;
-  animation: sparklePulse 2s infinite ease-in-out;
+.modern-msg-group.ai {
+  align-self: flex-start;
 }
 
-@keyframes sparklePulse {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 1; }
-}
-
-.holo-welcome-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
-}
-
-.holo-sub-hint {
-  font-size: 11px;
-  color: #94a3b8;
-  line-height: 1.4;
-  max-width: 260px;
-}
-
-.holo-msg-row {
-  display: flex;
-  flex-direction: column;
-  max-width: 88%;
-}
-
-.holo-msg-row.user {
+.modern-msg-group.user {
   align-self: flex-end;
 }
 
-.holo-msg-row.user .holo-msg-bubble {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.9) 0%, rgba(2, 132, 199, 0.95) 100%);
-  color: #ffffff;
-  border-radius: 14px 14px 3px 14px;
-  padding: 7px 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-.holo-msg-row.mochi {
-  align-self: flex-start;
-}
-
-.holo-msg-row.mochi .holo-msg-bubble {
-  background: rgba(22, 28, 44, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f1f5f9;
-  border-radius: 14px 14px 14px 3px;
-  padding: 7px 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.holo-msg-text {
-  font-size: 11.5px;
-  line-height: 1.45;
+.modern-ai-bubble {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-radius: 14px 14px 14px 4px;
+  padding: 11px 15px;
+  font-size: 13px;
+  line-height: 1.48;
   word-break: break-word;
 }
 
-.holo-thinking-row {
+.modern-ai-bubble.thinking {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(0, 247, 255, 0.1);
-  border: 1px solid rgba(0, 247, 255, 0.25);
-  align-self: flex-start;
+  padding: 10px 14px;
 }
 
-.holo-thinking-bars {
+.modern-user-bubble {
+  background: #16384c;
+  color: #ffffff;
+  border-radius: 14px 14px 4px 14px;
+  padding: 11px 15px;
+  font-size: 13px;
+  line-height: 1.48;
+  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(22, 56, 76, 0.25);
+}
+
+.modern-bubble-timestamp {
+  font-size: 10.5px;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.modern-bubble-timestamp.right {
+  text-align: right;
+}
+
+/* Suggestion chips stack (matching reference photo) */
+.modern-suggestion-chips-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.modern-suggestion-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.modern-suggestion-chip:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+/* Active / Selected Chip matching teal chip in reference photo */
+.modern-suggestion-chip.selected {
+  background: #f0fdfa;
+  border-color: #2dd4bf;
+  color: #0f766e;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px #2dd4bf;
+}
+
+.chip-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.chip-text {
+  flex: 1;
+}
+
+/* AI Message Footer / Reaction Row */
+.modern-ai-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+
+.modern-feedback-actions {
   display: flex;
   align-items: center;
   gap: 3px;
 }
 
-.holo-thinking-bars span {
-  width: 4px;
-  height: 10px;
-  border-radius: 2px;
-  background: #00f7ff;
-  animation: thinkingBarScale 1s infinite ease-in-out;
-}
-
-.holo-thinking-bars span:nth-child(2) {
-  animation-delay: 0.18s;
-}
-
-.holo-thinking-bars span:nth-child(3) {
-  animation-delay: 0.36s;
-}
-
-@keyframes thinkingBarScale {
-  0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
-  50% { transform: scaleY(1.3); opacity: 1; }
-}
-
-.holo-thinking-label {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: #38bdf8;
-}
-
-.holo-input-form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.holo-chat-input {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  padding: 7px 12px;
-  font-size: 11.5px;
-  color: #f1f5f9;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.holo-chat-input:focus {
-  border-color: rgba(0, 247, 255, 0.6);
-  box-shadow: 0 0 12px rgba(0, 247, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.holo-send-btn {
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+.modern-feedback-btn {
+  background: transparent;
   border: none;
-  border-radius: 9px;
-  color: #ffffff;
-  width: 30px;
-  height: 30px;
+  color: #94a3b8;
+  padding: 3px;
+  border-radius: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modern-feedback-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.modern-feedback-btn.active {
+  color: #0284c7;
+}
+
+.text-emerald {
+  color: #10b981;
+}
+
+/* Typing wave dots */
+.modern-typing-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.modern-typing-wave span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #64748b;
+  animation: modernTypingBounce 1.2s infinite ease-in-out;
+}
+
+.modern-typing-wave span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.modern-typing-wave span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes modernTypingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.65);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.thinking-lbl {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Card Footer Input Form */
+.modern-chat-footer {
+  padding: 13px 18px;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.modern-input-capsule {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px 8px 3px 14px;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modern-input-capsule:focus-within {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.modern-text-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #0f172a;
+  padding: 9px 0;
+  font-family: inherit;
+}
+
+.modern-text-input::placeholder {
+  color: #94a3b8;
+}
+
+.modern-send-icon-btn {
+  background: transparent;
+  border: none;
+  color: #0284c7;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+  transition: all 0.15s ease;
 }
 
-.holo-send-btn:hover:not(:disabled) {
-  transform: scale(1.08);
-  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.6);
+.modern-send-icon-btn:hover:not(:disabled) {
+  color: #0369a1;
+  transform: scale(1.12);
 }
 
-.holo-send-btn:disabled {
-  opacity: 0.35;
+.modern-send-icon-btn:disabled {
+  color: #cbd5e1;
   cursor: not-allowed;
-  box-shadow: none;
+}
+
+/* Matrix Orb Container and Canvas */
+.matrix-orb-wrapper {
+  user-select: none;
+  pointer-events: auto;
+}
+
+.matrix-orb-canvas {
+  filter: drop-shadow(0 0 14px rgba(0, 247, 255, 0.5));
 }
 
 /* Matrix Orb Container and Canvas */

@@ -22,6 +22,11 @@ import {
   MessageSquare,
   Send,
   X,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  Check,
+  MoreHorizontal,
 } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { GlowLavaOrb } from './GlowLavaOrb';
@@ -101,10 +106,28 @@ export const OrbPet: React.FC = () => {
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
   // Direct Floating Orb Chat with Local Ollama AI & Matrix Wave Animations
+  interface ChatMessage {
+    id: string;
+    sender: 'user' | 'mochi';
+    text: string;
+    time: string;
+    feedback?: 'like' | 'dislike' | null;
+  }
+
+  const DEFAULT_SUGGESTIONS = [
+    { id: 'focus', icon: '🚀', text: 'Start a 25m focus sprint?' },
+    { id: 'water', icon: '💧', text: 'Remind me to drink water' },
+    { id: 'breathe', icon: '🧘', text: 'Start 4-4-4-4 box breathing' },
+    { id: 'code', icon: '💻', text: 'Help me brainstorm & review code' },
+  ];
+
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [quickChatInput, setQuickChatInput] = useState('');
   const [isChatThinking, setIsChatThinking] = useState(false);
-  const [quickChatHistory, setQuickChatHistory] = useState<{ sender: 'user' | 'mochi'; text: string }[]>([]);
+  const [quickChatHistory, setQuickChatHistory] = useState<ChatMessage[]>([]);
+  const [selectedChipId, setSelectedChipId] = useState<string | null>(null);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [ollamaModel, setOllamaModel] = useState<string>('llama3.2');
   const [ollamaOnline, setOllamaOnline] = useState<boolean>(false);
   const [matrixState, setMatrixState] = useState<MatrixOrbState>('idle');
@@ -137,6 +160,7 @@ export const OrbPet: React.FC = () => {
     } else {
       setMatrixState('idle');
       setTypingLevel(0.2);
+      setShowMenuDropdown(false);
     }
   }, [showQuickChat]);
 
@@ -185,12 +209,20 @@ export const OrbPet: React.FC = () => {
     return () => clearTimeout(enterTimer);
   }, []);
 
-  const handleSendQuickChat = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const prompt = quickChatInput.trim();
+  const handleSendPrompt = async (promptToSend: string, chipId?: string) => {
+    const prompt = promptToSend.trim();
     if (!prompt || isChatThinking) return;
 
-    const userMessage = { sender: 'user' as const, text: prompt };
+    if (chipId) {
+      setSelectedChipId(chipId);
+    }
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: prompt,
+      time: 'Just now',
+    };
     const newHistory = [...quickChatHistory, userMessage];
     setQuickChatHistory(newHistory);
     setQuickChatInput('');
@@ -203,18 +235,20 @@ export const OrbPet: React.FC = () => {
     try {
       let replyText = '';
       if (window.mochiApi?.queryAi) {
-        const aiResult = await window.mochiApi.queryAi(prompt, newHistory);
+        const historyForIpc = newHistory.map(m => ({ sender: m.sender, text: m.text }));
+        const aiResult = await window.mochiApi.queryAi(prompt, historyForIpc);
         if (aiResult?.text) {
           replyText = aiResult.text;
           if (aiResult.model) setOllamaModel(aiResult.model);
           setOllamaOnline(true);
         } else if (aiResult?.error) {
           // Graceful local heuristic fallback
-          const fallback = await AiCompanionService.generateResponse(prompt, newHistory as any, { provider: 'offline-local' });
+          const fallback = await AiCompanionService.generateResponse(prompt, historyForIpc as any, { provider: 'offline-local' });
           replyText = `${fallback.text}\n\n*(Local Ollama notice: ${aiResult.error})*`;
         }
       } else {
-        const fallback = await AiCompanionService.generateResponse(prompt, newHistory as any, { provider: 'offline-local' });
+        const historyForIpc = newHistory.map(m => ({ sender: m.sender, text: m.text }));
+        const fallback = await AiCompanionService.generateResponse(prompt, historyForIpc as any, { provider: 'offline-local' });
         replyText = fallback.text;
       }
 
@@ -225,20 +259,45 @@ export const OrbPet: React.FC = () => {
       setIsSpeaking(true);
       SoundEffects.chirp(0.35);
 
-      setQuickChatHistory((prev) => [...prev, { sender: 'mochi', text: replyText }]);
+      const mochiMessage: ChatMessage = {
+        id: `mochi-${Date.now()}`,
+        sender: 'mochi',
+        text: replyText,
+        time: 'Just now',
+      };
+      setQuickChatHistory((prev) => [...prev, mochiMessage]);
 
       setTimeout(() => {
         setIsSpeaking(false);
         setTypingLevel(0.25);
-      }, 5000);
+      }, 4500);
     } catch {
       setIsChatThinking(false);
       setMatrixState('listening');
       setQuickChatHistory((prev) => [
         ...prev,
-        { sender: 'mochi', text: "My thoughts wandered for a second. Ask me again! ✨" },
+        {
+          id: `err-${Date.now()}`,
+          sender: 'mochi',
+          text: "I had a momentary connection hiccup with Ollama. Make sure 'ollama serve' is active and try again! ✨",
+          time: 'Just now',
+        },
       ]);
     }
+  };
+
+  const handleFeedback = (id: string, type: 'like' | 'dislike') => {
+    setQuickChatHistory(prev =>
+      prev.map(msg => msg.id === id ? { ...msg, feedback: msg.feedback === type ? null : type } : msg)
+    );
+    SoundEffects.tap(0.15);
+  };
+
+  const handleCopyMessage = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedMsgId(id);
+    SoundEffects.tap(0.15);
+    setTimeout(() => setCopiedMsgId(null), 1800);
   };
 
   const formatTime = (totalSec: number) => {
@@ -764,87 +823,200 @@ export const OrbPet: React.FC = () => {
       <ConfettiEffect active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <EyeReliefGuide isOpen={showEyeRelief} onClose={() => setShowEyeRelief(false)} />
 
-      {/* Futuristic Holo-Chat Pull-Up Console (Rendered side-by-side with the Matrix Orb) */}
+      {/* Modern High-End AI Chat Card (Pixel-perfect to reference design) */}
       {showQuickChat && (
         <div
-          className="mochi-holo-chat-console"
-          onClick={(e) => e.stopPropagation()}
+          className="mochi-modern-chat-card"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (showMenuDropdown) setShowMenuDropdown(false);
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {/* Holo Header */}
-          <div className="holo-console-header">
-            <div className="holo-header-info">
-              <span className={`holo-status-dot ${ollamaOnline ? 'active' : 'idle'}`} />
-              <span className="holo-title">Mochi AI</span>
-              <span className="holo-model-pill">
-                {ollamaModel ? `ollama • ${ollamaModel}` : 'local ollama'}
-              </span>
+          {/* Card Header */}
+          <div className="modern-chat-header">
+            <div className="modern-header-profile">
+              <div className="modern-avatar-badge">
+                <span className="modern-avatar-emoji">🤖</span>
+              </div>
+              <div className="modern-title-col">
+                <div className="modern-title-row">
+                  <span className="modern-agent-title">Mochi AI Companion</span>
+                  <span className="modern-agent-verified">✓</span>
+                </div>
+                <div className="modern-subtitle-row">
+                  <span className={`modern-status-dot ${ollamaOnline ? 'active' : 'offline'}`} />
+                  <span className="modern-engine-label">
+                    {ollamaOnline ? `Local Ollama • ${ollamaModel || 'llama3.2'}` : 'Offline Engine • Heuristic'}
+                  </span>
+                </div>
+              </div>
             </div>
-            <button
-              className="holo-close-btn"
-              onClick={() => setShowQuickChat(false)}
-              title="Close chat (Esc)"
-            >
-              <X size={13} />
-            </button>
+
+            <div className="modern-header-actions">
+              <button
+                className="modern-header-icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenuDropdown((prev) => !prev);
+                }}
+                title="More options"
+              >
+                <MoreHorizontal size={15} />
+              </button>
+              <button
+                className="modern-header-icon-btn"
+                onClick={() => setShowQuickChat(false)}
+                title="Close chat (Esc)"
+              >
+                <X size={15} />
+              </button>
+
+              {/* Options Dropdown */}
+              {showMenuDropdown && (
+                <div className="modern-options-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="dropdown-opt-btn"
+                    onClick={() => {
+                      setQuickChatHistory([]);
+                      setSelectedChipId(null);
+                      setShowMenuDropdown(false);
+                    }}
+                  >
+                    Clear Chat History
+                  </button>
+                  <button
+                    className="dropdown-opt-btn"
+                    onClick={() => {
+                      setShowMenuDropdown(false);
+                      window.mochiApi?.toggleAssistant();
+                    }}
+                  >
+                    Open Full Assistant
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Conversation Feed */}
-          <div className="holo-console-feed" ref={chatFeedRef}>
-            {quickChatHistory.length === 0 ? (
-              <div className="holo-empty-state">
-                <Sparkles size={16} className="holo-sparkle-icon" />
-                <p className="holo-welcome-text">
-                  Direct Desktop AI with Local Ollama
-                </p>
-                <span className="holo-sub-hint">
-                  Ask questions, debug code, or chat while watching the Matrix Orb react in real-time.
-                </span>
+          {/* Conversation Stream */}
+          <div className="modern-chat-stream" ref={chatFeedRef}>
+            {/* Initial Welcome AI Message with Suggested Action Chips */}
+            <div className="modern-msg-group ai">
+              <div className="modern-ai-bubble">
+                Hi, I'm your desktop AI companion. I'm running locally on your device with Ollama. Ask me anything, or tap an action below:
               </div>
-            ) : (
-              quickChatHistory.map((msg, idx) => (
-                <div key={idx} className={`holo-msg-row ${msg.sender}`}>
-                  <div className="holo-msg-bubble">
-                    <span className="holo-msg-text">{msg.text}</span>
-                  </div>
-                </div>
-              ))
-            )}
+
+              {/* Suggestion Chips Stack (Exact styling from reference photo) */}
+              <div className="modern-suggestion-chips-grid">
+                {DEFAULT_SUGGESTIONS.map((chip) => {
+                  const isSelected = selectedChipId === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      className={`modern-suggestion-chip ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleSendPrompt(chip.text, chip.id)}
+                      disabled={isChatThinking}
+                    >
+                      <span className="chip-icon">{chip.icon}</span>
+                      <span className="chip-text">{chip.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="modern-bubble-timestamp">Just now</span>
+            </div>
+
+            {/* Conversation Messages */}
+            {quickChatHistory.map((msg) => (
+              <div key={msg.id} className={`modern-msg-group ${msg.sender}`}>
+                {msg.sender === 'user' ? (
+                  <>
+                    <div className="modern-user-bubble">
+                      {msg.text}
+                    </div>
+                    <span className="modern-bubble-timestamp right">{msg.time}</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="modern-ai-bubble">
+                      {msg.text}
+                    </div>
+                    <div className="modern-ai-footer-row">
+                      <div className="modern-feedback-actions">
+                        <button
+                          className={`modern-feedback-btn ${msg.feedback === 'like' ? 'active' : ''}`}
+                          onClick={() => handleFeedback(msg.id, 'like')}
+                          title="Helpful"
+                        >
+                          <ThumbsUp size={11} />
+                        </button>
+                        <button
+                          className={`modern-feedback-btn ${msg.feedback === 'dislike' ? 'active' : ''}`}
+                          onClick={() => handleFeedback(msg.id, 'dislike')}
+                          title="Not helpful"
+                        >
+                          <ThumbsDown size={11} />
+                        </button>
+                        <button
+                          className="modern-feedback-btn"
+                          onClick={() => handleCopyMessage(msg.id, msg.text)}
+                          title="Copy response"
+                        >
+                          {copiedMsgId === msg.id ? <Check size={11} className="text-emerald" /> : <Copy size={11} />}
+                        </button>
+                      </div>
+                      <span className="modern-bubble-timestamp">{msg.time}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+
+            {/* Thinking / Reasoning State */}
             {isChatThinking && (
-              <div className="holo-thinking-row">
-                <div className="holo-thinking-bars">
-                  <span />
-                  <span />
-                  <span />
+              <div className="modern-msg-group ai">
+                <div className="modern-ai-bubble thinking">
+                  <div className="modern-typing-wave">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <span className="thinking-lbl">Thinking with {ollamaModel || 'Ollama'}...</span>
                 </div>
-                <span className="holo-thinking-label">
-                  Reasoning with {ollamaModel || 'Ollama'}...
-                </span>
               </div>
             )}
           </div>
 
-          {/* Futuristic Input Form */}
-          <form className="holo-input-form" onSubmit={handleSendQuickChat}>
-            <input
-              ref={quickChatInputRef}
-              type="text"
-              className="holo-chat-input"
-              placeholder={isChatThinking ? "Mochi is reasoning..." : "Ask or talk to Mochi... (Enter to send)"}
-              value={quickChatInput}
-              onChange={handleQuickChatInputChange}
-              disabled={isChatThinking}
-              maxLength={500}
-            />
-            <button
-              type="submit"
-              className="holo-send-btn"
-              disabled={!quickChatInput.trim() || isChatThinking}
-              title="Send Message"
+          {/* Card Footer Input Form */}
+          <div className="modern-chat-footer">
+            <form
+              className="modern-input-capsule"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendPrompt(quickChatInput);
+              }}
             >
-              <Send size={13} />
-            </button>
-          </form>
+              <input
+                ref={quickChatInputRef}
+                type="text"
+                className="modern-text-input"
+                placeholder={isChatThinking ? "Thinking..." : "Write your message..."}
+                value={quickChatInput}
+                onChange={handleQuickChatInputChange}
+                disabled={isChatThinking}
+                maxLength={600}
+              />
+              <button
+                type="submit"
+                className="modern-send-icon-btn"
+                disabled={!quickChatInput.trim() || isChatThinking}
+                title="Send Message"
+              >
+                <Send size={15} />
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
