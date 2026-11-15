@@ -21,9 +21,11 @@ import {
   GitBranch,
   MessageSquare,
   Send,
+  X,
 } from 'lucide-react';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { GlowLavaOrb } from './GlowLavaOrb';
+import { MatrixOrb, MatrixOrbState } from './MatrixOrb';
 import { IslandFluidOrb } from './IslandFluidOrb';
 import { ConfettiEffect } from './ConfettiEffect';
 import { EyeReliefGuide } from './EyeReliefGuide';
@@ -98,14 +100,18 @@ export const OrbPet: React.FC = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Direct Floating Orb Chat with Local Ollama AI
+  // Direct Floating Orb Chat with Local Ollama AI & Matrix Wave Animations
   const [showQuickChat, setShowQuickChat] = useState(false);
   const [quickChatInput, setQuickChatInput] = useState('');
   const [isChatThinking, setIsChatThinking] = useState(false);
   const [quickChatHistory, setQuickChatHistory] = useState<{ sender: 'user' | 'mochi'; text: string }[]>([]);
   const [ollamaModel, setOllamaModel] = useState<string>('llama3.2');
   const [ollamaOnline, setOllamaOnline] = useState<boolean>(false);
+  const [matrixState, setMatrixState] = useState<MatrixOrbState>('idle');
+  const [typingLevel, setTypingLevel] = useState<number>(0.2);
   const quickChatInputRef = useRef<HTMLInputElement>(null);
+  const chatFeedRef = useRef<HTMLDivElement>(null);
+  const typingDecayRef = useRef<number | null>(null);
 
   // Check Ollama service on startup
   useEffect(() => {
@@ -118,6 +124,57 @@ export const OrbPet: React.FC = () => {
       }).catch(() => {});
     }
   }, []);
+
+  // Synchronize window size when pulling up or closing chat mode
+  useEffect(() => {
+    if (window.mochiApi?.setPetChatExpanded) {
+      window.mochiApi.setPetChatExpanded(showQuickChat);
+    }
+    if (showQuickChat) {
+      setMatrixState('listening');
+      setTypingLevel(0.35);
+      setTimeout(() => quickChatInputRef.current?.focus(), 120);
+    } else {
+      setMatrixState('idle');
+      setTypingLevel(0.2);
+    }
+  }, [showQuickChat]);
+
+  // Auto-scroll chat feed to bottom on new messages
+  useEffect(() => {
+    if (chatFeedRef.current) {
+      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+    }
+  }, [quickChatHistory, isChatThinking]);
+
+  // Close chat on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showQuickChat) {
+        setShowQuickChat(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showQuickChat]);
+
+  // Handle typing to trigger real-time reactive wave bursts across the Matrix Orb dots
+  const handleQuickChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuickChatInput(e.target.value);
+    setTypingLevel(0.85); // Energize wave amplitude
+    if (typingDecayRef.current) cancelAnimationFrame(typingDecayRef.current);
+    const start = performance.now();
+    const decay = (now: number) => {
+      const elapsed = now - start;
+      if (elapsed < 600) {
+        setTypingLevel(0.85 - (elapsed / 600) * 0.55);
+        typingDecayRef.current = requestAnimationFrame(decay);
+      } else {
+        setTypingLevel(0.3);
+      }
+    };
+    typingDecayRef.current = requestAnimationFrame(decay);
+  };
 
   // Apple-style entrance animation and chime on startup
   useEffect(() => {
@@ -139,8 +196,8 @@ export const OrbPet: React.FC = () => {
     setQuickChatInput('');
     setIsChatThinking(true);
 
-    // Set Orb to Thinking State (triggers fluid thinking orbital synthesis & aura)
-    animControllerRef.current?.setState('thinking');
+    // Switch Matrix Orb into fluid 3-body orbital heat wave thinking animation
+    setMatrixState('thinking');
     SoundEffects.tap(0.2);
 
     try {
@@ -161,19 +218,22 @@ export const OrbPet: React.FC = () => {
         replyText = fallback.text;
       }
 
-      // Ollama replied! Trigger speaking reaction & sound effect
+      // Ollama replied! Trigger wave response animation & sound effect
       setIsChatThinking(false);
+      setMatrixState('listening');
+      setTypingLevel(0.75);
       setIsSpeaking(true);
-      animControllerRef.current?.triggerReaction('happy', 4500);
       SoundEffects.chirp(0.35);
 
       setQuickChatHistory((prev) => [...prev, { sender: 'mochi', text: replyText }]);
 
       setTimeout(() => {
         setIsSpeaking(false);
+        setTypingLevel(0.25);
       }, 5000);
     } catch {
       setIsChatThinking(false);
+      setMatrixState('listening');
       setQuickChatHistory((prev) => [
         ...prev,
         { sender: 'mochi', text: "My thoughts wandered for a second. Ask me again! ✨" },
@@ -694,7 +754,7 @@ export const OrbPet: React.FC = () => {
 
   return (
     <div
-      className="mochi-pet-window"
+      className={`mochi-pet-window ${showQuickChat ? 'chat-expanded' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => {
@@ -703,6 +763,90 @@ export const OrbPet: React.FC = () => {
     >
       <ConfettiEffect active={showConfetti} onComplete={() => setShowConfetti(false)} />
       <EyeReliefGuide isOpen={showEyeRelief} onClose={() => setShowEyeRelief(false)} />
+
+      {/* Futuristic Holo-Chat Pull-Up Console (Rendered side-by-side with the Matrix Orb) */}
+      {showQuickChat && (
+        <div
+          className="mochi-holo-chat-console"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {/* Holo Header */}
+          <div className="holo-console-header">
+            <div className="holo-header-info">
+              <span className={`holo-status-dot ${ollamaOnline ? 'active' : 'idle'}`} />
+              <span className="holo-title">Mochi AI</span>
+              <span className="holo-model-pill">
+                {ollamaModel ? `ollama • ${ollamaModel}` : 'local ollama'}
+              </span>
+            </div>
+            <button
+              className="holo-close-btn"
+              onClick={() => setShowQuickChat(false)}
+              title="Close chat (Esc)"
+            >
+              <X size={13} />
+            </button>
+          </div>
+
+          {/* Conversation Feed */}
+          <div className="holo-console-feed" ref={chatFeedRef}>
+            {quickChatHistory.length === 0 ? (
+              <div className="holo-empty-state">
+                <Sparkles size={16} className="holo-sparkle-icon" />
+                <p className="holo-welcome-text">
+                  Direct Desktop AI with Local Ollama
+                </p>
+                <span className="holo-sub-hint">
+                  Ask questions, debug code, or chat while watching the Matrix Orb react in real-time.
+                </span>
+              </div>
+            ) : (
+              quickChatHistory.map((msg, idx) => (
+                <div key={idx} className={`holo-msg-row ${msg.sender}`}>
+                  <div className="holo-msg-bubble">
+                    <span className="holo-msg-text">{msg.text}</span>
+                  </div>
+                </div>
+              ))
+            )}
+            {isChatThinking && (
+              <div className="holo-thinking-row">
+                <div className="holo-thinking-bars">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <span className="holo-thinking-label">
+                  Reasoning with {ollamaModel || 'Ollama'}...
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Futuristic Input Form */}
+          <form className="holo-input-form" onSubmit={handleSendQuickChat}>
+            <input
+              ref={quickChatInputRef}
+              type="text"
+              className="holo-chat-input"
+              placeholder={isChatThinking ? "Mochi is reasoning..." : "Ask or talk to Mochi... (Enter to send)"}
+              value={quickChatInput}
+              onChange={handleQuickChatInputChange}
+              disabled={isChatThinking}
+              maxLength={500}
+            />
+            <button
+              type="submit"
+              className="holo-send-btn"
+              disabled={!quickChatInput.trim() || isChatThinking}
+              title="Send Message"
+            >
+              <Send size={13} />
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Dynamic Island Pill Mode */}
       {isDynamicIsland ? (
@@ -748,10 +892,8 @@ export const OrbPet: React.FC = () => {
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
-                setShowQuickChat((prev) => !prev);
-                if (!showQuickChat) {
-                  setTimeout(() => quickChatInputRef.current?.focus(), 80);
-                }
+                setIsDynamicIsland(false);
+                setShowQuickChat(true);
               }}
               title="Chat with Mochi (Local Ollama AI)"
             >
@@ -784,21 +926,21 @@ export const OrbPet: React.FC = () => {
             setContextMenuPos({ x: e.clientX, y: e.clientY });
           }}
         >
-          {/* Quick Chat Right Trigger Button on the Orb */}
-          <button
-            className="orb-quick-chat-trigger-btn"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowQuickChat((prev) => !prev);
-              if (!showQuickChat) {
-                setTimeout(() => quickChatInputRef.current?.focus(), 80);
-              }
-            }}
-            title="Chat directly with Mochi (Local Ollama AI)"
-          >
-            <MessageSquare size={13} />
-          </button>
+          {/* Cyber Floating Chat Trigger (Positioned outside the orb boundary - NEVER covers eyes or face) */}
+          {!showQuickChat && (
+            <button
+              className="orb-cyber-chat-trigger"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowQuickChat(true);
+              }}
+              title="Pull up AI Chat with Mochi (Local Ollama)"
+            >
+              <MessageSquare size={12} />
+              <span>Chat</span>
+            </button>
+          )}
           {/* Apple Startup Bloom Ring */}
           {isEntering && <div className="apple-start-bloom-ring" />}
 
@@ -806,78 +948,80 @@ export const OrbPet: React.FC = () => {
           <div className="orb-status-indicator" data-state={currentState} title="Assistant Status" />
 
           {/* Floating Capsule / Speech Bubble / Onboarding Anchor - directly hugs top of orb */}
-          <div
-            className="mochi-bubble-anchor"
-            style={{
-              transform: `scale(${bubbleScale})`,
-              transformOrigin: 'bottom right',
-            }}
-          >
-            {showOnboarding ? (
-              <form
-                className="mochi-onboarding-capsule"
-                onSubmit={handleSaveName}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <span className="onboarding-sparkle">✨</span>
-                <input
-                  type="text"
-                  className="onboarding-input"
-                  placeholder="Your name? (e.g. Alex)"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  autoFocus
-                  maxLength={20}
-                />
-                <button type="submit" className="onboarding-submit-btn" title="Save name">
-                  ✓
-                </button>
-              </form>
-            ) : (isHovered || reactionMessage) ? (
-              <div
-                className="mochi-speech-bubble"
-                onClick={handlePetAction}
-                onMouseDown={(e) => e.stopPropagation()}
-                title="Click to open Mochi Assistant"
-              >
-                {/* Cloud scallops along top to match the photo */}
-                <div className="cloud-scallop-1" />
-                <div className="cloud-scallop-2" />
+          {!showQuickChat && (
+            <div
+              className="mochi-bubble-anchor"
+              style={{
+                transform: `scale(${bubbleScale})`,
+                transformOrigin: 'bottom right',
+              }}
+            >
+              {showOnboarding ? (
+                <form
+                  className="mochi-onboarding-capsule"
+                  onSubmit={handleSaveName}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <span className="onboarding-sparkle">✨</span>
+                  <input
+                    type="text"
+                    className="onboarding-input"
+                    placeholder="Your name? (e.g. Alex)"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    autoFocus
+                    maxLength={20}
+                  />
+                  <button type="submit" className="onboarding-submit-btn" title="Save name">
+                    ✓
+                  </button>
+                </form>
+              ) : (isHovered || reactionMessage) ? (
+                <div
+                  className="mochi-speech-bubble"
+                  onClick={handlePetAction}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  title="Click to open Mochi Assistant"
+                >
+                  {/* Cloud scallops along top to match the photo */}
+                  <div className="cloud-scallop-1" />
+                  <div className="cloud-scallop-2" />
 
-                {/* Connector thought bubble dot pointing down to the orb */}
-                <div className="bubble-connector-dot" />
+                  {/* Connector thought bubble dot pointing down to the orb */}
+                  <div className="bubble-connector-dot" />
 
-                {/* Integrated Live Timer Chip inside capsule */}
-                {isTimerRunning && (
-                  <div className="bubble-timer-chip">
-                    <TimerIcon size={11} className="timer-chip-icon" />
-                    <span>{formatTime(activeTimer.remainingSeconds)}</span>
-                    <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
+                  {/* Integrated Live Timer Chip inside capsule */}
+                  {isTimerRunning && (
+                    <div className="bubble-timer-chip">
+                      <TimerIcon size={11} className="timer-chip-icon" />
+                      <span>{formatTime(activeTimer.remainingSeconds)}</span>
+                      <span className="timer-chip-label">{activeTimer.label || 'FOCUS'}</span>
+                    </div>
+                  )}
+
+                  <div className="bubble-body">
+                    <span className="bubble-text">
+                      {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
+                    </span>
                   </div>
-                )}
-
-                <div className="bubble-body">
-                  <span className="bubble-text">
-                    {reactionMessage ? (reactionMessage.subtitle || reactionMessage.title) : greeting.title}
-                  </span>
                 </div>
-              </div>
-            ) : isTimerRunning ? (
-              /* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */
-              <div
-                className="mochi-timer-hologram-pill"
-                onClick={handlePetAction}
-                onMouseDown={(e) => e.stopPropagation()}
-                title="Click to open timer controls"
-              >
-                <span className="timer-hologram-dot" />
-                <TimerIcon size={12} className="timer-hologram-icon" />
-                <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
-                <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
-              </div>
-            ) : null}
-          </div>
+              ) : isTimerRunning ? (
+                /* Holographic Timer Badge - ONLY shown when speech bubble is NOT visible */
+                <div
+                  className="mochi-timer-hologram-pill"
+                  onClick={handlePetAction}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  title="Click to open timer controls"
+                >
+                  <span className="timer-hologram-dot" />
+                  <TimerIcon size={12} className="timer-hologram-icon" />
+                  <span className="timer-hologram-time">{formatTime(activeTimer.remainingSeconds)}</span>
+                  <span className="timer-hologram-label">{activeTimer.label || 'FOCUS'}</span>
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* Floating Love Heart Wave from petting */}
           {showLoveWave && (
@@ -901,7 +1045,15 @@ export const OrbPet: React.FC = () => {
             onMouseMove={handlePetMouseMove}
             title="Mochi Companion (Click to open, double-click for pill mode, right-click for menu, drag to move)"
           >
-            {orbMode === 'glow-lava' ? (
+            {showQuickChat ? (
+              <MatrixOrb
+                state={matrixState}
+                level={typingLevel}
+                size={petSize}
+                color="#00f7ff"
+                dots={13}
+              />
+            ) : orbMode === 'glow-lava' ? (
               <GlowLavaOrb
                 state={currentState}
                 isSpeaking={isSpeaking}
@@ -993,82 +1145,6 @@ export const OrbPet: React.FC = () => {
             <Power size={13} />
             <span>Turn Off Mochi</span>
           </button>
-        </div>
-      )}
-
-      {/* Floating Direct Chat Capsule (Local Ollama AI) */}
-      {showQuickChat && (
-        <div
-          className="mochi-quick-chat-capsule"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="quick-chat-header">
-            <div className="quick-chat-title-group">
-              <span className={`quick-chat-status-dot ${ollamaOnline ? 'online' : 'offline'}`} />
-              <span className="quick-chat-title">Chat with Mochi</span>
-              <span className="quick-chat-model-badge">
-                {ollamaModel || 'Ollama Local'}
-              </span>
-            </div>
-            <button
-              className="quick-chat-close-btn"
-              onClick={() => setShowQuickChat(false)}
-              title="Close Chat"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="quick-chat-body">
-            {quickChatHistory.length === 0 ? (
-              <div className="quick-chat-empty-hint">
-                <Sparkles size={12} className="text-cyan animate-pulse" />
-                <span>Private local AI chat powered by Ollama ({ollamaModel || 'llama3.2'}). Type below to speak directly with Mochi!</span>
-              </div>
-            ) : (
-              <div className="quick-chat-messages">
-                {quickChatHistory.slice(-5).map((msg, idx) => (
-                  <div key={idx} className={`quick-chat-msg ${msg.sender}`}>
-                    <span className="msg-bubble">{msg.text}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {isChatThinking && (
-              <div className="quick-chat-thinking-indicator">
-                <div className="thinking-dots">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <span className="thinking-text">Thinking with {ollamaModel || 'Ollama'}...</span>
-              </div>
-            )}
-          </div>
-
-          <form className="quick-chat-input-bar" onSubmit={handleSendQuickChat}>
-            <input
-              ref={quickChatInputRef}
-              type="text"
-              className="quick-chat-input"
-              placeholder={isChatThinking ? "Mochi is thinking..." : "Ask or chat with Mochi..."}
-              value={quickChatInput}
-              onChange={(e) => setQuickChatInput(e.target.value)}
-              disabled={isChatThinking}
-              maxLength={400}
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="quick-chat-send-btn"
-              disabled={!quickChatInput.trim() || isChatThinking}
-              title="Send Message (Enter)"
-            >
-              <Send size={12} />
-            </button>
-          </form>
         </div>
       )}
     </div>

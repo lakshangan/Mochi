@@ -946,22 +946,6 @@ export const GlowLavaOrb: React.FC<GlowLavaOrbProps> = ({
       {/* 1. Outer Ambient Halo Bloom */}
       <div className="glow-orb-halo" />
 
-      {/* 1.5. Dynamic Holographic Thinking Rings (Active during Local LLM reasoning) */}
-      {state === 'thinking' && (
-        <div className="glow-orb-thinking-aura">
-          <div className="thinking-orbital-ring ring-outer" />
-          <div className="thinking-orbital-ring ring-inner" />
-        </div>
-      )}
-
-      {/* 1.6. Vocal Acoustic Waveform Ripples (Active when Mochi is responding) */}
-      {isSpeaking && (
-        <div className="glow-orb-speaking-aura">
-          <div className="speaking-wave wave-1" />
-          <div className="speaking-wave wave-2" />
-        </div>
-      )}
-
       {/* 2. Optional Orbital Timer Progress Ring */}
       {isTimerActive && (
         <div className="glow-orb-timer-ring">

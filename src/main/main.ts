@@ -311,6 +311,11 @@ function registerIpcHandlers(): void {
     broadcast(IPC_CHANNELS.PET_SET_STATE, reaction);
   });
 
+  ipcMain.handle(IPC_CHANNELS.PET_SET_CHAT_EXPANDED, (_event, expanded: boolean) => {
+    petWindow?.setChatExpanded(Boolean(expanded));
+    return true;
+  });
+
   // AI Proxy Handler with SSRF Defense (Supports Local Ollama & OpenAI)
   ipcMain.handle(
     IPC_CHANNELS.AI_QUERY,

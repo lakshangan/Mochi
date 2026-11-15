@@ -60,6 +60,7 @@ export const IPC_CHANNELS = {
   PET_SET_STATE: 'pet:set-state',
   PET_REACT: 'pet:react',
   PET_GAZE_UPDATE: 'pet:gaze-update',
+  PET_SET_CHAT_EXPANDED: 'pet:set-chat-expanded',
 
   // AI & External Services
   AI_QUERY: 'ai:query',
@@ -126,6 +127,7 @@ export interface ElectronMochiAPI {
   // Pet
   setPetState: (state: PetAnimationState) => Promise<void>;
   triggerPetReaction: (reaction: PetAnimationState) => Promise<void>;
+  setPetChatExpanded?: (expanded: boolean) => Promise<boolean>;
   onPetStateChange: (callback: (state: PetAnimationState) => void) => () => void;
   onGazeUpdate?: (callback: (gaze: { x: number; y: number }) => void) => () => void;
 

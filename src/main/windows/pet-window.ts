@@ -7,6 +7,7 @@ export class PetWindow {
   private window: BrowserWindow | null = null;
   private currentPosition: PetPosition;
   private petSize: number;
+  private isChatExpanded: boolean = false;
 
   constructor(initialPosition: PetPosition, settings: AppSettings) {
     this.currentPosition = initialPosition;
@@ -30,8 +31,8 @@ export class PetWindow {
     }
     this.currentPosition = { x, y };
 
-    const windowW = Math.max(460, this.petSize + 320);
-    const windowH = Math.max(280, this.petSize + 150);
+    const windowW = Math.max(340, this.petSize + 160);
+    const windowH = Math.max(220, this.petSize + 90);
 
     const iconPath = path.join(__dirname, '../assets/trayIcon.png');
 
@@ -115,23 +116,55 @@ export class PetWindow {
   public resize(size: number): void {
     this.petSize = size;
     if (this.window && !this.window.isDestroyed()) {
-      const windowW = Math.max(300, size + 130);
-      const windowH = Math.max(160, size + 65);
+      const targetW = this.isChatExpanded
+        ? Math.max(560, size + 390)
+        : Math.max(340, size + 160);
+      const targetH = this.isChatExpanded
+        ? Math.max(480, size + 340)
+        : Math.max(220, size + 90);
       const [currentX, currentY] = this.window.getPosition();
       const [currentW, currentH] = this.window.getSize();
 
-      // Anchor to bottom center so the mascot remains stable on desktop when adjusting size
-      const newX = Math.round(currentX + (currentW - windowW) / 2);
-      const newY = Math.round(currentY + (currentH - windowH));
+      // Anchor to bottom-right so the mascot remains stable on desktop
+      const newX = Math.round(currentX + (currentW - targetW));
+      const newY = Math.round(currentY + (currentH - targetH));
 
       this.window.setBounds({
         x: newX,
         y: newY,
-        width: windowW,
-        height: windowH,
+        width: targetW,
+        height: targetH,
       });
       this.currentPosition = { x: newX, y: newY };
     }
+  }
+
+  public setChatExpanded(expanded: boolean): void {
+    if (!this.window || this.window.isDestroyed()) return;
+    if (this.isChatExpanded === expanded) return;
+    this.isChatExpanded = expanded;
+
+    const targetW = expanded
+      ? Math.max(560, this.petSize + 390)
+      : Math.max(340, this.petSize + 160);
+    const targetH = expanded
+      ? Math.max(480, this.petSize + 340)
+      : Math.max(220, this.petSize + 90);
+
+    const [curX, curY] = this.window.getPosition();
+    const [curW, curH] = this.window.getSize();
+
+    // Anchor to bottom-right so the pet's position on screen remains rock solid!
+    const newX = Math.round(curX + (curW - targetW));
+    const newY = Math.round(curY + (curH - targetH));
+
+    this.window.setBounds({
+      x: newX,
+      y: newY,
+      width: targetW,
+      height: targetH,
+    });
+    this.currentPosition = { x: newX, y: newY };
   }
 
   public setAlwaysOnTop(val: boolean): void {

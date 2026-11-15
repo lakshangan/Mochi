@@ -151,6 +151,9 @@ const mochiApi: ElectronMochiAPI = {
   triggerPetReaction: (reaction: PetAnimationState) => {
     return ipcRenderer.invoke(IPC_CHANNELS.PET_REACT, reaction);
   },
+  setPetChatExpanded: (expanded: boolean) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.PET_SET_CHAT_EXPANDED, expanded);
+  },
   onPetStateChange: (callback: (state: PetAnimationState) => void) => {
     const handler = (_event: any, state: PetAnimationState) => callback(state);
     ipcRenderer.on(IPC_CHANNELS.PET_SET_STATE, handler);
